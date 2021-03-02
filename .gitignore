@@ -1,0 +1,17 @@
+*.aux
+*.toc
+*.out
+*.log
+_minted*
+*.swp
+hardware/src/.Xil
+hardware/src/*proj
+hardware/src/bitstream_files
+
+*.o
+*.bin
+*.coe
+*.elf
+*.mif
+*.dump
+*.hex
