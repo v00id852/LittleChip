@@ -14,7 +14,7 @@ set_property board_part www.digilentinc.com:pynq-z1:part0:1.0 [current_project]
 source $sources_file
 
 # Add constraint file
-add_files -fileset constrs_1 -norecurse constrs/pynq-z1.xdc
+add_files -fileset constrs_1 -norecurse constr/pynq-z1.xdc
 
 update_compile_order -fileset sources_1
 
