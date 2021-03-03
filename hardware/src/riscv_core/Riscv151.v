@@ -108,18 +108,18 @@ module Riscv151 #(
 
   // Asynchronous read: read data is available in the same cycle
   // Synchronous write: write takes one cycle
-  REGFILE # (
+  ASYNC_RAM_1W2R # (
     .AWIDTH(5),
     .DWIDTH(32)
   ) rf (
-    .din0(rf_wd),   // input
+    .d0(rf_wd),     // input
     .addr0(rf_wa),  // input
     .we0(rf_we),    // input
 
-    .dout1(rf_rd1), // output
+    .q1(rf_rd1),    // output
     .addr1(rf_ra1), // input
 
-    .dout2(rf_rd2), // output
+    .q2(rf_rd2),    // output
     .addr2(rf_ra2), // input
 
     .clk(clk)

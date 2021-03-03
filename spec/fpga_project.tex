@@ -252,16 +252,7 @@ You'll have to deal with the following types of hazards:
 
 \subsection{Register File}
 \label{reg_file}
-%We have provided a register file module for you in \verb|EECS151.v|: \verb|REGFILE_1W2R|. The register file has two asynchronous-read ports and one synchronous-write port (positive edge).
-Your register file should have two asynchronous-read ports and one synchronous-write port (positive edge).
-
-To test your register file, you should write a testbench to verify the following:
-\begin{itemize}
-  \item Register 0 is not writable, i.e. reading from register 0 always returns 0
-  \item Registers are updated on the same cycle that a write occurs (i.e. the value read on the cycle following the rising edge of the write should be the value written).
-  \item The write enable signal to the register file controls whether a write occurs (\verb|we| is active high, meaning you only write when \verb|we| is high)
-  \item Reads should be asynchronous (the value at the output one simulation timestep (\#1) after feeding in an input address should be the value stored in that register)
-\end{itemize}
+We have provided a register file module for you in \verb|EECS151.v|: \verb|ASYNC_RAM_1W2R|. The register file has two asynchronous-read ports and one synchronous-write port (positive edge). In addition, you should ensure that register 0 is not writable in your own logic, i.e. reading from register 0 always returns 0.
 
 \subsection{RAMs}
 \label{ram_info}
