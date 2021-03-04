@@ -6,8 +6,11 @@ if {![file exists $bitstream_file]} {
     exit
 }
 
+# Change this number based on your assigned port number (Lab 1)
+set port_number 3121
+
 open_hw
-connect_hw_server
+connect_hw_server -url localhost:${port_number}
 open_hw_target
 
 set_property PROGRAM.FILE ${bitstream_file} [get_hw_devices xc7z020_1]
