@@ -12,9 +12,8 @@ module Riscv151 #(
   output [31:0] csr
 );
   // Memories
-  localparam BIOS_AWIDTH = 12;
+  localparam BIOS_AWIDTH = 11;
   localparam BIOS_DWIDTH = 32;
-  localparam BIOS_DEPTH  = 4096;
 
   wire [BIOS_AWIDTH-1:0] bios_addra, bios_addrb;
   wire [BIOS_DWIDTH-1:0] bios_douta, bios_doutb;
@@ -22,22 +21,17 @@ module Riscv151 #(
   // BIOS Memory
   // Synchronous read: read takes one cycle
   // Synchronous write: write takes one cycle
-  SYNC_RAM_DP #(
+  SYNC_ROM_DP #(
     .AWIDTH(BIOS_AWIDTH),
     .DWIDTH(BIOS_DWIDTH),
-    .DEPTH(BIOS_DEPTH),
     .MIF_HEX(BIOS_MIF_HEX)
   ) bios_mem(
     .q0(bios_douta),    // output
-    .d0(),              // intput
     .addr0(bios_addra), // input
-    .we0(1'b0),         // input
     .en0(1'b1),
 
     .q1(bios_doutb),    // output
-    .d1(),              // input
     .addr1(bios_addrb), // input
-    .we1(1'b0),         // input
     .en1(1'b1),
 
     .clk(clk)
@@ -45,7 +39,6 @@ module Riscv151 #(
 
   localparam DMEM_AWIDTH = 14;
   localparam DMEM_DWIDTH = 32;
-  localparam DMEM_DEPTH  = 16384;
 
   wire [DMEM_AWIDTH-1:0] dmem_addra;
   wire [DMEM_DWIDTH-1:0] dmem_dina, dmem_douta;
@@ -57,20 +50,18 @@ module Riscv151 #(
   // Write-byte-enable: select which of the four bytes to write
   SYNC_RAM_WBE #(
     .AWIDTH(DMEM_AWIDTH),
-    .DWIDTH(DMEM_DWIDTH),
-    .DEPTH(DMEM_DEPTH)
+    .DWIDTH(DMEM_DWIDTH)
   ) dmem (
     .q(dmem_douta),    // output
     .d(dmem_dina),     // input
     .addr(dmem_addra), // input
     .wbe(dmem_wea),    // input
     .en(1'b1),
-    .clk(clk),
+    .clk(clk)
   );
 
   localparam IMEM_AWIDTH = 14;
   localparam IMEM_DWIDTH = 32;
-  localparam IMEM_DEPTH  = 16384;
 
   wire [IMEM_AWIDTH-1:0] imem_addra, imem_addrb;
   wire [IMEM_DWIDTH-1:0] imem_douta, imem_doutb;
@@ -83,8 +74,7 @@ module Riscv151 #(
   // Write-byte-enable: select which of the four bytes to write
   SYNC_RAM_DP_WBE #(
     .AWIDTH(IMEM_AWIDTH),
-    .DWIDTH(IMEM_DWIDTH),
-    .DE PTH(IMEM_DEPTH)
+    .DWIDTH(IMEM_DWIDTH)
   ) imem (
     .q0(imem_douta),    // output
     .d0(imem_dina),     // input
@@ -158,7 +148,6 @@ module Riscv151 #(
     .data_in_ready(uart_tx_data_in_ready), // output
     .serial_out(FPGA_SERIAL_TX)            // output
   );
-
 
   // TODO: Your code to implement a fully functioning RISC-V core
   // Add as many modules as you want

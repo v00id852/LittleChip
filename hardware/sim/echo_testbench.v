@@ -18,7 +18,7 @@ module echo_testbench();
 
   Riscv151 # (
     .CPU_CLOCK_FREQ(CPU_CLOCK_FREQ),
-    .BIOS_MEM_HEX_FILE("echo.mif")
+    .BIOS_MIF_HEX("echo.mif")
   ) CPU (
     .clk(clk),
     .rst(rst),
