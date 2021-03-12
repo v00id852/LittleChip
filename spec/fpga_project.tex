@@ -134,7 +134,7 @@ The suggested way for initializing your repository with the skeleton files is as
   git clone git@github.com:EECS150/project_skeleton_sp21.git
   cd project_skeleton_sp21
   git remote add my-repo git@github.com:EECS150/sp21_teamXX.git
-  git push my-repo master
+  git push my-repo main
 \end{minted}
 
 Then reclone your repo and add the skeleton repo as a remote:
@@ -146,7 +146,7 @@ Then reclone your repo and add the skeleton repo as a remote:
   git remote add staff git@github.com:EECS150/project_skeleton_sp21.git
 \end{minted}
 
-To pull project updates from the skeleton repo, run \verb|git pull staff master|.
+To pull project updates from the skeleton repo, run \verb|git pull staff main|.
 
 To get a team repo, fill the \href{https://docs.google.com/forms/d/1hOJek4q_Z6SokflpH17gOESGGCXmY1VfdJ5VLMNku1U}{Google form} with your team information (names, Github logins). Only one person in a team is required to fill the form.
 
@@ -501,7 +501,7 @@ Test the CSR instructions using hand assembly tests.
 
 To run the ISA tests, first pull the latest skeleton changes:
 \begin{minted}{bash}
-git pull staff master
+git pull staff main
 git submodule update --init --recursive
 \end{minted}
 
