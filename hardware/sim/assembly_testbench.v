@@ -1,4 +1,5 @@
 `timescale 1ns/1ns
+`include "mem_path.vh"
 
 module assembly_testbench();
   reg clk, rst;
@@ -24,9 +25,9 @@ module assembly_testbench();
     input [4:0] reg_number;
     input [31:0] expected_value;
     input [10:0] test_num;
-    if (expected_value !== CPU.rf.mem[reg_number]) begin
+    if (expected_value !== `RF_PATH.mem[reg_number]) begin
       $display("FAIL - test %d, got: %d, expected: %d for reg %d",
-               test_num, CPU.rf.mem[reg_number], expected_value, reg_number);
+               test_num, `RF_PATH.mem[reg_number], expected_value, reg_number);
       $finish();
     end
     else begin
@@ -38,16 +39,19 @@ module assembly_testbench();
   task wait_for_reg_to_equal;
     input [4:0] reg_number;
     input [31:0] expected_value;
-    while (CPU.rf.mem[reg_number] !== expected_value) @(posedge clk);
+    wait (`RF_PATH.mem[reg_number] === expected_value);
   endtask
 
   initial begin
+    $dumpfile("assembly_testbench.vcd");
+    $dumpvars;
     #0;
     rst = 0;
 
     // Reset the CPU
     rst = 1;
     repeat (10) @(posedge clk);             // Hold reset for 10 cycles
+    @(negedge clk);
     rst = 0;
 
     // Your processor should begin executing the code in /software/assembly_tests/start.s

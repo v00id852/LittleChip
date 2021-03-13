@@ -1,4 +1,5 @@
 `timescale 1ns/1ns
+`include "mem_path.vh"
 
 module strcmp_testbench();
   reg clk, rst;
@@ -24,9 +25,12 @@ module strcmp_testbench();
   reg [31:0] cycle = 0;
 
   initial begin
+    $dumpfile("strcmp_testbench.vcd");
+    $dumpvars;
+
     #1;
-    $readmemh("strcmp.mif", CPU.imem.mem);
-    $readmemh("strcmp.mif", CPU.dmem.mem);
+    $readmemh("strcmp.mif", `IMEM_PATH.mem);
+    $readmemh("strcmp.mif", `DMEM_PATH.mem);
 
     rst = 1;
 

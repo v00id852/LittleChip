@@ -1,4 +1,5 @@
 `timescale 1ns/1ns
+`include "mem_path.vh"
 
 module c_testbench();
   reg clk, rst;
@@ -78,9 +79,12 @@ module c_testbench();
   endtask
 
   initial begin
+    $dumpfile("c_testbench.vcd");
+    $dumpvars;
+
     #1;
-    $readmemh("c_test.mif", CPU.imem.mem);
-    $readmemh("c_test.mif", CPU.dmem.mem);
+    $readmemh("c_test.mif", `IMEM_PATH.mem);
+    $readmemh("c_test.mif", `DMEM_PATH.mem);
 
     rst = 1;
     serial_in = 1;

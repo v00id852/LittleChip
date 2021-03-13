@@ -83,17 +83,12 @@ if {[string match "isa_testbench" ${testbench_name}] && [string match "all" $tes
 
 set num_tests [llength $tests]
 
-file mkdir vcd_files
 set current_dir [pwd]
 cd ${project_name}_proj/${project_name}_proj.sim/sim_1/behav/xsim
 
 for {set i 0} {$i < $num_tests} {incr i} {
   xsim ${testbench_name}_behav -testplusarg MIF_FILE=[lindex $tests $i].mif
-  open_vcd [lindex $tests $i].vcd
-  log_vcd /${testbench_name}/*
   run all
-  close_vcd
-  file copy -force [lindex $tests $i].vcd $current_dir/vcd_files
 }
 
 exit

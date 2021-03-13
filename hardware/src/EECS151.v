@@ -88,7 +88,7 @@ module ASYNC_ROM(q, addr);
   input  [AWIDTH-1:0] addr; // address
   output [DWIDTH-1:0] q;    // read data
 
-  (* rom_style = "distributed" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* rom_style = "distributed" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin
@@ -122,7 +122,7 @@ module ASYNC_RAM(q, d, addr, we, clk);
   input  [DWIDTH-1:0] d;    // write data
   output [DWIDTH-1:0] q;    // read data
 
-  (* ram_style = "distributed" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* ram_style = "distributed" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin
@@ -160,7 +160,7 @@ module SYNC_ROM(q, addr, en, clk);
   input  [AWIDTH-1:0] addr; // address
   output [DWIDTH-1:0] q;    // read data
 
-  (* rom_style = "block" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* rom_style = "block" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin
@@ -202,7 +202,7 @@ module SYNC_RAM(q, d, addr, we, en, clk);
   input  [DWIDTH-1:0] d;    // write data
   output [DWIDTH-1:0] q;    // read data
 
-  (* ram_style = "block" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* ram_style = "block" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin
@@ -244,7 +244,7 @@ module SYNC_ROM_DP(q0, addr0, en0, q1, addr1, en1, clk);
   input  [AWIDTH-1:0] addr0, addr1; // address
   output [DWIDTH-1:0] q0, q1;       // read data
 
-  (* rom_style = "block" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* rom_style = "block" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin
@@ -294,7 +294,7 @@ module ASYNC_RAM_DP(q0, d0, addr0, we0, q1, d1, addr1, we1, clk);
   input  [DWIDTH-1:0] d0, d1;       // write data
   output [DWIDTH-1:0] q0, q1;       // read data
 
-  (* ram_style = "distributed" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* ram_style = "distributed" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin
@@ -341,7 +341,7 @@ module SYNC_RAM_DP(q0, d0, addr0, we0, en0, q1, d1, addr1, we1, en1, clk);
   input  [DWIDTH-1:0] d0, d1;       // write data
   output [DWIDTH-1:0] q0, q1;       // read data
 
-  (* ram_style = "block" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* ram_style = "block" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin
@@ -396,7 +396,7 @@ module SYNC_RAM_WBE(q, d, addr, en, wbe, clk);
   input clk;
   output [DWIDTH-1:0] q;
 
-  (* ram_style = "block" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* ram_style = "block" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin
@@ -448,7 +448,7 @@ module SYNC_RAM_DP_WBE(q0, d0, addr0, en0, wbe0, q1, d1, addr1, en1, wbe1, clk);
   input                en1;
   output [DWIDTH-1:0]  q1;
 
-  (* ram_style = "block" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* ram_style = "block" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin
@@ -513,7 +513,7 @@ module ASYNC_RAM_1W2R(d0, addr0, we0, q1, addr1, q2, addr2, clk);
   input [AWIDTH-1:0] addr2; // Address input
   output [DWIDTH-1:0] q2;
 
-  (* ram_style = "distributed" *) reg [DWIDTH-1:0] mem [DEPTH-1:0];
+  (* ram_style = "distributed" *) reg [DWIDTH-1:0] mem [0:DEPTH-1];
 
   integer i;
   initial begin

@@ -78,6 +78,9 @@ module bios_testbench();
   endtask
 
   initial begin
+    $dumpfile("bios_testbench.vcd");
+    $dumpvars;
+
     #0;
     rst = 1;
     serial_in = 1;
