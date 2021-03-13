@@ -89,12 +89,10 @@ The following is a brief description of each checkpoint and approximately how ma
 %The current schedule is summarised at the end of the document in Section \ref{project_timeline}.
 
 \begin{itemize}
-  \item \textbf{\blockDiagramDueDate \space - \blockDiagramTaskName \space (\blockDiagramTimeAlloted)} - Draw a schematic of your processor's datapath and pipeline stages, and provide a brief writeup of your answers to the questions in ~\ref{sec:chkpt1_questions}. In addition, push all of your IO-circuit Verilog modules that you have implemented in the labs to your assigned Github repository under \verb|hardware/src/io_circuits|. Also commit your design documents (block diagram + writeup) to \verb|docs|.
-  \item \textbf{\ALUDueDate \space - \ALUTaskName \space (\ALUTimeAlloted)} - You should have a working Riscv151 core that can decode and execute all RV32I instructions, including CSR. The UART integration is not required.
+  \item \textbf{\blockDiagramDueDate \space - \blockDiagramTaskName \space (\blockDiagramTimeAlloted)} - Draw a schematic of your processor's datapath and pipeline stages, and provide a brief writeup of your answers to the questions in ~\ref{sec:chkpt1_questions}. In addition, push all of your IO-circuit Verilog modules that you have implemented in the labs to your assigned Github repository under \verb|hardware/src/io_circuits| (see ~\ref{sec:past_designs}). Also commit your design documents (block diagram + writeup) to \verb|docs|.
   \item \textbf{\baseCPUDueDate \space - \baseCPUTaskName \space (\baseCPUTimeAlloted)} - Implement a fully functional RISC-V processor core in Verilog. Your processor core should be able to run the \textbf{mmult} demo successfully.
   \item \textbf{\imageDueDate \space - \imageTaskName \space (\imageTimeAlloted)} - TBD
 %  \item \textbf{\imageDueDate \space - \imageTaskName \space (\imageTimeAlloted)} - Implement an IO memory-mapped hardware-accelerated 2D Convolutional filter.
-
   \item \textbf{\finalCheckoffDueDate \space - Final Checkoff + Demo} - Final processor optimization and checkoff
   \item \textbf{\finalReportDueDate \space - Project Report} - Final report due
 \end{itemize}
@@ -154,7 +152,7 @@ To get a team repo, fill the \href{https://docs.google.com/forms/d/1hOJek4q_Z6So
 it is highly suggested that you do git pull from the skeleton repo to get the latest update.
 Update announcements will be posted to Piazza.
 
-\subsection{Integrate Designs from Labs} \label{past_designs}
+\subsection{Integrate Designs from Labs} \label{sec:past_designs}
 You should copy some modules you designed from the labs.
 We suggest you keep these with the provided source files in \verb|hardware/src/io_circuits| (overwriting any provided skeletons).
 
@@ -180,20 +178,24 @@ We suggest you keep these with the provided source files in \verb|hardware/src/i
         \end{itemize}
       \item \texttt{sim}
         \begin{itemize}
-          \item \verb|Riscv151_testbench.v|: Starting point for testing your CPU. The testbench checks if your CPU can execute the instruction correctly according to spec, and can handle several cases of hazards. You should make sure your CPU implementation pass this testbench before moving on.
+          \item \verb|Riscv151_testbench.v|: Starting point for testing your CPU. The testbench checks if your CPU can execute all the RV32I instructions (including CSR ones) correctly, and can handle some simple hazards. You should make sure that your CPU implementation passes this testbench before moving on.
           \item \verb|assembly_testbench.v|: The testbench works with the software in \texttt{software/assembly\_tests}.
-          \item \verb|echo_testbench.v|: The testbench works with the software in \texttt{software/echo}. The CPU reads a character sent from the serial rx line and echoes it back to the serial tx line.
           \item \verb|isa_testbench.v|: The testbench works with the RISC-V ISA test suite in
 
 \texttt{software/riscv-isa-tests}.
 
-The testbench only runs one test at a time. To run multiple tests, use the script we provide (see \ref{riscv-isa-tests}).
+The testbench only runs one test at a time. To run multiple tests, use the script we provide (see \ref{riscv-isa-tests}). There is a total of 38 ISA tests in the test suite.
         \end{itemize}
+          \item \verb|echo_testbench.v|: The testbench works with the software in \texttt{software/echo}. The CPU reads a character sent from the serial rx line and echoes it back to the serial tx line.
+          \item \verb|bios_testbench.v|: The testbench works with the BIOS program. The testbench checks if your CPU can execute the instructions stored in the BIOS memory. The testbench also emulates user input sent over the serial rx line, and checks the BIOS message output obtained from the serial tx line.
+          \item \verb|strcmp_testbench.v|: The testbench works with the software in \texttt{software/strcmp}. This is an extra test for debugging.
+          \item \verb|c_testbench.v|: The testbench works with the software in \texttt{software/c\_test}. This is an extra test for debugging.
+
     \end{itemize}
   \item \texttt{software}
     \begin{itemize}
       \item \verb|bios151v3|: The BIOS program, which allows us to interact with our CPU via the UART. You need to compile it before creating a bitstream or running a simulation.
-      \item \verb|echo|: The echo program, which emulates the echo test of Lab 6 in software.
+      \item \verb|echo|: The echo program, which emulates the echo test of Lab 5 in software.
       \item \verb|assembly_tests|: Use this as a template to write assembly tests for your processor designed to run in simulation.
       \item \verb|c_example|: Use this as an example to write C programs.
       \item \verb|riscv-isa-tests|: A comprehensive test suite for your CPU. Available after doing \verb|git submodule| (see \ref{riscv-isa-tests}).
@@ -378,7 +380,7 @@ This prevents programs from being self-modifying, which would drastically compli
 \subsubsection{Memory Mapped I/O}
 \label{mmio}
 At this stage in the project the only way to interact with your CPU is through the UART.
-The UART from Lab 6 accomplishes the low-level task of sending and receiving bits from the serial lines, but you will need a way for your CPU to send and receive bytes to and from the UART.
+The UART from Lab 5 accomplishes the low-level task of sending and receiving bits from the serial lines, but you will need a way for your CPU to send and receive bytes to and from the UART.
 To accomplish this, we will use memory-mapped I/O, a technique in which registers of I/O devices are assigned memory addresses.
 This enables load and store instructions to access the I/O devices as if they were memory.
 
@@ -430,15 +432,30 @@ A reasonable order in which to complete your testing is as follows:
   \item Test that your Riscv151 work with the \verb|Riscv151_testbench.v|
   \item Test the entire CPU one instruction at a time with hand-written assembly --- see \verb|assembly_testbench.v|
   \item Run the \verb|riscv-tests| ISA test suite
+  \item Some extra tests with other software C program, such as \verb|c_test| and \verb|strcmp|. They could help reveal more bugs -- see \verb|c_testbench.v| and \verb|strcmp_testbench.v|
   \item Test the CPU's memory mapped I/O --- see \verb|echo_testbench.v|
+  \item Test the CPU's memory mapped I/O with BIOS software program --- see \verb|bios_testbench.v|
 \end{enumerate}
 
 \subsection{Riscv151 Tests}
 
-Once you are confident that the individual components of your processor are working in isolation, you will want to test the entire processor as a whole. One way to do this is to pass the \verb|Riscv151_testbench|. To run the test, use the following command:\\
-\verb|make sim tb=Riscv151_testbench|
+Once you are confident that the individual components of your processor are working in isolation, you will want to test the entire processor as a whole. One way to do this is to pass the \verb|Riscv151_testbench|. To run the test, use either one of the following commands (iverilog is highly recommended since it is faster):\\
+\begin{minted}{bash}
 
-The testbench covers all RV32I instructions. To pass this testbench, you should have a working Riscv151 implementation that can decode and execute all the instructions in the spec, including CSR instructions. Several hazard cases are also tested. The testbench does not work with any software code as in the following sections, but rather it manually initializes the instructions and data in the memory blocks for each test. The testbench does not cover reading from BIOS memory nor memory mapped IO. You will need to complete these components before moving on with other testbenches.
+# Simulate with sim/Riscv151_testbench.v
+
+# with iverilog
+make iverilog-sim tb=Riscv151_testbench
+
+# open waveform
+make wave tb=Riscv151_testbench
+
+# with Vivado
+make sim tb=Riscv151_testbench
+
+\end{minted}
+
+The testbench covers all RV32I instructions. To pass this testbench, you should have a working Riscv151 implementation that can decode and execute all the instructions in the spec, including CSR instructions. Several hazard cases are also tested. The testbench does not work with any software code as in the following sections, but rather it manually initializes the instructions and data in the memory blocks as well as register file content for each test. The testbench does not cover reading from BIOS memory nor memory mapped IO. You will need to complete these components before moving on with other testbenches.
 
 \subsection{Software Toolchain - Writing RISC-V Programs}
 \label{toolchain}
@@ -509,30 +526,58 @@ Then run
 
 \begin{minted}{bash}
 cd hardware
-make sim tb=isa_testbench
+
+# with iverilog
+make iverilog-sim tb=isa_testbench test=all
+
+# with Vivado
+make sim tb=isa_testbench test=all
 \end{minted}
 
-To run a particular ISA test (e.g. \verb|add|) run \verb|make sim tb=isa_testbench test=add|. The simulation should print out which tests passed or failed and their simulation cycles.
-
-%To check what tests passed run \texttt{cat sim/isa/*.log | grep -i pass}.
-%To check for failures run \texttt{cat sim/isa/*.log | grep -i fail}.
+To run a particular ISA test (e.g. \verb|add|), replace "all" with "add". The simulation should print out which tests passed or failed and their simulation cycles.
 
 If you're failing other tests, debug using the test assembly file in\\\verb|software/riscv-isa-tests/riscv-tests/isa/rv32ui| or the generated assembly dump.
+The assembly dump files are extremely helpful in debugging at this stage. If you look into a particular dump file of a test (e.g., \verb|add.dump|), it contains several subtests in series. The CSR output from the simulation indicates which subtest is failing to help you narrow down where the problem is, and you can start debugging from there.
 
 The \verb|RESET_PC| parameter is used in \verb|isa_testbench| to start the test in the IMEM instead of the BIOS.
 Make sure you have used it in \verb|Riscv151.v|.
 
-\subsection{Echo Test}
+\subsection{Software Tests: Echo}
 
 You should have your UART modules integrated with the CPU before running this test. The test verifies if your CPU is able to: check the UART status, read a character from UART Receiver, and write a character to UART Transmitter. Take a look at the software code \verb|software/echo/echo.c| to see what it does. The testbench loads the MIF file compiled from the software code, and load it to the BIOS memory in a similar manner to the assembly test and riscv-isa tests.
 
 To run the echo test, run
 
 \begin{minted}{bash}
+
+# with iverilog
+make iverilog-sim tb=echo_testbench
+
+# with Vivado
 make sim tb=echo_testbench
 \end{minted}
 
-The testbench, acts like a host, sends multiple characters via the serial line, then waits until it receives all the characters back. It is similar to how we test the UART Receiver and UART Transmitter module in Lab 6, but this time we test both of them along with your RISC-V CPU.
+The testbench, acts like a host, sends multiple characters via the serial line, then waits until it receives all the characters back. In some sense, it is similar to the echo test in Lab 5, however, the UART modules are controlled by the softwrae program (\verb|software/echo/echo.c|) running on your RISC-V CPU 
+
+In addition to the echo program, we also have other software programs such as
+
+\verb|software/c_test/c_test.c| and \verb|software/strcmp_test/strcmp_test.c|. 
+
+which you can test with the following commands
+
+\begin{minted}{bash}
+
+# with iverilog
+make iverilog-sim tb=c_testbench
+make iverilog-sim tb=strcmp_testbench
+
+# with Vivado
+make sim tb=c_testbench
+make sim tb=strcmp_testbench
+
+\end{minted}
+
+These tests could help reveal more hazard bugs in your implementation. The tests use CSR instruction to indicate if they are passed (e.g., write '1' to CSR if passed). Take a look at the C files for further details. Following that practice, you can also write your custom C program to further test your CPU.
 
 \subsection{BIOS and Programming your CPU}
 \label{bios_info}
@@ -540,6 +585,19 @@ The testbench, acts like a host, sends multiple characters via the serial line, 
 We have provided a BIOS program in \verb|software/bios151v3| that allows you to interact with your CPU and download other programs over UART.
 The BIOS is just an infinite loop that reads from the UART, checks if the input string matches a known control sequence, and then performs an associated action.
 For detailed information on the BIOS, see Appendix \ref{sec:biosinfo}.
+
+Before running the BIOS program on your FPGA, please do the final simulation test with the \verb|sim/bios_testbench.v|. The testbench emulates the interaction between the host and your CPU via the serial lines orchestrated by the BIOS program.
+
+\begin{minted}{bash}
+
+# with iverilog
+make iverilog-sim tb=bios_testbench
+
+# with Vivado
+make sim tb=bios_testbench
+\end{minted}
+
+Once you pass the BIOS testbench, it's time to test it on the FPGA!
 
 To run the BIOS:
 \begin{enumerate}
@@ -636,9 +694,10 @@ It might seem overwhelming to implement all the functionality that your processo
   \item \textit{Implement data forwarding for data hazards.} Add forwarding muxes and forward the outputs of the ALU and memory stage. Remember that you might have to forward to ALU input A, ALU input B, and data to write to memory. Test forwarding aggressively; most of your bugs will come from incomplete or faulty forwarding logic. Test forwarding from memory and from the ALU, and with control instructions.
   \item \textit{Add BIOS memory reads.} Add the BIOS memory block RAM to the memory stage to be able to load data from the BIOS memory. Write assembly tests that contain some static data stored in the BIOS memory and verify that you can read that data.
   \item \textit{Add Inst memory writes and reads.} Add the instruction memory block RAM to the memory stage to be able to write data to it when executing inside the BIOS memory. Also add the instruction memory block RAM to the instruction fetch stage to be able to read instructions from the inst memory. Write tests that first write instructions to the instruction memory, and then jump (using jalr) to instruction memory to see that the right instructions are executed.
-  \item \textit{Run Riscv151\_testbench}. The testbench verifies if your Riscv151 is able to read instructons from instruction memory block RAM, execute, and write data to either the Register File or data memory block RAM.
+  \item \textit{Run Riscv151\_testbench}. The testbench verifies if your Riscv151 is able to read the RV32I instructions from instruction memory block RAM, execute, and write data to either the Register File or data memory block RAM.
+  \item \textit{Run isa\_testbench}. The testbench works with the RISCV ISA tests. This comprehensive test suites verifies the functionality of your processor.
   \item \textit{Add cycle counters.} Begin to add the memory mapped IO components, by first adding the cycle and instruction counters. These are just 2 32-bit registers that your CPU should update on every cycle and every instruction respectively. Write tests to verify that your counters can be reset with a \verb|sw| instruction, and can be read from using a \verb|lw| instruction.
-  \item \textit{Integrate UART.} Add the UART to the memory stage, in parallel with the data, instruction, and BIOS memories. Detect when an instruction is accessing the UART and route the data to the UART accordingly. Make sure that you are setting the UART ready/valid control signals properly as you are feeding or retrieving data from it. We have provided you with the \verb|echo_testbench| which performs a test of the UART.
+  \item \textit{Integrate UART.} Add the UART to the memory stage, in parallel with the data, instruction, and BIOS memories. Detect when an instruction is accessing the UART and route the data to the UART accordingly. Make sure that you are setting the UART ready/valid control signals properly as you are feeding or retrieving data from it. We have provided you with the \verb|echo_testbench| which performs a test of the UART. In addition, also run \verb|bios_testbench|.
   \item \textit{Run the BIOS.} If everything so far has gone well, program the FPGA. Verify that the BIOS performs as expected. As a precursor to this step, you might try to build a bitstream with the BIOS memory initialized with the echo program.
   \item \textit{Run matrix multiply.} Load the \verb|mmult| program with the \verb|hex_to_serial| utility, and run \verb|mmult| on the FPGA. Verify that it returns the correct checksum.
   \item \textit{Check CPI.} Compute the CPI when running the \verb|mmult| program. If you achieve a CPI 1.2 or smaller, that is acceptable, but if your CPI is larger than that, you should think of ways to reduce it.
@@ -719,12 +778,11 @@ label: addi x2, x1, 4
 
 Commit your block diagram and your writeup to your team repository under \verb|sp21_teamXX/docs| by \blockDiagramDueDate. Please also remember to push your working IO circuits to your Github repository.
 
-\subsubsection{\ALUTaskName: Riscv151 Test}
-This checkpoint is for TA to keep track of your current progress, and to ensure that your implementation is on the right track. You are expected to have a fully-functioning Riscv151 core without IO blocks that passes the \verb|Riscv151_testbench.v|. You will also need to run Synthesis and Implementation to get the reports of area utilization and timing information of your design. This early-stage evaluation will give you some insight on how to further optimize your design to meet the spec requirement in future checkpoints. Although highly encouraged, it is not required to pass any software-related tests for this checkpoint, such as assembly tests or RISC-V test suite or echo. It is also not mandatory that you meet the target clock frequency at this checkpoint (50 MHz). The UART integration is also not required.
-
 \subsubsection{\baseCPUTaskName: Base RISCV151 System}
 This checkpoint requires a fully functioning three stage RISC-V CPU as described in this specification.
 Checkoff will consist of a demonstration of the BIOS functionality, loading a program (\verb|echo| and \verb|mmult|) over the UART, and successfully jumping to and executing the program.
+
+Additionally, please find the maximum achievable frequency of your CPU implementation. To do so, lower the \verb|CPU_CLOCK_PERIOD| (starting at 20, with a step size of 1) in \verb|hardware/src/z1top.v| until the Implementation fails to meet timing. Please report the critical path in your implementation.
 
 \textbf{\baseCPUTaskName \space materials should be committed to your project repository by \baseCPUDueDate.}
 
@@ -734,11 +792,9 @@ Checkoff will consist of a demonstration of the BIOS functionality, loading a pr
     \toprule
     \textbf{Deliverable} & \textbf{Due Date} & \textbf{Description} \\
     \midrule
-    Block Diagram, RISC-V ISA Questions, IO code & \blockDiagramDueDate & Push your block diagram, your writeup, and IO code to your Github repository. Sit down with a GSI and go over your design in detail. \\
+    Block Diagram, RISC-V ISA Questions, IO code & \blockDiagramDueDate & Push your block diagram, your writeup, and IO code to your Github repository. \linebreak In-lab Checkoff: Sit down with a GSI and go over your design in detail. \\
     \midrule
-    Riscv151 testbench & \ALUDueDate \linebreak Check in code to Github & Pass the Riscv151 testbench. Submit the area and timing report of your design along with the log files (from Synthesis and Implementation) as private posts on Piazza.\\
-    \midrule
-    RISC-V CPU & \baseCPUDueDate \linebreak Check in code to Github & Demonstrate that the BIOS works, you can use \verb|hex_to_serial| to load the \verb|echo| program, \verb|jal| to it from the BIOS, and have that program successfully execute. Load the mmult program with \verb|hex_to_serial|, \verb|jal| to it, and have it execute successfully and return the benchmarking results and correct checksum. Your CPI should not be greater than 1.2\\
+    RISC-V CPU, Fmax and Crit. path & \baseCPUDueDate & Check in code to Github. \linebreak In-lab Checkoff: Demonstrate that the BIOS works, you can use \verb|hex_to_serial| to load the \verb|echo| program, \verb|jal| to it from the BIOS, and have that program successfully execute. Load the mmult program with \verb|hex_to_serial|, \verb|jal| to it, and have it execute successfully and return the benchmarking results and correct checksum. Your CPI should not be greater than 1.2\\
     \bottomrule
   \end{tabular}
 \end{center}
@@ -1258,7 +1314,7 @@ directory and rebuild your design and the memory.
 To do this, simply cd to the \verb|software/bios151v3| directory and make the .hex file by running
 “make”. This should generate the .hex file using the compiler tailored to our ISA. The
 block RAM will be instantiated with the contents of the .hex file.
-When you get your design to synthesize and impact to the board, open up screen using the
+When you get your design to synthesize and program the board, open up screen using the
 same command from Lab 6:
 
 \verb|screen $SERIALTTY 115200|
