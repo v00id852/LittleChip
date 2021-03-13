@@ -3,16 +3,16 @@ VERILOG_SRCS := $(wildcard src/*.v)
 VERILOG_SRCS += $(wildcard src/io_circuits/*.v)
 VERILOG_SRCS += $(wildcard src/riscv_core/*.v)
 
+VERILOG_SIMS := $(wildcard sim/*.v)
+
 Z1TOP_XPR := z1top_proj/z1top_proj.xpr
 
 tb := assembly_testbench
 
 ifeq ($(tb), assembly_testbench)
 sw   = assembly_tests
-test = assembly_tests
 else ifeq ($(tb), echo_testbench)
 sw   = echo
-test = echo
 else ifeq ($(tb), c_testbench)
 sw = c_test
 else ifeq ($(tb), strcmp_testbench)
@@ -37,6 +37,73 @@ $(SW_MIF): $(SW_SRCS)
 
 $(sw): $(SW_MIF)
 
+# iverilog simulation
+sim_exec = $(tb).out
+sim_vcd  = $(tb).vcd
+
+iverilog-compile $(sim_exec): $(VERILOG_SRCS) $(VERILOG_SIMS)
+	iverilog $(VERILOG_SRCS) $(VERILOG_SIMS) -I src/ -I src/riscv_core -I sim/ -s $(tb) -o $(sim_exec)
+
+# Full ISA test suit (exclude fence_i)
+isa_tests = \
+	addi \
+	add \
+	andi \
+	and \
+	auipc \
+	beq \
+	bge \
+	bgeu \
+	blt \
+	bltu \
+	bne \
+	jal \
+	jalr \
+	lb \
+	lbu \
+	lh \
+	lhu \
+	lui \
+	lw \
+	ori \
+	or \
+	sb \
+	sh \
+	simple \
+	slli \
+	sll \
+	slti \
+	sltiu \
+	slt \
+	sltu \
+	srai \
+	sra \
+	srli \
+	srl \
+	sub \
+	sw \
+	xori \
+	xor \
+
+iverilog-sim $(sim_vcd): $(sim_exec) $(BIOS_MIF)
+	cp $(BIOS_MIF) ./
+	if [ "$(sw)" != "" ] ; then \
+		cp $(SW_MIF) ./ ; \
+	fi
+	if [ "$(tb)" = "isa_testbench" -a "$(test)" = "all" ] ; then \
+		for inst in $(isa_tests) ; do \
+			./$(sim_exec) +MIF_FILE=$$inst.mif | tee -a output.log ; \
+		done ; \
+		sed -n '/\[[a-zA-Z]*\]/p' output.log ; \
+	else \
+		./$(sim_exec) +MIF_FILE=$(test).mif ; \
+	fi
+	rm -f *.mif
+
+wave: $(sim_vcd)
+	gtkwave $(sim_vcd)
+
+# Vivado
 $(Z1TOP_XPR): $(VERILOG_SRCS) $(BIOS_MIF)
 		vivado -mode batch -source scripts/build_project.tcl
 
@@ -45,7 +112,8 @@ build-project: $(Z1TOP_XPR)
 
 .PHONY: sim
 sim: $(sw) $(BIOS_MIF)
-		vivado -mode batch -source scripts/sim.tcl -tclargs $(tb) $(sw) $(test)
+		vivado -mode batch -source scripts/sim.tcl -tclargs $(tb) $(sw) $(test) | tee output.log
+		sed -n '/\[[a-zA-Z]*\]/p' output.log ; \
 
 .PHONY: write-bitstream
 write-bitstream: $(Z1TOP_XPR)
@@ -58,4 +126,4 @@ program-fpga:
 .PHONY: clean
 # "make clean" won't remove your project folders
 clean:
-		rm -rf *.log *.jou *.str vcd_files
+		rm -rf *.log *.jou *.str *.vcd *.out *.mif

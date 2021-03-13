@@ -1,4 +1,5 @@
 `timescale 1ns/1ns
+`include "mem_path.vh"
 
 module isa_testbench();
   reg clk, rst;
@@ -25,13 +26,16 @@ module isa_testbench();
   reg [31:0] cycle = 0;
   reg [255:0] MIF_FILE;
   initial begin
+    $dumpfile("isa_testbench.vcd");
+    $dumpvars;
+
     if (!$value$plusargs("MIF_FILE=%s", MIF_FILE)) begin
       $display("Must supply mif_file!");
       $finish();
     end
 
-    $readmemh(MIF_FILE, CPU.dmem.mem);
-    $readmemh(MIF_FILE, CPU.imem.mem);
+    $readmemh(MIF_FILE, `IMEM_PATH.mem);
+    $readmemh(MIF_FILE, `DMEM_PATH.mem);
 
     rst = 0;
 
@@ -47,9 +51,9 @@ module isa_testbench();
     done = 1;
 
     if (csr[0] === 1'b1 && csr[31:1] === 31'd0) begin
-      $display("[PASSED] - %s in %d simulation cycles", MIF_FILE, cycle);
+      $display("[passed] - %s in %d simulation cycles", MIF_FILE, cycle);
     end else begin
-      $display("[FAILED] - %s. Failed test: %d", MIF_FILE, csr[31:1]);
+      $display("[failed] - %s. Failed test: %d", MIF_FILE, csr[31:1]);
     end
     $finish();
   end
@@ -64,7 +68,7 @@ module isa_testbench();
       if (!done) @(posedge clk);
     end
     if (!done) begin
-      $display("[FAILED] - %s. Timing out", MIF_FILE);
+      $display("[failed] - %s. Timing out", MIF_FILE);
       $finish();
     end
   end

@@ -90,6 +90,8 @@ module echo_testbench();
   endtask
 
   initial begin
+    $dumpfile("echo_testbench.vcd");
+    $dumpvars;
     #0;
     rst = 1;
     serial_in = 1;
