@@ -85,7 +85,7 @@ isa_tests = \
 	xori \
 	xor \
 
-iverilog-sim $(sim_vcd): $(sim_exec) $(BIOS_MIF)
+iverilog-sim $(sim_vcd): $(sim_exec) $(BIOS_MIF) $(sw)
 	cp $(BIOS_MIF) ./
 	if [ "$(sw)" != "" ] ; then \
 		cp $(SW_MIF) ./ ; \
