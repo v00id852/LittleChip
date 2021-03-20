@@ -56,10 +56,10 @@
 // This file is generated from Xilinx Vivado IP Integrator
 // Some minor modifications are made to add clock parameters
 module clk_wiz #(
-    CLKIN1_PERIOD   = 8,
-    CLKFBOUT_MULT_F = 8,
-    DIVCLK_DIVIDE   = 1,
-    CLKOUT0_DIVIDE  = 25
+    parameter CLKIN1_PERIOD   = 8,
+    parameter CLKFBOUT_MULT_F = 8,
+    parameter DIVCLK_DIVIDE   = 1,
+    parameter CLKOUT0_DIVIDE  = 25
 ) 
  (// Clock in ports
   // Clock out ports
