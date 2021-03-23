@@ -81,7 +81,7 @@ module Riscv151_testbench();
     integer i;
     begin
       for (i = 1; i < `RF_PATH.DEPTH; i = i + 1) begin
-        `RF_PATH.mem[i] = 100 * i;
+        `RF_PATH.mem[i] = 100 * i + 1;
       end
     end
   endtask
@@ -542,6 +542,7 @@ module Riscv151_testbench();
     `IMEM_PATH.mem[INST_ADDR + 1]   = {12'h51e, IMM[4:0],  3'b101, 5'd0, `OPC_CSR};
 
     current_test_id = current_test_id + 1;
+    current_test_type = "CSRRW Test";
     done = 0;
     while (!(csr === `RF_PATH.mem[1])) begin
       @(posedge clk);
@@ -551,6 +552,7 @@ module Riscv151_testbench();
     $display("[%d] Test CSRRW passed!", current_test_id);
 
     current_test_id = current_test_id + 1;
+    current_test_type = "CSRRWI Test";
     done = 0;
     while (!(csr === IMM)) begin
       @(posedge clk);
