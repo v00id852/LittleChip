@@ -41,8 +41,10 @@ $(sw): $(SW_MIF)
 sim_exec = $(tb).out
 sim_vcd  = $(tb).vcd
 
+IV_FLAGS := -Wimplicit -Winfloop -Wfloating-nets
+
 iverilog-compile $(sim_exec): $(VERILOG_SRCS) $(VERILOG_SIMS)
-	iverilog $(VERILOG_SRCS) $(VERILOG_SIMS) -I src/ -I src/riscv_core -I sim/ -s $(tb) -o $(sim_exec)
+	iverilog $(IV_FLAGS) $(VERILOG_SRCS) $(VERILOG_SIMS) -I src/ -I src/riscv_core -I sim/ -s $(tb) -o $(sim_exec)
 
 # Full ISA test suit (exclude fence_i)
 isa_tests = \
