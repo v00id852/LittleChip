@@ -427,8 +427,8 @@ module Riscv151_testbench();
     `IMEM_PATH.mem[JUMP_ADDR[13:0]] = {`FNC7_0, 5'd4, 5'd3, `FNC_ADD_SUB, 5'd7, `OPC_ARI_RTYPE};
 
     check_result_rf(5'd5, 32'h1000_0004, "J-Type JAL");
-    check_result_rf(5'd6, 0, "J-Type JAL");
     check_result_rf(5'd7, 700, "J-Type JAL");
+    check_result_rf(5'd6, 0, "J-Type JAL");
 
     // Test I-Type JALR Insts ---------------------------------------------
     reset();
@@ -447,8 +447,8 @@ module Riscv151_testbench();
     `IMEM_PATH.mem[JUMP_ADDR[13:0]] = {`FNC7_0, 5'd4, 5'd3, `FNC_ADD_SUB, 5'd7, `OPC_ARI_RTYPE};
 
     check_result_rf(5'd5, 32'h1000_0004, "J-Type JALR");
-    check_result_rf(5'd6, 0, "J-Type JALR");
     check_result_rf(5'd7, 700, "J-Type JALR");
+    check_result_rf(5'd6, 0, "J-Type JALR");
 
     // Test B-Type Insts --------------------------------------------------
     // - BEQ, BNE, BLT, BGE, BLTU, BGEU
