@@ -71,8 +71,9 @@ module Riscv151_testbench();
         `RF_PATH.mem[i] = 0;
       end
 
+      @(negedge clk);
       rst = 1;
-      @(posedge clk); #1;
+      @(negedge clk);
       rst = 0;
     end
   endtask
