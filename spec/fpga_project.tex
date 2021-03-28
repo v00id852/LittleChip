@@ -602,7 +602,7 @@ Once you pass the BIOS testbench, it's time to test it on the FPGA!
 To run the BIOS:
 \begin{enumerate}
   \item Verify that the stack pointer and .text segment offset are set properly in \verb|start.s| and \verb|bios151v3.ld| in software/bios151v3 directory
-  \item Build a bitstream and program the FPGA. Run \verb|make write-bitstream| in \verb|hardware|
+  \item Build a bitstream and program the FPGA. Run \verb|make write-bitstream| in \verb|hardware| to generate a bitstream to your project, then \verb|make program-fpga bs=bitstream_files/z1top.bit| to program the FPGA (if you are programming the FPGA from a lab machine with the Hardware Server, make sure that you update the port number in \verb|hardware/scripts/program_fpga.tcl| to your assigned port number).
   \item Use screen to access the serial port:
     \begin{minted}[tabsize=2]{bash}
     screen $SERIALTTY 115200
@@ -619,6 +619,8 @@ If all goes well, you should see a \verb|151 >| prompt after pressing return. Th
     \item \verb|sw, sb, sh <data> <address>|: Store data (hex) to address (hex).
     \item \verb|lw, lbu, lhu <address>|: Prints the data at the address (hex).
 \end{itemize}
+
+(if you want to backspace, type \verb|Ctrl + Backspace|)
 
 As an example, running \verb|sw cafef00d 10000000| should write to the data memory and running \verb|lw 10000000| should print the output \verb|10000000: cafef00d|.
 Please also pay attention that writes to the instruction memory (\verb|sw ffffffff 20000000|) do not write to the data memory, i.e. \verb|lw 10000000| still should yield \verb|cafef00d|.
