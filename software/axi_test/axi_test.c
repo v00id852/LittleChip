@@ -26,7 +26,7 @@ int main(int argc, char**argv) {
   DMA_DIR = 1;
   DMA_DST_ADDR = 0x400000;
   DMA_SRC_ADDR = (uint32_t)array1 >> 2;
-  DMA_LEN = len;
+  DMA_LEN = len >> 2;
   DMA_START = 1;
   while (!DMA_DONE);
 
@@ -34,7 +34,7 @@ int main(int argc, char**argv) {
   DMA_DIR = 0;
   DMA_SRC_ADDR = 0x400000;
   DMA_DST_ADDR = (uint32_t)array1 >> 2;
-  DMA_LEN = 2;
+  DMA_LEN = len >> 2;
   DMA_START = 1;
   while (!DMA_DONE);
 
