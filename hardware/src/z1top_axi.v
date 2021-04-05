@@ -302,7 +302,7 @@ module z1top_axi #(
   wire                  xcel_write_data_valid;
   wire                  xcel_write_data_ready;
 
-  xcel #(
+  xcel_naive #(
     .AXI_AWIDTH(AXI_AWIDTH),
     .AXI_DWIDTH(AXI_DWIDTH)
   ) xcel_unit (
