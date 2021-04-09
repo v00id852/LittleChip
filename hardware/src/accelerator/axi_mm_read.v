@@ -10,20 +10,20 @@ module axi_mm_read #(
 
   // Read request address channel
   output [3:0]            arid,
-  (* mark_debug = "True" *) output [AXI_AWIDTH-1:0] araddr,
-  (* mark_debug = "True" *) output                  arvalid,
-  (* mark_debug = "True" *) input                   arready,
-  (* mark_debug = "True" *) output [7:0]            arlen,
-  (* mark_debug = "True" *) output [2:0]            arsize,
-  (* mark_debug = "True" *) output [1:0]            arburst,
+  output [AXI_AWIDTH-1:0] araddr,
+  output                  arvalid,
+  input                   arready,
+  output [7:0]            arlen,
+  output [2:0]            arsize,
+  output [1:0]            arburst,
   // lock, cache, prot, qos, region, user (unused)
 
   // Read response data channel
   input  [3:0]            rid,
-  (* mark_debug = "True" *) input  [AXI_DWIDTH-1:0] rdata,
-  (* mark_debug = "True" *) input                   rvalid,
-  (* mark_debug = "True" *) output                  rready,
-  (* mark_debug = "True" *) input                   rlast,
+  input  [AXI_DWIDTH-1:0] rdata,
+  input                   rvalid,
+  output                  rready,
+  input                   rlast,
   input  [1:0]            rresp,
   // user (unused)
 

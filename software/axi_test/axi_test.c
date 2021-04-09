@@ -24,7 +24,7 @@ int main(int argc, char**argv) {
 
   // Copy data from array1 from DMem to DDR at address 0x40_0000
   DMA_DIR = 1;
-  DMA_DST_ADDR = 0x400000;
+  DMA_DST_ADDR = 0x900000;
   DMA_SRC_ADDR = (uint32_t)array1 >> 2;
   DMA_LEN = len >> 2;
   DMA_START = 1;
@@ -32,8 +32,8 @@ int main(int argc, char**argv) {
 
   // Copy data from DDR at address 0x40_0000 to array0 from DMem
   DMA_DIR = 0;
-  DMA_SRC_ADDR = 0x400000;
-  DMA_DST_ADDR = (uint32_t)array1 >> 2;
+  DMA_SRC_ADDR = 0x900000;
+  DMA_DST_ADDR = (uint32_t)array0 >> 2;
   DMA_LEN = len >> 2;
   DMA_START = 1;
   while (!DMA_DONE);
@@ -49,7 +49,7 @@ int main(int argc, char**argv) {
     uwrite_int8s(uint8_to_ascii_hex(array1[i], buffer, BUF_LEN));
 
     if (array0[i] != array1[i]) {
-      num_mismatches += 1;     
+      num_mismatches += 1;
     }
   }
 
@@ -57,7 +57,7 @@ int main(int argc, char**argv) {
     uwrite_int8s("\r\nPassed!\r\n");
   else {
     uwrite_int8s("\r\nFailed! Num. mismatches ");
-    uwrite_int8s(uint8_to_ascii_hex(i, buffer, BUF_LEN));
+    uwrite_int8s(uint8_to_ascii_hex(num_mismatches, buffer, BUF_LEN));
     uwrite_int8s("\r\n");
   }
 

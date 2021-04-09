@@ -32,7 +32,7 @@ module dma_controller #(
   input  dma_start,
   output dma_done,
   output dma_idle,
-  output dma_dir, // 1: DMem -> DDR, 0: DDR -> DMem
+  input  dma_dir, // 1: DMem -> DDR, 0: DDR -> DMem
   input [31:0] dma_src_addr,
   input [31:0] dma_dst_addr,
   input [31:0] dma_len,
