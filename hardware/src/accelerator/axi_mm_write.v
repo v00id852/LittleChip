@@ -10,21 +10,21 @@ module axi_mm_write #(
 
   // Write request address channel
   output [3:0]            awid,
-  (* mark_debug = "True" *) output [AXI_AWIDTH-1:0] awaddr,
-  (* mark_debug = "True" *) output                  awvalid,
-  (* mark_debug = "True" *) input                   awready,
-  (* mark_debug = "True" *) output [7:0]            awlen,
-  (* mark_debug = "True" *) output [2:0]            awsize,
-  (* mark_debug = "True" *) output [1:0]            awburst,
+  output [AXI_AWIDTH-1:0] awaddr,
+  output                  awvalid,
+  input                   awready,
+  output [7:0]            awlen,
+  output [2:0]            awsize,
+  output [1:0]            awburst,
   // lock, cache, prot, qos, region, user (unused)
 
   // Write request data channel
   output [3:0]            wid,
-  (* mark_debug = "True" *) output [AXI_DWIDTH-1:0] wdata,
-  (* mark_debug = "True" *) output                  wvalid,
-  (* mark_debug = "True" *) input                   wready,
-  (* mark_debug = "True" *) output                  wlast,
-  (* mark_debug = "True" *) output [AXI_DWIDTH/8-1:0] wstrb,
+  output [AXI_DWIDTH-1:0] wdata,
+  output                  wvalid,
+  input                   wready,
+  output                  wlast,
+  output [AXI_DWIDTH/8-1:0] wstrb,
   // user (unused)
 
   // Write response channel
@@ -93,16 +93,6 @@ module axi_mm_write #(
     .d(waddr_next),
     .q(waddr_value),
     .ce(waddr_ce)
-  );
-
-  wire [AXI_DWIDTH-1:0] wdata_next, wdata_value;
-  wire wdata_ce;
-  REGISTER_R_CE #(.N(AXI_DWIDTH), .INIT(0)) wdata_reg (
-    .clk(clk),
-    .rst(~resetn),
-    .d(wdata_next),
-    .q(wdata_value),
-    .ce(wdata_ce)
   );
 
   wire [31:0] wlen_next, wlen_value;
