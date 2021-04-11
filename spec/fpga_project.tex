@@ -803,24 +803,82 @@ Additionally, please find the maximum achievable frequency of your CPU implement
 
 \pagebreak
 
-\section{Checkpoint 3}
-TBD
+\section{Checkpoint 3 - Hardware-Accelerated Convolutional Neural Network}
 
-%\section{Checkpoint 3 - Hardware-accelerated 2D Convolutional Engine}
-%For this checkpoint, you are tasked with designing an efficient, parameterized 2D Convolutional hardware generator. You will be comparing the performance of your generator against the conv2D software code running on your RISC-V processor in Checkpoint 2.
-%
-%Here are the new files added to this checkpoint:
-%
-%\begin{itemize}
-%\item \verb|hardware/src/accelerator/conv2D_naive.v|: A naive conv2D hardware implementation.
-%\item \verb|hardware/src/accelerator/conv2D_mem_if.v|: A memory interface module of \texttt{conv2D\_naive}.
-%\item \verb|hardware/src/accelerator/conv2D_compute.v|: A compute module of \texttt{conv2D\_naive}.
-%\item \verb|hardware/src/accelerator/conv2D_opt.v|: A skeleton code for optimized conv2D hardware generator. Your task is to complete this file.
-%\item \verb|hardware/src/accelerator/io_dmem_controller.v|: A memory controller for interfacing conv2D accelerator and CPU Data memory.
-%\item \verb|hardware/sim/conv2D_testbench.v|: A standalone testbench that tests conv2D implementation.
-%\item \verb|software/conv2D/*|: Software files for conv2D that can be compiled to run on the Riscv151 processor in a similar manner to \texttt{mmult} of Checkpoint 2.
-%\end{itemize}
-%
+\subsection{Checkpoint Overview}
+
+In this checkpoint, you are tasked with designing an optimized accelerator to speed up the inference process of a small Convolutional Neural Network (CNN). You will be comparing the performance of your accelerator against the CNN software implementation running on your RISC-V processor in Checkpoint 2. Our target CNN is the classic LeNet-5 network used for handwritten digit classification. LeNet-5 consists of 5 layers as shown in the following figure.
+
+[figure]
+
+Some new files have been added for this checkpoint:
+
+\begin{itemize}
+\item \verb|hardware/src/accelerator/conv3D_naive.v|: A naive conv2D hardware implementation.
+\item \verb|hardware/src/accelerator/accelerator_opt.v|: A skeleton code for optimized accelerator module. Your task is to complete this file.
+\item \verb|hardware/src/accelerator/axi_mm_adapter.v|: An AXI Memory-mapped adapter core for interfacing with the Zynq Processing System.
+\item \verb|hardware/src/accelerator/axi_mm_read.v|: An AXI Memory-mapped read logic.
+\item \verb|hardware/src/accelerator/axi_mm_write.v|: An AXI Memory-mapped write logic.
+\item \verb|hardware/src/accelerator/dma_controller.v|: A DMA (Direct-Memory Access) controller for interfacing offchip DDR and CPU Data memory via the AXI adapter.
+\item \verb|hardware/src/accelerator/arbiter.v|: An arbiter for selecting which client (DMA or Accelerator) to service requests and responses to and from the offchip DDR.
+\item \verb|software/axi_test/*|: Software files for testing AXI communication (read and write).
+\item \verb|software/lenet/*|: Software files for the LeNet inference implementation.
+\end{itemize}
+
+\subsection{Software Implementation}
+
+conv3D
+
+maxpool2D
+
+fully connection
+
+\subsection{AXI Bus Interface}
+
+Write address request
+
+Write data request
+
+Write response
+
+Read address request
+
+Read data response
+
+[figures]
+
+\subsection{Vivado Block Design with Zynq Processing System}
+
+[figure from Vivado]
+
+\subsection{Debugging with Vivado Integrated Logic Analyzer}
+
+To debug AXI transaction in real time
+
+\subsection{IO Memory-mapped Addresses for DMA Controller and Accelerator}
+
+DMA memory-mapped
+
+Accelerator (xcel) memory-mapped
+
+\subsection{System Integration}
+
+[figure]
+
+\subsection{Suggested Implementation and Resources}
+
+Jenny's lecture
+
+DNN Eyeriss Tutorial
+
+EE290-2
+
+\subsection{Steps to Complete Checkpoint 3}
+
+\subsection{Checkpoint 3 Deliverables}
+
+ABCD
+
 %\subsection{2D Convolutional Operation}
 %
 %2D Convolution is prevalent in many domains, ranging from signal and image processing to deep learning. An input matrix is convolved with a kernel, or weight matrix in a sliding window fashion to produce an output matrix. We refer to the input matrix as input feature map, and output matrix as output feature map. For simplicity, our conv2D implementation only supports square matrices for both feature map and weight data. In addition, the sliding window stride is always 1 and we pad zeros to the boundary of the input feature map. The supported datatype is 32-bit integer. The feature map dimension is a power-of-two value, and the weight dimension is an odd number.
