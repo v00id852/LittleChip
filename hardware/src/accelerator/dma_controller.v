@@ -113,7 +113,8 @@ module dma_controller #(
 
     STATE_WRITE_DDR: begin
       // setup reading from DMem, since reading from synchronous memory takes one cycle
-      state_next = STATE_WRITE_DDR_DELAY;
+      if (dma_write_request_fire)
+        state_next = STATE_WRITE_DDR_DELAY;
     end
 
     STATE_WRITE_DDR_DELAY: begin
@@ -136,7 +137,7 @@ module dma_controller #(
   assign dma_done_rst  = ((state_value == STATE_IDLE) & dma_start) | (~resetn);
 
   assign write_cnt_next = write_cnt_value + 1;
-  assign write_cnt_ce   = (state_value == STATE_WRITE_DDR) | dma_write_data_fire;
+  assign write_cnt_ce   = (state_value == STATE_WRITE_DDR && dma_write_request_fire) | dma_write_data_fire;
   assign write_cnt_rst  = (state_value == STATE_IDLE) | (~resetn);
 
   assign read_cnt_next = read_cnt_value + 1;
@@ -149,7 +150,6 @@ module dma_controller #(
   assign dma_write_burst         = `BURST_INCR;
   assign dma_write_size          = 3'd2; // 2^2 bytes
   assign dma_write_data_valid    = state_value == STATE_WRITE_DDR_DELAY;
-
   assign dma_write_data          = dmem_dout;
 
   assign dma_read_request_valid = state_value == STATE_READ_DDR;
