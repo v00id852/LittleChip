@@ -1,7 +1,8 @@
 # Master Makefile dependencies
 TARGET := lenet
 INCLUDE_LIB := true
-GCC_OPTS += -O2
+xcel := SW
+GCC_OPTS += -O2 -D$(xcel)
 
 include ../Makefile.gcc.in
 

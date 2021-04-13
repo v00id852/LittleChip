@@ -1,4 +1,7 @@
 
+set f_mhz [expr int(1000 / ${target_clock})]
+set f_hz  [expr int(1000000000 / ${target_clock})]
+
 create_bd_design "z1top_axi_bd"
 
 # Create instance: z1top_axi_0, and set properties
@@ -8,7 +11,7 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_sy
 
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" apply_board_preset "1" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
 
-set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100} CONFIG.PCW_USE_M_AXI_GP0 {0} CONFIG.PCW_USE_S_AXI_HP0 {1} CONFIG.PCW_QSPI_GRP_SINGLE_SS_ENABLE {1}] [get_bd_cells processing_system7_0]
+set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ ${f_mhz} CONFIG.PCW_USE_M_AXI_GP0 {0} CONFIG.PCW_USE_S_AXI_HP0 {1} CONFIG.PCW_QSPI_GRP_SINGLE_SS_ENABLE {1}] [get_bd_cells processing_system7_0]
 
 apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {Auto} Clk_slave {Auto} Clk_xbar {Auto} Master {/z1top_axi_0/interface_aximm} Slave {/processing_system7_0/S_AXI_HP0} intc_ip {Auto} master_apm {0}}  [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
 
@@ -21,6 +24,8 @@ set_property -dict [list CONFIG.FREQ_HZ ${ps_clk}] [get_bd_intf_pins z1top_axi_0
 
 set_property CONFIG.ASSOCIATED_BUSIF z1top_axi_0_interface_aximm [get_bd_pins /z1top_axi_0/axi_clk]
 set_property CONFIG.CLK_DOMAIN z1top_axi_bd_processing_system7_0_0_FCLK_CLK0 [get_bd_intf_pins /z1top_axi_0/interface_aximm]
+
+set_property -dict [list CONFIG.CPU_CLOCK_FREQ ${f_hz}] [get_bd_cells z1top_axi_0]
 
 # Create ports
 set BUTTONS [ create_bd_port -dir I -from 3 -to 0 BUTTONS ]

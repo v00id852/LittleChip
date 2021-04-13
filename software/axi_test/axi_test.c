@@ -5,7 +5,7 @@
 
 #define BUF_LEN 128
 
-#define SIZE 8
+#define SIZE 16
 
 static int8_t array0[SIZE] = {0};
 static int8_t array1[SIZE] = {0};
@@ -19,7 +19,7 @@ int main(int argc, char**argv) {
   int32_t i;
 
   for (i = 0; i < len; i++) {
-    array1[i] = 2 * i;
+    array1[i] = i;
   }
 
   // Copy data from array1 from DMem to DDR at address 0x40_0000

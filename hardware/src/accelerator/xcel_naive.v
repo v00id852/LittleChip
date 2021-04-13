@@ -559,10 +559,19 @@ module xcel_naive #(
   assign ofm_data_rst  = (conv2D_done & ic_cnt_value == ifm_depth - 1) | idle;
 
   // Accumulator
-  wire signed [31:0] ifm_s0 = $signed(ifm_sr_value[0]);
-  wire signed [31:0] wt_s0  = $signed(wt_sr_value[0]);
+//  wire signed [31:0] ifm_s0 = $signed(ifm_sr_value[0]);
+//  wire signed [31:0] wt_s0  = $signed(wt_sr_value[0]);
+  wire signed [15:0] ifm_s0 = $signed(ifm_sr_value[0]);
+  wire signed [15:0] wt_s0  = $signed(wt_sr_value[0]);
+  (* use_dsp48 = "yes" *) wire signed [15:0] tmp  = ifm_s0 * wt_s0;
+//  REGISTER #(.N(16)) tmp_reg (
+//    .clk(clk),
+//    .d(ifm_s0 * wt_s0),
+//    .q(tmp)
+//  );
 
-  assign acc_next = acc_value + ifm_s0 * wt_s0;
+  //assign acc_next = acc_value + ifm_s0 * wt_s0;
+  assign acc_next = acc_value + {{16{tmp[15]}}, tmp[15:0]};
   assign acc_ce   = compute;
   assign acc_rst  = fetch_ifm | idle;
 

@@ -96,6 +96,15 @@ module z1top_axi #(
 
   wire xcel_start, xcel_idle, xcel_done;
 
+  wire [31:0] ifm_ddr_addr, wt_ddr_addr, ofm_ddr_addr;
+  wire [31:0] ifm_dim;
+  wire [31:0] ifm_depth;
+
+  wire [31:0] wt_depth;
+
+  wire [31:0] ofm_dim;
+  wire [31:0] ofm_depth;
+
   wire [DMEM_AWIDTH-1:0] dmem_addrb;
   wire [DMEM_DWIDTH-1:0] dmem_dinb, dmem_doutb;
   wire [3:0]  dmem_web;
@@ -114,7 +123,16 @@ module z1top_axi #(
     .xcel_start(xcel_start),
     .xcel_idle(xcel_idle),
     .xcel_done(xcel_done),
-    // TODO(tan): additional scalar signals to set the params for the xcel
+
+    .ifm_ddr_addr(ifm_ddr_addr),
+    .wt_ddr_addr(wt_ddr_addr),
+    .ofm_ddr_addr(ofm_ddr_addr),
+
+    .ifm_dim(ifm_dim),
+    .ifm_depth(ifm_depth),
+
+    .ofm_dim(ofm_dim),
+    .ofm_depth(ofm_depth),
 
     // DMA Interfacing
     .dma_start(dma_start),
@@ -307,7 +325,7 @@ module z1top_axi #(
     .AXI_DWIDTH(AXI_DWIDTH)
   ) xcel_unit (
     .clk(axi_clk),
-    .resetn(axi_resetn | ~reset),
+    .rst(~axi_resetn | reset),
 
     .xcel_read_request_valid(xcel_read_request_valid),
     .xcel_read_request_ready(xcel_read_request_ready),
@@ -331,10 +349,28 @@ module z1top_axi #(
 
     .xcel_start(xcel_start),
     .xcel_done(xcel_done),
-    .xcel_idle(xcel_idle)
+    .xcel_idle(xcel_idle),
+
+    .ifm_ddr_addr(ifm_ddr_addr),
+    .wt_ddr_addr(wt_ddr_addr),
+    .ofm_ddr_addr(ofm_ddr_addr),
+
+    .ifm_dim(ifm_dim),
+    .ifm_depth(ifm_depth),
+
+    .ofm_dim(ofm_dim),
+    .ofm_depth(ofm_depth)
   );
 
-  wire acc_busy = 1'b0;
+  wire xcel_busy;
+
+  REGISTER_R_CE #(.N(1)) acc_busy_reg (
+    .clk(axi_clk),
+    .rst(xcel_done | ~axi_resetn | reset),
+    .d(1'b1),
+    .q(xcel_busy),
+    .ce(xcel_start)
+  );
 
   // Arbiter logic between {DMA, Accelerator} and {AXI Adapter} <-> DDR
   arbiter #(
@@ -342,7 +378,7 @@ module z1top_axi #(
     .AXI_DWIDTH(AXI_DWIDTH)
   ) arb (
 
-    .acc_busy(acc_busy),
+    .xcel_busy(xcel_busy),
 
      // Core interfacing (with the AXI Adapter)
     .core_read_request_valid(core_read_request_valid),   // output

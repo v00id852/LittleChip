@@ -1,5 +1,7 @@
 
-set project_name "z1top"
+#set project_name "z1top"
+set project_name [lindex $argv 0]
+set target_clock [lindex $argv 1]
 
 set sources_file scripts/${project_name}.tcl
 

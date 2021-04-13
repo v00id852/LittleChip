@@ -869,15 +869,6 @@ A pre-compiled ARM binary is provided to initialize the off-chip DRAM with the w
 
 You can take a look at the C source file \verb|arm_baremetal_app/system/helloworld.c| to see how things are set up. In order to compile this application, you will need to have access to a different Xilinx software (Vivado SDK). However, since the application is pre-compiled, you do not need to worry about this. You don't even need to touch any of the files in this submodule when doing the checkpoint. The addresses of the weight, image, and label data are statically known and fixed. We will provide these addresses to the DMA Controller and the Accelerator so that they can access to the correct locations of the DDR to get the data.
 
-%Next, run
-%
-%\begin{minted}{bash}
-%# If you are programming the FPGA from a lab machine with the Hardware Server, make sure that you update the port number in \verb|hardware/scripts/init_arm.tcl| to your assigned port number).
-%make init-arm
-%\end{minted}
-%
-%This command will 
-
 \subsection{Software Implementation}
 
 This section provides the software description for the computational kernels found in our network: conv3D, maxpool2D, and fconn. Their implementations are slightly different from the conventional ones that you might have seen in other resources since our network is quantized to 8-bit signed integers.
@@ -1178,8 +1169,9 @@ This will enable the DMA Controller to have access to the Data Memory.
 
 \subsection{Resources and Suggestions for Accelerator design}
 
-You are encouraged to visit the \href{http://eyeriss.mit.edu/tutorial.html}{MIT DNN Eyeriss tutorial} for ideas on how to build the accelerator for the 3D Convolution operation or CNN in general. The DNN Accelerators slides: \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-05-DNN-Accelerator-Architectures.pdf}{Part 1} and \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-06-RS-Dataflow-and-NoC.pdf}{Part 2} are particularly informative and might be useful for you as a starting point (check for \textit{Row-stationary architecture}). If you need a detailed cycle-by-cycle explanation, you can have a look at the slides here \href{}{...}
+You are encouraged to visit the \href{http://eyeriss.mit.edu/tutorial.html}{MIT DNN Eyeriss tutorial} for ideas on how to build the accelerator for the 3D Convolution operation or CNN in general. The DNN Accelerators slides: \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-05-DNN-Accelerator-Architectures.pdf}{Part 1} and \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-06-RS-Dataflow-and-NoC.pdf}{Part 2} are particularly informative and might be useful for you as a starting point (check the \textit{Row-stationary architecture}). If you need a detailed cycle-by-cycle explanation, you can have a look at the slides here \href{}{...}
 
+You can also design a conv2D accelerator and augment it to compute 3D Convolution. Refer to the slides \href{https://drive.google.com/file/d/1QGFzt3gZ53IK1ZCIaJ57NUKucU77Nwd-}{\textbf{here}} for some ideas. However, keep in mind that the conv2D there uses streaming interface, therefore, some handshake logic is required. Depending on how you want to buffer data to your accelerator, you may or may not want to use a FIFO, and simple memory modules would be sufficient. Additionally, the conv2D does some extra job to handle border effect due to padding; since padding is not required for this project, no boundary check is required when you design your accelerator.
 
 \subsection{High-throughput Spatially-mapped Design (Extra Credit)}
 
@@ -1236,13 +1228,16 @@ This program sends an array allocated in \texttt{DMem} of your RISCV-V core to a
 If the DMA is working, you can move on to the next part, which is to run the LeNet software. Go to \verb|software/lenet|, and run the program as follows.
 
 \begin{minted}{bash}
-# This will compile and run the software implementation of LeNet
-make xcel=SW
-make run
 # This will compile and run the hardware implementation of LeNet (only conv3D is
 # put in hardware)
-make xcel=HW
+make clean && make xcel=HW
 make run
+# This will compile and run the software implementation of LeNet
+make clean && make
+make run
+
+# You can also use the hex_to_serial script to load the generate MIF file
+# to the UART as in the mmult demo
 \end{minted}
 
 The program tests 128 images with 127 correct predictions (\textit{0000\_007f}).
@@ -1263,9 +1258,9 @@ cd hardware
 make iverilog-sim tb=xcel_testbench
 \end{minted}
 
-The testbench does not invoke any software MIF file nor the RISC-V core that you designed in Checkpoint 2. Rather, it tests the functionality of the xcel accelerator (conv3D) with a simple \verb|hardware/sim/mem_model.v| in place. A memory block is used to initialize data for testing. You may want to use the testbench when you design your own conv3D.
+The testbench does not invoke any software MIF file nor the RISC-V core that you designed in Checkpoint 2. Rather, it tests the functionality of the xcel accelerator (conv3D) with a simple \verb|hardware/sim/mem_model.v| in place, a memory block is used to initialize data for testing. You may want to use the testbench when you design your own conv3D.
 
-Start with something simple that works first, then worry about optimization later. It makes sense to just copying all the weight data and a test image to on-chip BRAM before you start doing the computatation. Buffering the temporary result to another local buffer, and only write back to the DDR once everything is done. Using burst mode is highly recommended. As a reference, you can take a look at the code in \verb|hardware/src/accelerator/dma\_controller.v| to see some examples of how to setup a burst read/write request, and then how to convert the AXI interface to the BlockRAM interface and vice versa. You could do something similar to that in your accelerator.
+Start with something simple that works first, then worry about optimization later. It makes sense to just copying all the weight data and a test image to on-chip BRAM before you start doing the computatation. Buffering the temporary result to another local buffer, and only write back to the DDR once everything is done. Using burst mode is highly recommended. As a reference, you can take a look at the code in \verb|hardware/src/accelerator/dma_controller.v| to see some examples of how to setup a burst read/write request, and then how to convert the AXI interface to the BlockRAM interface and vice versa. You could do something similar to that in your accelerator. When implementing the bus read/write logic, adopt good practice when it comes to handshake: don't wire ready to valid or vice versa.
 
 Once you have the data on chip, the low hanging fruit is to do some unrolling or pipelining for parallel execution. Make use of dual-port memory modules to allow you to have more parallel accesses. In addition, try not to use a monolithic memory for everything, but instead split it to smaller modules and assign one for each compute unit.
 
@@ -1279,7 +1274,7 @@ In-lab Checkoff: Demonstrate that your accelerator implementation \verb|xcel_opt
 
 Additionally, please write a short report (push to \textit{docs/}) with your answers to the following questions
 \begin{itemize}
-\item Sketch the block diagram of your accelerator design. What memory or compute optimizations would you like to highlight in your design?
+\item Sketch the block diagram of your accelerator design. What memory and compute optimizations would you like to highlight in your design?
 \item What is the speedup over the software execution? What about the baseline accelerator implementation?
 \item Where do you think the speedup comes from? What makes the software (CPU) execution so inefficient in comparison to specialized hardware architecture?
 \item The RV32I that our Riscv151 supports does not have a multiply instruction. Therefore, a multiplication is carried out by a software routine instead (look at the \textbf{times} function). Can you come up with an approach to implement a multiply operation for your processor (that should be more efficient than invoking \textbf{times} function)? You don't have to implement it, just briefly describe how you would do it and how many cycles it would take.

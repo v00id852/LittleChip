@@ -2,10 +2,10 @@
 VERILOG_SRCS := $(wildcard src/*.v)
 VERILOG_SRCS += $(wildcard src/io_circuits/*.v)
 VERILOG_SRCS += $(wildcard src/riscv_core/*.v)
-
+VERILOG_SRCS += $(wildcard src/accelerator/*.v)
 VERILOG_SIMS := $(wildcard sim/*.v)
 
-Z1TOP_XPR := z1top_proj/z1top_proj.xpr
+#Z1TOP_XPR := z1top_proj/z1top_proj.xpr
 
 tb := assembly_testbench
 
@@ -44,7 +44,7 @@ sim_vcd  = $(tb).vcd
 IV_FLAGS := -Wimplicit -Winfloop -Wfloating-nets
 
 iverilog-compile $(sim_exec): $(VERILOG_SRCS) $(VERILOG_SIMS)
-	iverilog $(IV_FLAGS) $(VERILOG_SRCS) $(VERILOG_SIMS) -I src/ -I src/riscv_core -I sim/ -s $(tb) -o $(sim_exec)
+	iverilog $(IV_FLAGS) $(VERILOG_SRCS) $(VERILOG_SIMS) -I src/ -I src/riscv_core -I src/accelerator -I sim/ -s $(tb) -o $(sim_exec)
 
 # Full ISA test suit (exclude fence_i)
 isa_tests = \
@@ -106,8 +106,14 @@ wave: $(sim_vcd)
 	gtkwave $(sim_vcd)
 
 # Vivado
+proj := z1top
+Z1TOP_XPR = $(proj)_proj/$(proj)_proj.xpr
+
+clk := 10
+port_number := 3121
+
 $(Z1TOP_XPR): $(VERILOG_SRCS) $(BIOS_MIF)
-		vivado -mode batch -source scripts/build_project.tcl
+		vivado -mode batch -source scripts/build_project.tcl -tclargs $(proj) $(clk)
 
 .PHONY: build-project
 build-project: $(Z1TOP_XPR)
@@ -119,11 +125,15 @@ sim: $(sw) $(BIOS_MIF)
 
 .PHONY: write-bitstream
 write-bitstream: $(Z1TOP_XPR)
-		vivado -mode batch -source scripts/write_bitstream.tcl
+		vivado -mode batch -source scripts/write_bitstream.tcl -tclargs $(proj) $(clk)
 
 .PHONY: program-fpga
 program-fpga:
 		vivado -mode batch -source scripts/program_fpga.tcl -tclargs $(bs)
+
+.PHONY: init-arm
+init-arm:
+		xsdb scripts/init_arm.tcl $(port_number)
 
 .PHONY: clean
 # "make clean" won't remove your project folders

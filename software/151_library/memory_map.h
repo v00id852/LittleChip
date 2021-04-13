@@ -17,4 +17,15 @@
 #define DMA_DST_ADDR  (*((volatile uint32_t*) 0x80000040))
 #define DMA_LEN       (*((volatile uint32_t*) 0x80000044))
 
-// TODO(tan): define addresses for accelerator memory-mapped registers
+#define XCEL_START (*((volatile uint32_t*) 0x80000050))
+#define XCEL_IDLE  (*((volatile uint32_t*) 0x80000054) & 0x02)
+#define XCEL_DONE  (*((volatile uint32_t*) 0x80000054) & 0x01)
+
+#define XCEL_IFM_DDR_ADDR (*((volatile uint32_t*) 0x80000058))
+#define XCEL_WT_DDR_ADDR  (*((volatile uint32_t*) 0x8000005c))
+#define XCEL_OFM_DDR_ADDR (*((volatile uint32_t*) 0x80000060))
+
+#define XCEL_IFM_DIM   (*((volatile uint32_t*) 0x80000064))
+#define XCEL_IFM_DEPTH (*((volatile uint32_t*) 0x80000068))
+#define XCEL_OFM_DIM   (*((volatile uint32_t*) 0x8000006c))
+#define XCEL_OFM_DEPTH (*((volatile uint32_t*) 0x80000070))

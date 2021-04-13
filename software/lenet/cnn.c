@@ -25,8 +25,6 @@ int32_t cast_si32(int8_t input) {
   return (input > 127) ? (val - 256) : val;
 }
 
-// hard-code the dimensions to make the code slightly more efficient on our RISC-V
-//
 // Convolution 3D
 void conv3D_sw_1(int8_t *ifm, int8_t *wt, int32_t *ofm) {
 
@@ -49,6 +47,7 @@ void conv3D_sw_1(int8_t *ifm, int8_t *wt, int32_t *ofm) {
 
     ifm_offset = 0;
     for (d = 0; d < IMG_DEPTH; ++d) {
+
       ofm_idx = 0;
       int ifm_idx0 = 0;
 
@@ -73,7 +72,7 @@ void conv3D_sw_1(int8_t *ifm, int8_t *wt, int32_t *ofm) {
             ifm_idx1 += IMG_DIM - WT1_DIM;
           } // m
 
-          ofm[ofm_offset + ofm_idx] += (tmp >> 0);
+          ofm[ofm_offset + ofm_idx] += (tmp >> 9);
 
           ofm_idx  += 1;
           ifm_idx0 += 1;
@@ -85,14 +84,6 @@ void conv3D_sw_1(int8_t *ifm, int8_t *wt, int32_t *ofm) {
       ifm_offset += IMG_SIZE;
       wt_offset  += WT1_SIZE;
     } // d
-
-    ofm_idx = 0;
-    for (i = 0; i < CV1_DIM; ++i) {
-      for (j = 0; j < CV1_DIM; ++j) {
-        ofm[ofm_offset + ofm_idx] = ofm[ofm_offset + ofm_idx] >> 9;
-        ofm_idx += 1;
-      }
-    }
 
     ofm_offset += CV1_SIZE;
   } // f
@@ -119,6 +110,7 @@ void conv3D_sw_2(int8_t *ifm, int8_t *wt, int32_t *ofm) {
 
     ifm_offset = 0;
     for (d = 0; d < P1_DEPTH; ++d) {
+
       ofm_idx = 0;
       int ifm_idx0 = 0;
 
@@ -131,7 +123,7 @@ void conv3D_sw_2(int8_t *ifm, int8_t *wt, int32_t *ofm) {
 
           for (m = 0; m < WT2_DIM; ++m) {
             for (n = 0; n < WT2_DIM; ++n) {
-              int32_t ifm_value = ifm[ifm_offset + ifm_idx0 + ifm_idx1];
+              int32_t ifm_value = cast_si32(ifm[ifm_offset + ifm_idx0 + ifm_idx1]);
               int32_t wt_value  = cast_si32(wt[wt_offset + wt_idx]);
               int32_t prod = times(ifm_value, wt_value);
               tmp += prod;
@@ -143,7 +135,7 @@ void conv3D_sw_2(int8_t *ifm, int8_t *wt, int32_t *ofm) {
             ifm_idx1 += P1_DIM - WT2_DIM;
           } // m
 
-          ofm[ofm_offset + ofm_idx] += (tmp >> 0);
+          ofm[ofm_offset + ofm_idx] += (tmp >> 9);
 
           ofm_idx  += 1;
           ifm_idx0 += 1;
@@ -155,14 +147,6 @@ void conv3D_sw_2(int8_t *ifm, int8_t *wt, int32_t *ofm) {
       ifm_offset += P1_SIZE;
       wt_offset  += WT2_SIZE;
     } // d
-
-    ofm_idx = 0;
-    for (i = 0; i < CV2_DIM; ++i) {
-      for (j = 0; j < CV2_DIM; ++j) {
-        ofm[ofm_offset + ofm_idx] = ofm[ofm_offset + ofm_idx] >> 9;
-        ofm_idx += 1;
-      }
-    }
 
     ofm_offset += CV2_SIZE;
   } // f
