@@ -109,7 +109,7 @@ wave: $(sim_vcd)
 proj := z1top
 Z1TOP_XPR = $(proj)_proj/$(proj)_proj.xpr
 
-clk := 10
+clk := 20
 port_number := 3121
 
 $(Z1TOP_XPR): $(VERILOG_SRCS) $(BIOS_MIF)
