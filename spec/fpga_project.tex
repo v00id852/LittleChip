@@ -865,7 +865,7 @@ The DMA Controller orchestrates the memory communication between the RISC-V's DM
 
 \subsubsection{ARM Baremetal Application}
 
-A pre-compiled ARM binary is provided to initialize the off-chip DRAM with the weight, image, and label data. Please run the following command to clone the submodule to your repository.
+A pre-compiled ARM binary is provided to initialize the off-chip DRAM with the weight, image, and label data.
 
 You can take a look at the C source file \verb|arm_baremetal_app/system/helloworld.c| to see how things are set up. In order to compile this application, you will need to have access to a different Xilinx software (Vivado SDK). However, since the application is pre-compiled, you do not need to worry about this. You don't even need to touch any of the files in this submodule when doing the checkpoint. The addresses of the weight, image, and label data are statically known and fixed. We will provide these addresses to the DMA Controller and the Accelerator so that they can access to the correct locations of the DDR to get the data.
 
@@ -974,7 +974,7 @@ for (f = 0; f < OFM_DEPTH; f++) {
 A straight mapping from the software description to hardware implementation, without considering many inherent characteristics of the system (memory latency, buffering, available compute blocks, etc.), undoubtedly yields poor result. Have a look at the baseline conv3D implementation given to you: \verb|hardware/src/accelerator/xcel_naive.v|. There are a few weaknesses in this implementation.
 
 \begin{itemize}
-\item This implementation reads the elements of input feature map redundantly without considering the fact that there are some overlap between the current and the next sliding window (with a stride of 1). Therefore, the off-chip memory latency quickly overwhelms the performance and leaves the compute unit starving for data most of the time
+\item This implementation reads the elements of input feature map redundantly without considering the fact that there are some overlap between the current and the next sliding window (with a stride of 1). Therefore, the off-chip memory latency quickly overwhelms the performance and leaves the compute unit starving for data most of the time.
 \item This implementation does not consider the fact that the weight and input feature map are 8-bit data, and that 4 weight/ifm items could be packed in a single read transfer at a time since our AXI data bus is 4 times wider. Instead, it issues 4 separate single read transfers for those consecutive weight/ifm data items. The redundancy addes extra communication overhead.
 \item This implementation does not utilize burst mode to achieve better memory bandwidth utilization, especially since there are multiple data items in a row and one could set up a burst request to read them all in successive cycles with some intial startup overhead from the request to the response.
 \item This implementation does not utilize any intermediate buffer to store the partial compute results on chip. Instead, the partial output channel result (ofm) is written back to the DDR, and then reread to accumulate with the next result.
@@ -992,7 +992,7 @@ Our communication cores (DMA, Accelerator, AXI Adapter) adopt the AXI4 interface
 There are separate read/write request and response channels.
 Per each channel, a handshake mechanism (Ready/Valid) is used to indicate a successful transaction.
 
-You can skim the offcial ARM's AXI specification \href{https://developer.arm.com/documentation/ihi0022/b}{here} for more information (chapter 2, 3, and 4).
+You can skim the official ARM's AXI specification \href{https://developer.arm.com/documentation/ihi0022/b}{here} for more information (chapter 2, 3, and 4).
 The reading is entirely optional. The following subsections give a brief summary on the protocol and things that are particularly important for this checkpoint.
 Additional resource is Xilinx \href{https://www.xilinx.com/support/documentation/ip\_documentation/ug761\_axi\_reference\_guide.pdf}{AXI Reference Guide}.
 
@@ -1189,9 +1189,58 @@ git submodule update --init --recursive
 This will clone the \verb|arm_baremetal_app| submodule.
 
 The next step is integrating the \texttt{dma\_controller} and \texttt{xcel\_naive} to your existing Riscv151 processor.
+First, you need to modify the interface of \verb|hardware/src/riscv_core/Riscv151.v| to include some additional input/output ports to connect to the DMA controller and the Accelerator as follows.
+
+\begin{minted}{Verilog}
+module Riscv151 #(
+  parameter CPU_CLOCK_FREQ = 50_000_000,
+  parameter RESET_PC       = 32'h4000_0000,
+  parameter BAUD_RATE      = 115200,
+  parameter BIOS_MIF_HEX   = "bios151v3.mif"
+) (
+  input  clk,
+  input  rst,
+  input  FPGA_SERIAL_RX,
+  output FPGA_SERIAL_TX,
+  output [31:0] csr,
+
+  // Accelerator Interfacing
+  output xcel_start,
+  input xcel_done,
+  input xcel_idle,
+
+  output [31:0] ifm_ddr_addr,
+  output [31:0] wt_ddr_addr,
+  output [31:0] ofm_ddr_addr,
+
+  output [31:0] ifm_dim,
+  output [31:0] ifm_depth,
+
+  output [31:0] ofm_dim,
+  output [31:0] ofm_depth,
+
+  // DMA Interfacing
+  output dma_start,
+  input  dma_done,
+  input  dma_idle,
+  output dma_dir,
+  output [31:0] dma_src_addr,
+  output [31:0] dma_dst_addr,
+  output [31:0] dma_len,
+
+  // DMem Interfacing (Port b)
+  input  [13:0] dmem_addrb,
+  input  [31:0] dmem_dinb,
+  output [31:0] dmem_doutb,
+  input  [3:0]  dmem_web,
+  input         dmem_enb
+);
+\end{minted}
+
 You need to expand your IO memory-mapped logic to perform load/store to the memory addresses of these blocks as mentioned in the section above,
 so that the CPU can control them from software. In addition, you will also need to convert \texttt{DMem} to dual-port memory block.
 Use \texttt{port b} to connect to the \texttt{dma\_controller} via the interface of the Riscv151 processor.
+Don't forget to wire the enable port of \texttt{DMem} to \texttt{dmem\_enb} from the interface.
 Also note that we're no longer using \verb|hardware/src/z1top.v| for this checkpoint, but \verb|hardware/src/z1top_axi.v| instead.
 
 Next, generate a bitstream to configure your FPGA. Now you can pass the target clock frequency to the command.
