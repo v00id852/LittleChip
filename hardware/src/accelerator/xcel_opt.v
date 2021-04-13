@@ -2,7 +2,8 @@
 
 module xcel_opt #(
   parameter AXI_AWIDTH = 32,
-  parameter AXI_DWIDTH = 32
+  parameter AXI_DWIDTH = 32,
+  parameter WT_DIM = 5
 ) (
   input clk,
   input rst,

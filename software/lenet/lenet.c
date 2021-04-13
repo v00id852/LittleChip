@@ -51,7 +51,7 @@ void dma_write_ddr(uint32_t src_addr, uint32_t dst_addr, int dma_len) {
 }
 
 void conv3D_hw(uint32_t ifm_ddr_addr, uint32_t wt_ddr_addr, uint32_t ofm_ddr_addr,
-               uint32_t ifm_dim, uint32_t ifm_depth, uint32_t wt_dim,
+               uint32_t ifm_dim, uint32_t ifm_depth,
                uint32_t ofm_dim, uint32_t ofm_depth) {
 
   XCEL_IFM_DDR_ADDR = ifm_ddr_addr;
@@ -59,10 +59,9 @@ void conv3D_hw(uint32_t ifm_ddr_addr, uint32_t wt_ddr_addr, uint32_t ofm_ddr_add
   XCEL_OFM_DDR_ADDR = ofm_ddr_addr;
   XCEL_OFM_DIM      = ofm_dim;
   XCEL_OFM_DEPTH    = ofm_depth;
-  XCEL_WT_DIM       = wt_dim;
   XCEL_IFM_DIM      = ifm_dim;
   XCEL_IFM_DEPTH    = ifm_depth;
-  XCEL_START         = 1;
+  XCEL_START        = 1;
 
   while (!XCEL_DONE);
 }
@@ -122,10 +121,11 @@ int main(int argc, char**argv) {
                (uint32_t)wt_fc >> 2,
                WT_FC_SIZE >> 2);
 
+  uint32_t num_labels = (NUM_TEST_IMAGES < 4) ? 4 : (NUM_TEST_IMAGES >> 2);
   // Load groundtruth labels
   dma_read_ddr(LABELS_DDR_ADDR,
                (uint32_t)test_labels >> 2,
-               NUM_LABELS >> 2);
+               num_labels);
 
   int32_t conv1_ofm[CONV1_OFM_SIZE];
   int32_t conv2_ofm[CONV2_OFM_SIZE];
@@ -133,12 +133,11 @@ int main(int argc, char**argv) {
   int8_t pool1_ofm[POOL1_OFM_SIZE];
   int8_t pool2_ofm[POOL2_OFM_SIZE];
 
-  int32_t fc_ofm[FC_DEPTH];
+  int32_t fc_ofm[FC_OFM_SIZE];
 
   char pred_labels[NUM_LABELS];
   uint32_t num_corrects = 0;
   uint32_t time = 0;
-
   for (i = 0; i < NUM_TEST_IMAGES; i++) {
     uwrite_int8s("\r\n>>> Processing image: ");
     uwrite_int8s(uint32_to_ascii_hex(i, buffer, BUF_LEN));
@@ -146,15 +145,35 @@ int main(int argc, char**argv) {
     // Benchmark
     COUNTER_RST = 0;
 
+#ifdef HW
+    conv3D_hw(IMAGES_DDR_ADDR + i * IMG_SIZE, WT_CONV1_DDR_ADDR, 0x900000,
+              IMG_DIM, IMG_DEPTH, CV1_DIM, CV1_DEPTH);
+    dma_read_ddr(0x900000, (uint32_t)conv1_ofm >> 2, CONV1_OFM_SIZE);
+
+    clamp(conv1_ofm, CONV1_OFM_SIZE);
+    pooling_sw_1(conv1_ofm, pool1_ofm);
+
+    dma_write_ddr((uint32_t)pool1_ofm >> 2, 0x900000, POOL1_OFM_SIZE >> 2);
+    conv3D_hw(0x900000, WT_CONV2_DDR_ADDR, 0x910000,
+              P1_DIM, P1_DEPTH, CV2_DIM, CV2_DEPTH);
+    dma_read_ddr(0x910000, (uint32_t)conv2_ofm >> 2, CONV2_OFM_SIZE);
+
+    clamp(conv2_ofm, CONV2_OFM_SIZE);
+    pooling_sw_2(conv2_ofm, pool2_ofm);
+
+    fc_sw(pool2_ofm, wt_fc, fc_ofm);
+    findmax(fc_ofm, pred_labels, i);
+#else
     // Read image from DDR
     dma_read_ddr(IMAGES_DDR_ADDR + i * IMG_SIZE,
                  (uint32_t)img >> 2,
-                 (IMG_SIZE) / sizeof(int8_t));
+                 (IMG_SIZE) >> 2);
     lenet(img, wt_conv1, wt_conv2, wt_fc,
           conv1_ofm, conv2_ofm,
           pool1_ofm, pool2_ofm,
           fc_ofm,
           pred_labels, i);
+#endif
 
     time += CYCLE_COUNTER;
 

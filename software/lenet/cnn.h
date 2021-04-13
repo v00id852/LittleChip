@@ -53,6 +53,8 @@
 
 #define WT3_DIM  (P2_DIM) // 4
 
+#define WT3_SIZE (WT3_DIM * WT3_DIM)
+
 #define FC_DIM 1
 #define FC_DEPTH 10
 
@@ -72,6 +74,3 @@ void pooling_sw_2(int32_t *ifm, int8_t *ofm);
 void fc_sw(int8_t *ifm, int8_t *wt, int32_t *ofm);
 void clamp(int32_t *array, int len);
 int32_t cast_si32(int8_t input);
-
-
-

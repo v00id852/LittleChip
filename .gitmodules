@@ -1,3 +1,6 @@
 [submodule "software/riscv-isa-tests/riscv-tests"]
 	path = software/riscv-isa-tests/riscv-tests
 	url = git@github.com:riscv/riscv-tests
+[submodule "arm_baremetal_app"]
+	path = arm_baremetal_app
+	url = https://github.com/EECS150/arm_baremetal_app.git
