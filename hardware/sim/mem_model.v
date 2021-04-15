@@ -143,6 +143,15 @@ module mem_model #(
     .ce(write_request_fire)
   );
 
+  wire r_idle   = state_r_value == STATE_R_IDLE;
+  wire r_run    = state_r_value == STATE_R_RUN;
+  wire r_run_dl = state_r_value == STATE_R_RUN_DELAY;
+  wire r_done   = state_r_value == STATE_R_DONE;
+
+  wire w_idle   = state_w_value == STATE_W_IDLE;
+  wire w_run    = state_w_value == STATE_W_RUN;
+  wire w_done   = state_w_value == STATE_W_DONE;
+
   always @(*) begin
     state_r_next = state_r_value;
     case (state_r_value)
@@ -185,27 +194,27 @@ module mem_model #(
     endcase
   end
 
-  assign read_request_ready  = (state_r_value == STATE_R_IDLE);
-  assign write_request_ready = (state_w_value == STATE_R_IDLE);
+  assign read_request_ready  = r_idle;
+  assign write_request_ready = w_idle;
 
   assign read_cnt_next = read_cnt_value + 1;
-  assign read_cnt_ce   = (state_r_value == STATE_R_RUN)  | read_data_fire;
-  assign read_cnt_rst  = (state_r_value == STATE_R_IDLE) | rst;
+  assign read_cnt_ce   = r_run  | read_data_fire;
+  assign read_cnt_rst  = r_idle | rst;
 
   assign write_cnt_next = write_cnt_value + 1;
-  assign write_cnt_ce   = (state_w_value == STATE_W_RUN) & write_data_fire;
-  assign write_cnt_rst  = (state_w_value == STATE_W_IDLE) | rst;
+  assign write_cnt_ce   = w_run & write_data_fire;
+  assign write_cnt_rst  = w_idle | rst;
 
   assign mem_addr0 = (read_request_addr_value + {read_cnt_value << read_size}) >> 2;
-  assign mem_en0   = (state_r_value == STATE_R_RUN) | read_data_fire;
+  assign mem_en0   = r_run | read_data_fire;
 
   assign mem_addr1 = (write_request_addr_value + {write_cnt_value << write_size}) >> 2;
   assign mem_din1  = write_data;
   assign mem_we1   = write_data_fire;
-  assign mem_en1   = (state_w_value == STATE_W_RUN);
+  assign mem_en1   = w_run;
 
   assign read_data        = mem_dout0;
-  assign read_data_valid  = (state_r_value == STATE_R_RUN_DELAY);
-  assign write_data_ready = (state_w_value == STATE_W_RUN);
+  assign read_data_valid  = r_run_dl;
+  assign write_data_ready = w_run;
 
 endmodule

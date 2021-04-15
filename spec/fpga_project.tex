@@ -1118,7 +1118,7 @@ Also note that the Zynq PS supplies the clock signal \verb|FCLK_CLK0| to the fab
 \subsection{System Integration with Riscv151}
 \subsubsection{IO Memory-mapped Addresses for DMA Controller and Accelerator}
 
-You will need to extend your IO memory-mapped logic to integrate the DMA controller and the Accelerator (xcel) cores to Riscv151. We will use the load and store instructions to the memory-mapped addresses as a mechanism to control (start, reset) or check the status of these blocks (idle, done). The done signal should be kept HIGH once the \texttt{dma} or \texttt{xcel} finishes, since a software code will keep polling on this signal (busy-waiting) before moving to the next part of the program. In addition, we introduce additional memory-mapped registers to set various address offsets so that the cores know where to access the correct data in any memory devices (DDR or \texttt{DMem}). This is a neat approach to avoid hard-coding the addresses or recompiling the whole bitstream everytime we change the memory layout of the arrays. The input/output feature map dimension and depth can also be set in software code.
+You will need to extend your IO memory-mapped logic to integrate the DMA controller and the Accelerator (xcel) cores to Riscv151. We will use the load and store instructions to the memory-mapped addresses as a mechanism to control (start) or check the status of these blocks (idle, done). The done signal should be kept HIGH once the \texttt{dma} or \texttt{xcel} finishes, since a software code will keep polling on this signal (busy-waiting) before moving to the next part of the program. In addition, we introduce additional memory-mapped registers to set various address offsets so that the cores know where to access the correct data in any memory devices (DDR or \texttt{DMem}). This is a neat approach to avoid hard-coding the addresses or recompiling the whole bitstream everytime we change the memory layout of the arrays. The input/output feature map dimension and depth can also be set in software code.
 
 The memory-mapped addresses are defined in \verb|software/151_library/memory_map.h|.
 
@@ -1191,7 +1191,7 @@ This will clone the \verb|arm_baremetal_app| submodule.
 The next step is integrating the \texttt{dma\_controller} and \texttt{xcel\_naive} to your existing Riscv151 processor.
 First, you need to modify the interface of \verb|hardware/src/riscv_core/Riscv151.v| to include some additional input/output ports to connect to the DMA controller and the Accelerator as follows.
 
-\begin{minted}{Verilog}
+\begin{minted}[fontsize=\footnotesize]{Verilog}
 module Riscv151 #(
   parameter CPU_CLOCK_FREQ = 50_000_000,
   parameter RESET_PC       = 32'h4000_0000,
@@ -1272,7 +1272,7 @@ cd software/axi_test
 make run
 \end{minted}
 
-This program sends an array allocated in \texttt{DMem} of your RISCV-V core to a memory location in the DDR (DMA write operation), and read from that memory location (DMA read operation) and write the result to a different array in \texttt{DMem}. There should not be any mismatches between the two arrays once the DMA finishes. Try testing with different transfer lengths or addresses.
+This program sends an array allocated in \texttt{DMem} of your RISC-V core to a memory location in the DDR (DMA write operation), and reads from that memory location (DMA read operation) and writes the result to a different array in \texttt{DMem}. There should not be any mismatches between the two arrays once the DMA finishes. Try testing with different transfer lengths or addresses.
 
 If the DMA is working, you can move on to the next part, which is to run the LeNet software. Go to \verb|software/lenet|, and run the program as follows.
 
@@ -1324,12 +1324,12 @@ In-lab Checkoff: Demonstrate that your accelerator implementation \verb|xcel_opt
 Additionally, please write a short report (push to \textit{docs/}) with your answers to the following questions
 \begin{itemize}
 \item Sketch the block diagram of your accelerator design. What memory and compute optimizations would you like to highlight in your design?
-\item What is the speedup over the software execution? What about the baseline accelerator implementation?
+\item What is the speedup of testing 128 images over the software execution? What about the baseline (naive) accelerator implementation?
 \item Where do you think the speedup comes from? What makes the software (CPU) execution so inefficient in comparison to specialized hardware architecture?
 \item The RV32I that our Riscv151 supports does not have a multiply instruction. Therefore, a multiplication is carried out by a software routine instead (look at the \textbf{times} function). Can you come up with an approach to implement a multiply operation for your processor (that should be more efficient than invoking \textbf{times} function)? You don't have to implement it, just briefly describe how you would do it and how many cycles it would take.
 
-(You should think of an approach that requires the \textit{least impact} to your existing processor pipeline.)
-\item What is the maximum achievable frequency of your implementation now?
+(You should think of an approach that introduces the \textit{least impact} to your existing processor pipeline.)
+\item What is the maximum achievable frequency of your implementation now? What is the resource utilization of your implementation (LUTs, FFs, BRAMs, DSPs)?
 \end{itemize}
 
 \newpage

@@ -25,7 +25,9 @@ int main(int argc, char**argv) {
   // Copy data from array1 from DMem to DDR at address 0x40_0000
   DMA_DIR = 1;
   DMA_DST_ADDR = 0x900000;
+  // shift right by 2 because the DMA uses word-level addressing to access DMem
   DMA_SRC_ADDR = (uint32_t)array1 >> 2;
+  // shift right by 2 because we're sending 8b data on 32b data bus
   DMA_LEN = len >> 2;
   DMA_START = 1;
   while (!DMA_DONE);
@@ -33,7 +35,9 @@ int main(int argc, char**argv) {
   // Copy data from DDR at address 0x40_0000 to array0 from DMem
   DMA_DIR = 0;
   DMA_SRC_ADDR = 0x900000;
+  // shift right by 2 because the DMA uses word-level addressing to access DMem
   DMA_DST_ADDR = (uint32_t)array0 >> 2;
+  // shift right by 2 because we're sending 8b data on 32b data bus
   DMA_LEN = len >> 2;
   DMA_START = 1;
   while (!DMA_DONE);

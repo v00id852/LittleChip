@@ -135,6 +135,17 @@ module axi_mm_write #(
     .ce(wbeat_cnt_ce)
   );
 
+  // If a request has a burst length which is greater than the MAX_BURST_LEN,
+  // we need to send multiple burst requests one after another to cover the
+  // whole burst length
+  //
+  // e.g. assume len = MAX_BURST_LEN * N + k
+  //      req0:     <addr0,  MAX_BURST_LEN>
+  //      req1:     <addr0 + {MAX_BURST_LEN << size}, MAX_BURST_LEN>
+  //      ...
+  //      reqN:     <addr0 + {k << size}, k>
+
+  // resume the request until the burst is fully covered
   wire wburst_resume_next, wburst_resume_value;
   wire wburst_resume_ce, wburst_resume_rst;
   REGISTER_R_CE #(.N(1), .INIT(0)) wburst_resume_reg (
@@ -145,23 +156,33 @@ module axi_mm_write #(
     .ce(wburst_resume_ce)
   );
 
-  wire wburst_restart;
+  wire aw_idle = (state_aw_value == STATE_AW_IDLE);
+  wire aw_run  = (state_aw_value == STATE_AW_RUN);
+  wire aw_done = (state_aw_value == STATE_AW_DONE);
+
+  wire dw_idle = (state_dw_value == STATE_DW_IDLE);
+  wire dw_run  = (state_dw_value == STATE_DW_RUN);
+  wire dw_done = (state_dw_value == STATE_DW_DONE);
 
   always @(*) begin
     state_aw_next = state_aw_value;
     case (state_aw_value)
       STATE_AW_IDLE: begin
+        // start the request if the core sends a request, or
+        // if we need to resume the request to finish the burst
         if (core_write_request_fire || wburst_resume_value)
           state_aw_next = STATE_AW_RUN;
       end
 
       STATE_AW_RUN: begin
+        // if the AXI has submitted the request, this is done
         if (aw_fire) begin
           state_aw_next = STATE_AW_DONE;
         end
       end
 
       STATE_AW_DONE: begin
+        // Need to wait for the write response before done
         if (bresp_fire)
           state_aw_next = STATE_AW_IDLE;
       end
@@ -173,17 +194,21 @@ module axi_mm_write #(
     state_dw_next = state_dw_value;
     case (state_dw_value)
       STATE_DW_IDLE: begin
+        // start the request if the core sends a request, or
+        // if we need to resume the request to finish the burst
         if (core_write_request_fire || wburst_resume_value)
           state_dw_next = STATE_DW_RUN;
       end
 
       STATE_DW_RUN: begin
+        // if the last data is fired, we are done
         if (dw_fire && wlast) begin
           state_dw_next = STATE_DW_DONE;
         end
       end
 
       STATE_DW_DONE: begin
+        // Need to wait for the write response before done
         if (bresp_fire)
           state_dw_next = STATE_DW_IDLE;
       end
@@ -193,52 +218,65 @@ module axi_mm_write #(
 
   wire full_wburst = wlen_value > AXI_MAX_BURST_LEN - 1;
 
+  // register the settings from the core client
+  // (size, burst)
   assign wsize_next = core_write_size;
   assign wsize_ce   = core_write_request_fire;
 
   assign wburst_next = core_write_burst;
   assign wburst_ce   = core_write_request_fire;
 
+  // Recalculate the address if we need to send multiple requests to cover
+  // the full burst length
   assign waddr_next = core_write_request_fire ? core_write_addr :
-                                                {waddr_value + {AXI_MAX_BURST_LEN << 2}};
+                                                {waddr_value + {AXI_MAX_BURST_LEN << wsize_value}};
   assign waddr_ce   = core_write_request_fire | (dw_fire & wlast);
 
+  // Recalculate the len if we need to send multiple requests to cover
+  // the full burst length
   assign wlen_next = core_write_request_fire ? core_write_len :
                                                {wlen_value - AXI_MAX_BURST_LEN};
   assign wlen_ce   = core_write_request_fire | (dw_fire & wlast);
 
+  // Resume the burst (or send a new request) if we yet to cover the whole burst length
   assign wburst_resume_next = full_wburst ? 1'b1 : 1'b0;
   assign wburst_resume_ce   = dw_fire & wlast;
-  assign wburst_resume_rst  = (state_dw_value == STATE_DW_IDLE) | (~resetn);
+  assign wburst_resume_rst  = dw_idle | (~resetn);
 
+  // Count the number of write data beats to assert the 'last' signal
   assign wbeat_cnt_next = wbeat_cnt_value + 1;
   assign wbeat_cnt_ce   = dw_fire;
-  assign wbeat_cnt_rst  = (state_dw_value == STATE_DW_IDLE) | (~resetn);
+  assign wbeat_cnt_rst  = dw_idle | (~resetn);
 
+  // Setup write request address for AXI adapter read
   assign awaddr  = waddr_value;
-  assign awvalid = (state_aw_value == STATE_AW_RUN);
+  assign awvalid = aw_run;
   assign awlen   = full_wburst ? {AXI_MAX_BURST_LEN - 1} : wlen_value;
   assign awsize  = wsize_value;
   assign awburst = wburst_value;
 
+  // Setup write request data for AXI adapter write
   assign wdata   = core_write_data;
-  assign wvalid  = (state_dw_value == STATE_DW_RUN) & core_write_data_valid;
-  assign wlast   = (state_dw_value == STATE_DW_RUN) &
+  assign wvalid  = dw_run & core_write_data_valid;
+  assign wlast   = dw_run &
                    ((wbeat_cnt_value == wlen_value & ~full_wburst) |
                     (wbeat_cnt_value == AXI_MAX_BURST_LEN - 1));
 
-  assign bready  = (state_aw_value == STATE_AW_DONE) &
-                   (state_dw_value == STATE_DW_DONE);
+  // write response channel is only ready when write request address and request data
+  // are finally done
+  assign bready  = aw_done & dw_done;
 
-  assign core_write_request_ready = (state_aw_value == STATE_AW_IDLE) &
+  assign core_write_request_ready = aw_idle &
                                     (~wburst_resume_value) &
                                     awready;
-  assign core_write_data_ready    = (state_dw_value == STATE_DW_RUN) & wready;
+  assign core_write_data_ready    = dw_run & wready;
 
-  assign wstrb = (state_dw_value == STATE_DW_RUN) ? {NUM_DBYTES{1'b1}} : {NUM_DBYTES{1'b0}};
+  // setup write strobe. Full word write for now?
+  assign wstrb = dw_run ? {NUM_DBYTES{1'b1}} : {NUM_DBYTES{1'b0}};
 
   // Keep it simple: use ID 0 for now
   assign awid = 0;
   assign wid  = 0;
+  assign bid  = 0;
 
 endmodule

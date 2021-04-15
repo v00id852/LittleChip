@@ -33,11 +33,14 @@ void findmax(int32_t *input, char *labels, int img_index) {
 }
 
 void dma_read_ddr(uint32_t src_addr, uint32_t dst_addr, int dma_len) {
+  // Set the parameters for the DMA Engine
   DMA_DIR      = 0; // DDR -> Riscv DMem
   DMA_SRC_ADDR = src_addr;
   DMA_DST_ADDR = dst_addr;
-  DMA_LEN      = dma_len;
+  DMA_LEN      = dma_len; // number of 32-bit data transfers
   DMA_START    = 1;
+
+  // Wait until the DMA finishes
   while (!DMA_DONE);
 }
 
@@ -45,8 +48,10 @@ void dma_write_ddr(uint32_t src_addr, uint32_t dst_addr, int dma_len) {
   DMA_DIR      = 1; // Riscv DMem -> DDR
   DMA_SRC_ADDR = src_addr;
   DMA_DST_ADDR = dst_addr;
-  DMA_LEN      = dma_len;
+  DMA_LEN      = dma_len; // number of 32-bit data transfers
   DMA_START    = 1;
+
+  // Wait until the DMA finishes
   while (!DMA_DONE);
 }
 
@@ -54,6 +59,7 @@ void conv3D_hw(uint32_t ifm_ddr_addr, uint32_t wt_ddr_addr, uint32_t ofm_ddr_add
                uint32_t ifm_dim, uint32_t ifm_depth,
                uint32_t ofm_dim, uint32_t ofm_depth) {
 
+  // Set the parameters for the conv3D (xcel) accelerator
   XCEL_IFM_DDR_ADDR = ifm_ddr_addr;
   XCEL_WT_DDR_ADDR  = wt_ddr_addr;
   XCEL_OFM_DDR_ADDR = ofm_ddr_addr;
@@ -63,6 +69,7 @@ void conv3D_hw(uint32_t ifm_ddr_addr, uint32_t wt_ddr_addr, uint32_t ofm_ddr_add
   XCEL_IFM_DEPTH    = ifm_depth;
   XCEL_START        = 1;
 
+  // Wait until it finishes
   while (!XCEL_DONE);
 }
 
@@ -146,21 +153,38 @@ int main(int argc, char**argv) {
     COUNTER_RST = 0;
 
 #ifdef HW
+    // Perform conv3D on the accelerator
+    // Write the OFM result to DDR at address 0x90_0000
     conv3D_hw(IMAGES_DDR_ADDR + i * IMG_SIZE, WT_CONV1_DDR_ADDR, 0x900000,
               IMG_DIM, IMG_DEPTH, CV1_DIM, CV1_DEPTH);
+
+    // Read the OFM result (computed by the accelerator) to the
+    // local conv1_ofm in RISC-V DMem
     dma_read_ddr(0x900000, (uint32_t)conv1_ofm >> 2, CONV1_OFM_SIZE);
 
     clamp(conv1_ofm, CONV1_OFM_SIZE);
+    // Perform MaxPooling2D on RISC-V
     pooling_sw_1(conv1_ofm, pool1_ofm);
 
+    // Send the IFM (maxpool result) to the DDR at address 0x90_0000
+    // so that the conv3D accelerator can read from it
     dma_write_ddr((uint32_t)pool1_ofm >> 2, 0x900000, POOL1_OFM_SIZE >> 2);
+
+    // Perform conv3D on the accelerator
+    // Read IFM from DDR 0x90_0000
+    // Write the OFM result to 0x91_0000
     conv3D_hw(0x900000, WT_CONV2_DDR_ADDR, 0x910000,
               P1_DIM, P1_DEPTH, CV2_DIM, CV2_DEPTH);
+
+    // Read the OFM result (computed by the accelerator) to the
+    // local conv2_ofm in RISC-V DMem
     dma_read_ddr(0x910000, (uint32_t)conv2_ofm >> 2, CONV2_OFM_SIZE);
 
     clamp(conv2_ofm, CONV2_OFM_SIZE);
+    // Perform MaxPooling2D on RISC-V
     pooling_sw_2(conv2_ofm, pool2_ofm);
 
+    // Perform Fully-connected computation on RISC-V
     fc_sw(pool2_ofm, wt_fc, fc_ofm);
     findmax(fc_ofm, pred_labels, i);
 #else
@@ -168,6 +192,8 @@ int main(int argc, char**argv) {
     dma_read_ddr(IMAGES_DDR_ADDR + i * IMG_SIZE,
                  (uint32_t)img >> 2,
                  (IMG_SIZE) >> 2);
+
+    // Run the entire LeNet on RISC-V
     lenet(img, wt_conv1, wt_conv2, wt_fc,
           conv1_ofm, conv2_ofm,
           pool1_ofm, pool2_ofm,
