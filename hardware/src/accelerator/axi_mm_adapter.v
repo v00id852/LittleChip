@@ -41,21 +41,22 @@ module axi_mm_adapter #(
 
   // Write data channel
   output [3:0]            wid,
-  (* mark_debug = "True" *) output [AXI_DWIDTH-1:0] wdata,
-  (* mark_debug = "True" *) output                  wvalid,
-  (* mark_debug = "True" *) input                   wready,
-  (* mark_debug = "True" *) output                  wlast,
+  (* mark_debug = "True" *) output [AXI_DWIDTH-1:0]   wdata,
+  (* mark_debug = "True" *) output                    wvalid,
+  (* mark_debug = "True" *) input                     wready,
+  (* mark_debug = "True" *) output                    wlast,
   (* mark_debug = "True" *) output [AXI_DWIDTH/8-1:0] wstrb,
   // user (unused)
 
   // Write response channel
-  input [3:0]             bid,
-  input [1:0]             bresp,
-  input                   bvalid,
-  output                  bready,
+  input [3:0] bid,
+  input [1:0] bresp,
+  input       bvalid,
+  output      bready,
   // user (unused)
 
   // Core (client) interface
+  // Read request address and Read response data
   input                   core_read_request_valid,
   output                  core_read_request_ready,
   input  [AXI_AWIDTH-1:0] core_read_addr,
@@ -66,6 +67,8 @@ module axi_mm_adapter #(
   output                  core_read_data_valid,
   input                   core_read_data_ready,
 
+  // Write request address and Write request data
+  // (no write response -- assuming write always succeeds)
   input                   core_write_request_valid,
   output                  core_write_request_ready,
   input  [AXI_AWIDTH-1:0] core_write_addr,
@@ -76,7 +79,6 @@ module axi_mm_adapter #(
   input                   core_write_data_valid,
   output                  core_write_data_ready
 );
-
 
   axi_mm_write #(.AXI_AWIDTH(AXI_AWIDTH), .AXI_DWIDTH(AXI_DWIDTH)) write_unit (
     .clk(clk),
@@ -130,7 +132,7 @@ module axi_mm_adapter #(
     .arsize(arsize),
     .arburst(arburst),
 
-     // write response data interface
+     // read response data interface
     .rid(rid),
     .rdata(rdata),
     .rvalid(rvalid),
