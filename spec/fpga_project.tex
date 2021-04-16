@@ -67,8 +67,7 @@ Version \projectSpecVersion
 \section{Introduction}
 The goal of this project is to familiarize EECS151/251A students with the methods and tools of digital design.
 Working alone or in a team of two, you will design and implement a 3-stage pipelined RISC-V CPU with a UART for tethering.
-%Afterwards, you will build a 2D Convolutional hardware accelerator and do a system integration with your RISC-V CPU.
-Afterwards, you will build a hardware accelerator (\textit{TBD}) and do a system integration with your RISC-V CPU.
+Afterwards, you will build a hardware accelerator to accelerate a small Convolutional Neural Network and do a system integration with your RISC-V CPU.
 
 Finally, you will optimize your CPU for performance (maximizing the Iron Law) and cost (FPGA resource utilization).
 
@@ -91,8 +90,7 @@ The following is a brief description of each checkpoint and approximately how ma
 \begin{itemize}
   \item \textbf{\blockDiagramDueDate \space - \blockDiagramTaskName \space (\blockDiagramTimeAlloted)} - Draw a schematic of your processor's datapath and pipeline stages, and provide a brief writeup of your answers to the questions in ~\ref{sec:chkpt1_questions}. In addition, push all of your IO-circuit Verilog modules that you have implemented in the labs to your assigned Github repository under \verb|hardware/src/io_circuits| (see ~\ref{sec:past_designs}). Also commit your design documents (block diagram + writeup) to \verb|docs|.
   \item \textbf{\baseCPUDueDate \space - \baseCPUTaskName \space (\baseCPUTimeAlloted)} - Implement a fully functional RISC-V processor core in Verilog. Your processor core should be able to run the \textbf{mmult} demo successfully.
-  \item \textbf{\imageDueDate \space - \imageTaskName \space (\imageTimeAlloted)} - TBD
-%  \item \textbf{\imageDueDate \space - \imageTaskName \space (\imageTimeAlloted)} - Implement an IO memory-mapped hardware-accelerated 2D Convolutional filter.
+  \item \textbf{\imageDueDate \space - \imageTaskName \space (\imageTimeAlloted)} - Implement an IO memory-mapped hardware-accelerated Convolutional Neural Network for LeNet inference.
   \item \textbf{\finalCheckoffDueDate \space - Final Checkoff + Demo} - Final processor optimization and checkoff
   \item \textbf{\finalReportDueDate \space - Project Report} - Final report due
 \end{itemize}
@@ -1125,7 +1123,7 @@ The memory-mapped addresses are defined in \verb|software/151_library/memory_map
 \begin{table}[hbt]
   \begin{center}
     \caption{I/O Memory Map for the DMA Controller and Accelerator}
-    \label{mem_map_conv2D}
+    \label{mem_map_dma_xcel}
     \begin{adjustbox}{width=\columnwidth,center}
     \begin{tabular}{l l l l}
       \toprule
@@ -1155,7 +1153,7 @@ The memory-mapped addresses are defined in \verb|software/151_library/memory_map
 
 \subsubsection{Integrating DMA Controller with CPU Data Memory}
 
-You might already notice that this system would not work with the current setting of Riscv151 in that \texttt{DMem} is a single-port memory block. In addition, port a is currently being used for the CPU load and store instructions. We would need to do the following steps to integrate the DMA Controller safely to the existing system.
+You might have already noticed that this system would not work with the current setting of Riscv151 in that \texttt{DMem} is a single-port memory block. In addition, port a is currently being used for the CPU load and store instructions. We would need to do the following steps to integrate the DMA Controller safely to the existing system.
 
 \begin{itemize}
 \item Use a dual-port memory template for \texttt{DMem} (look at \texttt{IMem} as an example)
@@ -1165,7 +1163,11 @@ You might already notice that this system would not work with the current settin
 This will enable the DMA Controller to have access to the Data Memory.
 \subsection{LeNet Demo software code}
 
-...
+The FPGA demo of this checkpoint is to run the software code \verb|software/lenet| on your RISC-V processor. The demo runs the LeNet inference to perform handwritten digit classification of the first 128 test images from the MNIST dataset. The demo can be compiled to run with either software flow (running the entire LeNet on the RISC-V) or the hardware-software partition/hybrid flow (executing the two conv3D layers on the accelerator, and the rest of the LeNet on RISC-V). For the software flow, the read-from-DDR DMA operations are carried out to first fetch all the weight data to \texttt{DMem} of the RISC-V core. A test image is also fetched from the DDR to \texttt{DMem} before running the network. The output feature map results of each layer are written to the arrays allocated in \texttt{DMem} and read by the next layer. Our \texttt{DMem} is large enough to hold the weights and the OFM results of the layers in addition to a single test image.
+
+The hardware/software partition flow, on the other hand, performs the conv3D operation in the hardware accelerator (\texttt{xcel}). By supplying the weight and image addresses in the DDR, the accelerator knows where to get the data and perform its computation. The output feature map result is written back to the DDR at an address specified in software (e.g., \texttt{0x900\_0000}). The data is then read by the DMA to \texttt{DMem} since the Max Pooling layers are executed on RISC-V.
+
+In practice, you could implement an accelerator that compute all the layers with intermediate buffers to store the OFMs, so that no DMA operation is needed to copy data back-and-forth between the DDR and \texttt{DMem}, therefore reducing the number of off-chip memory accesses. Please feel free to change the hardware/software partition flow in accordance with your accelerator design and implementation.
 
 \subsection{Resources and Suggestions for Accelerator design}
 
@@ -1243,6 +1245,8 @@ Use \texttt{port b} to connect to the \texttt{dma\_controller} via the interface
 Don't forget to wire the enable port of \texttt{DMem} to \texttt{dmem\_enb} from the interface.
 Also note that we're no longer using \verb|hardware/src/z1top.v| for this checkpoint, but \verb|hardware/src/z1top_axi.v| instead.
 
+Once you finish the integration, don't forget to rerun the simulation of all the tests from Checkpoint 2 to make sure that the new changes don't accidentally introduce bugs to your processor.
+
 Next, generate a bitstream to configure your FPGA. Now you can pass the target clock frequency to the command.
 
 \begin{minted}{bash}
@@ -1300,7 +1304,7 @@ You can use the naive code as a starting point, but please feel free to write yo
 Add your own implementation to \verb|xcel_opt.v|, then replace the naive module with the opt module
 in \verb|z1top_axi.v|.
 
-As an additional tip for debugging, you can take advantage of Vivado Integrated Logic Analyzer, especially when you debug your AXI read and write logic in your accelerator design. Check the Appendix \ref{sec:vivado_ila} for more detail. Nonetheless, don't rely too much on ILA since it would add extra time to the already long Place-and-Route time. The best way to debug is still writing your own testbenches and simulating it before you run Vivado implementation. A testbench for conv3D has been provided to you. Please feel free to use or change the testbench as you see fit.
+As an additional tip for debugging, you can take advantage of Vivado Integrated Logic Analyzer, especially when you debug your AXI read and write logic in your accelerator design. Check the Appendix \ref{sec:vivado_ila} for more detail. Nonetheless, don't rely too much on ILA since it would add extra time to the already arduous Place-and-Route process. The best way to debug is still writing your own testbenches and doing RTL simulation before you run Vivado implementation. A testbench for conv3D has been provided to you. Please feel free to use or change the testbench as you see fit.
 
 \begin{minted}{bash}
 cd hardware
@@ -1334,117 +1338,116 @@ Additionally, please write a short report (push to \textit{docs/}) with your ans
 
 \newpage
 \section{Final Checkpoint - Optimization}
-TBD
 
-%This optimization checkpoint is lumped with the final checkoff.
-%This part of the project is designed to give students freedom to implement the optimizations of their choosing to improve the performance of their processor.
-%
-%The optimization goal for this project is to minimize the \textbf{execution time} on the \verb|mmult| program, as defined by the 'Iron Law' of Processor Performance.
-%
-%\begin{equation*}
-%\frac{\text{Time}}{\text{Program}} = \frac{\text{Instructions}}{\text{Program}} \times \frac{\text{Cycles}}{\text{Instruction}} \times \frac{\text{Time}}{\text{Cycle}}
-%\end{equation*}
-%
-%The number of instructions is fixed, but you have freedom to change the CPI and the CPU clock frequency.
-%Often you will find that you will have to sacrifice CPI to achieve a higher clock frequency, but there also will exist opportunities to improve one or both of the variables without compromises.
-%
-%\subsection{Grading on Optimization: Frequency vs. CPI}
-%You will receive a full credit for the final checkpoint if you can push your clock frequency of your working \textbf{Riscv151} + \textbf{conv2D\_opt} implementation to 100 MHz. You must demonstrate that your processor has a working BIOS, can load and execute \textbf{mmult} (CPI does not need to be less than or equal to 1.2), and can execute conv2D accelerator (with a weight dimension of 3).
-%
-%As a baseline, you must improve the achievable frequency of your existing implementation since Checkpoint 2.
-%
-%Alternatively, a full credit can also be awarded if you demonstrate that you have spent a substantial effort on evaluating different design trade-off points between frequency and CPI of \textbf{mmult} (especially if you have implemented some interesting optimization for CPI and increase the frequency further would degrade the performance instead of helping).
-%
-%Also note that your final optimized design does not need to be strictly three-stage pipeline.
-%
-%A \textbf{very minor} component of the optimization grade is based total FPGA resource utilization, with the best designs using as few resources as possible.
-%Credit for your area optimizations will be calculated using a cost function.
-%At a high level, the cost function will look like:
-%\begin{equation*}
-%\mathrm{Cost}=\mathrm{C_{LUT}} \times \text{\# of LUTs} + \mathrm{C_{BRAM}} \times \text{\# of Block RAMs} + \mathrm{C_{FF}} \times \text{\# of FFs} + \mathrm{C_{DSP}} \times \text{\# of DSP Blocks}
-%\end{equation*}
-%where $\mathrm{C_{LUT}}$, $\mathrm{C_{BRAM}}$, $\mathrm{C_{FF}}$, and $\mathrm{C_{DSP}}$ are constant value weights that will be decided upon based on how much each resource that you use should cost. As part of your final grade we will evaluate the cost of your design based on this metric. Keep in mind that cost is only one very small component of your project grade. Correct functionality is far more important.
-%
-%\subsection{Clock Generation Info + Changing Clock Frequency}
-%Open up \verb|z1top.v|.
-%There's top level input called \verb|CLK_125MHZ_FPGA|.
-%It's a 125 MHz clock signal, which is used to derive the CPU clock.
-%
-%Scrolling down, there's an instantiation of \verb|clock_wizard| generated from Vivado, which is a wrapper module of PLL (phase locked loop) primitive on the FPGA.
-%This is a circuit that can create a new clock from an existing clock with a user-specified multiply-divide ratio.
-%
-%The \verb|clk_in1| input clock of the PLL is driven by the 125 MHz \verb|CLK_125MHZ_FPGA|.
-%The frequency of \verb|clk_out1| is calculated as:
-%\begin{equation*}
-%  \mathtt{clk\_out1}\_f = \mathtt{clk\_in1}\_f \cdot \frac{\mathtt{CLKFBOUT\_MULT_F}}{\mathtt{DIVCLK\_DIVIDE} \cdot \mathtt{CLKOUT0\_DIVIDE}}
-%\end{equation*}
-%
-%In our case we get:
-%\begin{equation*}
-%  \mathtt{clk\_out1}\_f = 125 \text{ MHz} \cdot \frac{8}{1 \cdot 10} = 50 \text{ MHz}
-%\end{equation*}
-%
-%You just need to change the local parameter \verb|CPU_CLOCK_PERIOD| in \verb|z1top.v| to set the target clock frequency for your CPU.
-%
-%\subsection{Critical Path Identification}
-%After running \verb|make write-bitstream|, timing analysis will be performed to determine the critical path(s) of your design.
-%The timing tools will automatically figure out the CPU's clock timing constraint based on \verb|CPU_CLOCK_PERIOD| in \verb|z1top.v|.
-%
-%The critical path can be found by looking in
-%
-%\verb|z1top_proj/z1top_proj.runs/impl_1/z1top_timing_summary_routed.rpt|.
-%
-%Look for the paths within your CPU.
-%
-%For each timing path look for the attribute called ``slack''.
-%Slack describes how much extra time the combinational delay of the path has before the rising edge of the receiving clock.
-%It is a setup time attribute.
-%Positive slack means that this timing path resolves and settles before the rising edge of the clock, and negative slack indicates a setup time violation.
-%
-%There are some common delay types that you will encounter.
-%\verb|LUT| delays are combinational delays through a LUT.
-%\verb|net| delays are from wiring delays. They come with a fanout attribute which you should aim to minimize.
-%Notice that your logic paths are usually dominated by routing delay; as you optimize, you should reach the point where the routing and LUT delays are about equal portions of the total path delay.
-%
-%%\subsubsection{Schematic View}
-%%To visualize the path, you can open the Vivado project \verb|z1top_proj/z1top_proj.xpr|.
-%%Use the default options and click \verb|OK|.
-%%Navigate (on the bottom left) to \verb|Intra-Clock Paths| $\rightarrow$ \verb|cpu_clk| $\rightarrow$ \verb|Setup|.
-%
-%%You can double-click any path to see the logic elements along it, or you can right-click and select \verb|Schematic| to see a schematic view of the path.
-%
-%The paths in post-PAR timing report may be hard to decipher since Vivado does some optimization to move/merge registers and logic across module boundaries.
-%You can also use the \href{https://www.xilinx.com/support/answers/54778.html}{\texttt{keep\_hierarchy} attribute} to prevent Vivado from 
-%
-%\begin{minted}{verilog}
-%// in z1top.v
-%(* keep_hierarchy="yes" *) Riscv151 #( ) cpu ( );
-%\end{minted}
-%
-%\subsubsection{Finding Actual Critical Paths}
-%When you first check the timing report with a 50 MHz clock, you might not see your 'actual' critical path.
-%50 MHz is easy to meet and the tools will only attempt to optimize routing until timing is met, and will then stop.
-%
-%You should increase the clock frequency slowly and rerun \verb|make write-bitstream| until you fail to meet timing.
-%At this point, the critical paths you see in the report are the 'actual' ones you need to work on.
-%
-%Don't try to increase the clock speed up all the way to 100 MHz initially, since that will cause the routing tool to give up even before it tried anything.
-%
-%\subsection{Optimization Tips}
-%As you optimize your design, you will want to try running \verb|mmult| on your newly optimized designs as you go along. You don't want to make a lot of changes to your processor, get a better clock speed, and then find out you broke something along the way.
-%
-%You will find that sacrificing CPI for a better clock speed is a good bet to make in some cases, but will worsen performance in others.
-%You should keep a record of all the different optimizations you tried and the effect they had on CPI and minimum clock period; this will be useful for the final report when you have to justify your optimization and architecture decisions.
-%
-%There is no limit to what you can do in this section.
-%The only restriction is that you have to run the original, unmodified \verb|mmult| program so that the number of instructions remain fixed.
-%You can add as many pipeline stages as you want, stall as much or as little as desired, add a branch predictor, or perform any other optimizations.
-%If you decide to do a more advanced optimization (like a 5 stage pipeline), ask the staff to see if you can use it as extra credit in addition to the optimization.
-%
-%Keep notes of your architecture modifications in the process of optimization.
-%Consider, but don't obsess, over area usage when optimizing (keep records though).
+This optimization checkpoint is lumped with the final checkoff.
+This part of the project is designed to give students freedom to implement the optimizations of their choosing to improve the performance of their processor.
 
-%You will be graded based on the best \verb|mmult| performance you were able to achieve, but \textit{more critically} on how many design points you explored.
+The optimization goal for this project is to minimize the \textbf{execution time} on the \verb|mmult| program, as defined by the 'Iron Law' of Processor Performance.
+
+\begin{equation*}
+\frac{\text{Time}}{\text{Program}} = \frac{\text{Instructions}}{\text{Program}} \times \frac{\text{Cycles}}{\text{Instruction}} \times \frac{\text{Time}}{\text{Cycle}}
+\end{equation*}
+
+The number of instructions is fixed, but you have freedom to change the CPI and the CPU clock frequency.
+Often you will find that you will have to sacrifice CPI to achieve a higher clock frequency, but there also will exist opportunities to improve one or both of the variables without compromises.
+
+\subsection{Grading on Optimization: Frequency vs. CPI}
+You will receive a full credit for the final checkpoint if you can push your clock frequency of your working \textbf{Riscv151} implementation to 100 MHz. You must demonstrate that your processor has a working BIOS, can load and execute \textbf{mmult} (CPI does not need to be less than 1.2).
+
+The bare minimum is that you should improve the achievable frequency of your existing implementation since Checkpoint 2.
+
+Alternatively, a full credit can also be awarded on effort, in particular if you're able to evaluate different design trade-off points (at least three) between frequency and CPI of \textbf{mmult} (especially if you have implemented some interesting optimization for CPI and increase the frequency further would degrade the performance instead of helping).
+
+Also note that your final optimized design does not need to be strictly three-stage pipeline.
+
+A \textbf{very minor} component of the optimization grade is based total FPGA resource utilization, with the best designs using as few resources as possible.
+Credit for your area optimizations will be calculated using a cost function.
+At a high level, the cost function will look like:
+\begin{equation*}
+\mathrm{Cost}=\mathrm{C_{LUT}} \times \text{\# of LUTs} + \mathrm{C_{BRAM}} \times \text{\# of Block RAMs} + \mathrm{C_{FF}} \times \text{\# of FFs} + \mathrm{C_{DSP}} \times \text{\# of DSP Blocks}
+\end{equation*}
+where $\mathrm{C_{LUT}}$, $\mathrm{C_{BRAM}}$, $\mathrm{C_{FF}}$, and $\mathrm{C_{DSP}}$ are constant value weights that will be decided upon based on how much each resource that you use should cost. As part of your final grade we will evaluate the cost of your design based on this metric. Keep in mind that cost is only one very small component of your project grade. Correct functionality is far more important.
+
+\subsection{Clock Generation Info + Changing Clock Frequency}
+Open up \verb|z1top.v|.
+There's top level input called \verb|CLK_125MHZ_FPGA|.
+It's a 125 MHz clock signal, which is used to derive the CPU clock.
+
+Scrolling down, there's an instantiation of \verb|clock_wizard| generated from Vivado, which is a wrapper module of PLL (phase locked loop) primitive on the FPGA.
+This is a circuit that can create a new clock from an existing clock with a user-specified multiply-divide ratio.
+
+The \verb|clk_in1| input clock of the PLL is driven by the 125 MHz \verb|CLK_125MHZ_FPGA|.
+The frequency of \verb|clk_out1| is calculated as:
+\begin{equation*}
+  \mathtt{clk\_out1}\_f = \mathtt{clk\_in1}\_f \cdot \frac{\mathtt{CLKFBOUT\_MULT_F}}{\mathtt{DIVCLK\_DIVIDE} \cdot \mathtt{CLKOUT0\_DIVIDE}}
+\end{equation*}
+
+In our case we get:
+\begin{equation*}
+  \mathtt{clk\_out1}\_f = 125 \text{ MHz} \cdot \frac{8}{1 \cdot 20} = 50 \text{ MHz}
+\end{equation*}
+
+You just need to change the local parameter \verb|CPU_CLOCK_PERIOD| in \verb|z1top.v| to set the target clock frequency for your CPU.
+
+\subsection{Critical Path Identification}
+After running \verb|make write-bitstream|, timing analysis will be performed to determine the critical path(s) of your design.
+The timing tools will automatically figure out the CPU's clock timing constraint based on \verb|CPU_CLOCK_PERIOD| in \verb|z1top.v|.
+
+The critical path can be found by looking in
+
+\verb|z1top_proj/z1top_proj.runs/impl_1/z1top_timing_summary_routed.rpt|.
+
+Look for the paths within your CPU.
+
+For each timing path look for the attribute called ``slack''.
+Slack describes how much extra time the combinational delay of the path has before the rising edge of the receiving clock.
+It is a setup time attribute.
+Positive slack means that this timing path resolves and settles before the rising edge of the clock, and negative slack indicates a setup time violation.
+
+There are some common delay types that you will encounter.
+\verb|LUT| delays are combinational delays through a LUT.
+\verb|net| delays are from wiring delays. They come with a fanout attribute which you should aim to minimize.
+Notice that your logic paths are usually dominated by routing delay; as you optimize, you should reach the point where the routing and LUT delays are about equal portions of the total path delay.
+
+\subsubsection{Schematic View}
+To visualize the path, you can open the Vivado project \verb|z1top_proj/z1top_proj.xpr|.
+%Use the default options and click \verb|OK|.
+Click \textit{Open Implemented Design} after the implementation to open the Device Floorplan view.
+Navigate (on the Timing pane at the bottom) to \verb|Intra-Clock Paths| $\rightarrow$ \verb|cpu_clk| $\rightarrow$ \verb|Setup|.
+You can double-click any path to see the logic elements along it, or you can right-click and select \verb|Schematic| to see a schematic view of the path.
+
+The paths in post-PAR timing report may be hard to decipher since Vivado does some optimization to move/merge registers and logic across module boundaries.
+You can also use the \href{https://www.xilinx.com/support/answers/54778.html}{\texttt{keep\_hierarchy} attribute} to prevent Vivado from 
+
+\begin{minted}{verilog}
+// in z1top.v
+(* keep_hierarchy="yes" *) Riscv151 #( ) cpu ( );
+\end{minted}
+
+\subsubsection{Finding Actual Critical Paths}
+When you first check the timing report with a 50 MHz clock, you might not see your 'actual' critical path.
+50 MHz is easy to meet and the tools will only attempt to optimize routing until timing is met, and will then stop.
+
+You should increase the clock frequency slowly and rerun \verb|make write-bitstream| until you fail to meet timing.
+At this point, the critical paths you see in the report are the 'actual' ones you need to work on.
+
+Don't try to increase the clock speed up all the way to 100 MHz initially, since that will cause the routing tool to give up even before it tried anything.
+
+\subsection{Optimization Tips}
+As you optimize your design, you will want to try running \verb|mmult| on your newly optimized designs as you go along. You don't want to make a lot of changes to your processor, get a better clock speed, and then find out you broke something along the way.
+
+You will find that sacrificing CPI for a better clock speed is a good bet to make in some cases, but will worsen performance in others.
+You should keep a record of all the different optimizations you tried and the effect they had on CPI and minimum clock period; this will be useful for the final report when you have to justify your optimization and architecture decisions.
+
+There is no limit to what you can do in this section.
+The only restriction is that you have to run the original, unmodified \verb|mmult| program so that the number of instructions remain fixed.
+You can add as many pipeline stages as you want, stall as much or as little as desired, add a branch predictor, or perform any other optimizations.
+If you decide to do a more advanced optimization (like a 5 stage pipeline), ask the staff to see if you can use it as extra credit in addition to the optimization.
+
+Keep notes of your architecture modifications in the process of optimization.
+Consider, but don't obsess, over area usage when optimizing (keep records though).
+
+You will be graded based on the best \verb|mmult| performance you were able to achieve, but \textit{more critically} on how many design points you explored.
 \pagebreak
 
 \section{Grading and Extra Credit}
@@ -1504,7 +1507,8 @@ The following are suggested projects that may or may not be feasible in one week
   \item Branch Predictor: Implement a two bit (or more complicated) branch predictor with a branch history table (BHT) to replace the naive 'always taken' predictor used in the project
   \item 5-Stage Pipeline: Add more pipeline stages and push the clock frequency past 100MHz
   \item RISC-V M Extension: Extend the processor with a hardware multiplier and divider
-  \item TBD
+  \item Everything 100MHz or beyond: Push the frequency of the full \verb|z1top\_axi| (including your \verb|xcel_opt| accelerator) to 100MHz or better.
+  \item High-throughput LeNet accelerator: Improve the image processing throughput of your LeNet accelerator (overlap reading new image with processing the current image).
 \end{itemize}
 
 When the time is right, if you are interested in implementing any of these, see the staff for more details.
