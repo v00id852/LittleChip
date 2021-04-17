@@ -589,7 +589,7 @@ module xcel_naive #(
   assign xcel_write_burst         = `BURST_INCR;
   assign xcel_write_size          = 3'd2; // 4 bytes;
   assign xcel_write_data_valid    = write_ofm;
-  assign xcel_write_data          = ofm_data_value + {$signed(acc_value) >>> 9};
+  assign xcel_write_data          = ofm_data_value + acc_value;
 
   // Shift registers to hold weight data
   generate

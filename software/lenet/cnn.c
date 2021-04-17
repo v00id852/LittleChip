@@ -72,7 +72,7 @@ void conv3D_sw_1(int8_t *ifm, int8_t *wt, int32_t *ofm) {
             ifm_idx1 += IMG_DIM - WT1_DIM;
           } // m
 
-          ofm[ofm_offset + ofm_idx] += (tmp >> 9);
+          ofm[ofm_offset + ofm_idx] += tmp;
 
           ofm_idx  += 1;
           ifm_idx0 += 1;
@@ -135,7 +135,7 @@ void conv3D_sw_2(int8_t *ifm, int8_t *wt, int32_t *ofm) {
             ifm_idx1 += P1_DIM - WT2_DIM;
           } // m
 
-          ofm[ofm_offset + ofm_idx] += (tmp >> 9);
+          ofm[ofm_offset + ofm_idx] += tmp;
 
           ofm_idx  += 1;
           ifm_idx0 += 1;
@@ -267,7 +267,7 @@ void fc_sw(int8_t *ifm, int8_t *wt, int32_t *ofm) {
 void clamp(int32_t *array, int len) {
   int i;
   for (i = 0; i < len; i++) {
-    int32_t value = array[i];
+    int32_t value = array[i] >> 9;
     array[i] = (value > 127)  ?  127 :
                (value < -128) ? -128 : value;
   }

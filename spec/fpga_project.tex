@@ -865,17 +865,23 @@ The DMA Controller orchestrates the memory communication between the RISC-V's DM
 
 A pre-compiled ARM binary is provided to initialize the off-chip DRAM with the weight, image, and label data.
 
-You can take a look at the C source file \verb|arm_baremetal_app/system/helloworld.c| to see how things are set up. In order to compile this application, you will need to have access to a different Xilinx software (Vivado SDK). However, since the application is pre-compiled, you do not need to worry about this. You don't even need to touch any of the files in this submodule when doing the checkpoint. The addresses of the weight, image, and label data are statically known and fixed. We will provide these addresses to the DMA Controller and the Accelerator so that they can access to the correct locations of the DDR to get the data.
+\begin{center}
+\includegraphics[width=0.2\textwidth]{images/ddr_layout.png}
+\end{center}
+
+You can take a look at the C source file \verb|arm_baremetal_app/system/helloworld.c| to see how things are set up. In order to compile this application, you will need to have access to a different Xilinx software (Vivado SDK). However, since the application is pre-compiled, you do not need to worry about this. You don't even need to touch any of the files in this submodule when doing the checkpoint. The addresses of the weight, image, and label data are statically allocated as shown in the DDR memory layout figure above (only showing the data section). We will provide these addresses to the DMA Controller and the Accelerator so that they can access to the correct locations of the DDR to get the data. Since ARM uses byte-level addressing scheme, a 32-bit read from the memory retrieves four consecutive 8-bit data items (e.g., weights).
 
 \subsection{Software Implementation}
 
-This section provides the software description for the computational kernels found in our network: conv3D, maxpool2D, and fconn. Their implementations are slightly different from the conventional ones that you might have seen in other resources since our network is quantized to 8-bit signed integers.
-
-You are not required to implement all these computational kernels in your accelerator, although you're welcome to do so. The bare minimum requirement is that you must accelerate the 3D Convolutional function as similar to the naive accelerator implementation given to you.
+This section provides the software description for the computational kernels found in our network: conv3D, maxpool2D, and fconn. You are not required to implement all these computational kernels in your accelerator, although you're welcome to do so. The bare minimum requirement is that you must accelerate the 3D Convolutional function as similar to the naive accelerator implementation given to you.
 
 To keep things simple, your conv3D module is only required to handle convolution with a stride of 1 and no padding. Therefore, no boundary check is necessary. In addition, the weight dimension is passed as a parameter to the Verilog module (statically known). You're encourage to write your code in a parameterizable manner since it is a good coding practice (i.e., no assumption on the value of the weight dimension), but this is not strictly compulsory.
 
 \subsubsection{conv3D}
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{images/conv3D.png}
+\end{center}
 
 \begin{minted}{C}
 // Since the stride is 1 and no padding required, OFM_DIM = IFM_DIM - WT_DIM + 1
@@ -905,7 +911,7 @@ for (f = 0; f < OFM_DEPTH; f++) {
           }
         }
 
-        ofm[f * OFM_SIZE + i * OFM_DIM + j] += tmp >> 9;
+        ofm[f * OFM_SIZE + i * OFM_DIM + j] += tmp;
       }
     }
   }
@@ -1165,19 +1171,9 @@ This will enable the DMA Controller to have access to the Data Memory.
 
 The FPGA demo of this checkpoint is to run the software code \verb|software/lenet| on your RISC-V processor. The demo runs the LeNet inference to perform handwritten digit classification of the first 128 test images from the MNIST dataset. The demo can be compiled to run with either software flow (running the entire LeNet on the RISC-V) or the hardware-software partition/hybrid flow (executing the two conv3D layers on the accelerator, and the rest of the LeNet on RISC-V). For the software flow, the read-from-DDR DMA operations are carried out to first fetch all the weight data to \texttt{DMem} of the RISC-V core. A test image is also fetched from the DDR to \texttt{DMem} before running the network. The output feature map results of each layer are written to the arrays allocated in \texttt{DMem} and read by the next layer. Our \texttt{DMem} is large enough to hold the weights and the OFM results of the layers in addition to a single test image.
 
-The hardware/software partition flow, on the other hand, performs the conv3D operation in the hardware accelerator (\texttt{xcel}). By supplying the weight and image addresses in the DDR, the accelerator knows where to get the data and perform its computation. The output feature map result is written back to the DDR at an address specified in software (e.g., \texttt{0x900\_0000}). The data is then read by the DMA to \texttt{DMem} since the Max Pooling layers are executed on RISC-V.
+The hardware/software partition flow, on the other hand, performs the conv3D operation in the hardware accelerator (\texttt{xcel}). By supplying the weight and image addresses in the DDR, the accelerator knows where to get the data and perform its computation. The output feature map result is written back to the DDR at an address specified in software (e.g., \texttt{0x0090\_0000}). The data is then read by the DMA to \texttt{DMem} since the Max Pooling layers are executed on RISC-V.
 
 In practice, you could implement an accelerator that compute all the layers with intermediate buffers to store the OFMs, so that no DMA operation is needed to copy data back-and-forth between the DDR and \texttt{DMem}, therefore reducing the number of off-chip memory accesses. Please feel free to change the hardware/software partition flow in accordance with your accelerator design and implementation.
-
-\subsection{Resources and Suggestions for Accelerator design}
-
-You are encouraged to visit the \href{http://eyeriss.mit.edu/tutorial.html}{MIT DNN Eyeriss tutorial} for ideas on how to build the accelerator for the 3D Convolution operation or CNN in general. The DNN Accelerators slides: \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-05-DNN-Accelerator-Architectures.pdf}{Part 1} and \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-06-RS-Dataflow-and-NoC.pdf}{Part 2} are particularly informative and might be useful for you as a starting point (check the \textit{Row-stationary architecture}). If you need a detailed cycle-by-cycle explanation, you can have a look at the slides here \href{}{...}
-
-You can also design a conv2D accelerator and augment it to compute 3D Convolution. Refer to the slides \href{https://drive.google.com/file/d/1QGFzt3gZ53IK1ZCIaJ57NUKucU77Nwd-}{\textbf{here}} for some ideas. However, keep in mind that the conv2D there uses streaming interface, therefore, some handshake logic is required. Depending on how you want to buffer data to your accelerator, you may or may not want to use a FIFO, and simple memory modules would be sufficient. Additionally, the conv2D does some extra job to handle border effect due to padding; since padding is not required for this project, no boundary check is required when you design your accelerator.
-
-\subsection{High-throughput Spatially-mapped Design (Extra Credit)}
-
-...
 
 \subsection{Steps to Complete Checkpoint 3}
 
@@ -1304,6 +1300,12 @@ You can use the naive code as a starting point, but please feel free to write yo
 Add your own implementation to \verb|xcel_opt.v|, then replace the naive module with the opt module
 in \verb|z1top_axi.v|.
 
+\subsection{Resources and Suggestions for Accelerator design}
+
+You are encouraged to visit the \href{http://eyeriss.mit.edu/tutorial.html}{MIT DNN Eyeriss tutorial} for ideas on how to build the accelerator for the 3D Convolution operation or CNN in general. The DNN Accelerators slides: \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-05-DNN-Accelerator-Architectures.pdf}{Part 1} and \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-06-RS-Dataflow-and-NoC.pdf}{Part 2} are particularly informative and might be useful for you as a starting point (check the \textit{Row-stationary architecture}). You can also design a conv2D accelerator and augment it to compute 3D Convolution. The slides \href{https://drive.google.com/file/d/1SJ6eUK9qJZXzZpeHY_D31d1M95nZMTjR/view?usp=sharing}{\textbf{here}} shows some detailed cycle-by-cycle operation of the engine and might be able to give you some ideas to get started.
+
+Alternatively, start with something simple that works first, then worry about optimization later. It makes sense to just copying all the weight data and a test image to on-chip BRAM before you start doing the computatation. Buffering the temporary result to another local buffer, and only write back to the DDR once everything is done. Using burst mode is highly recommended. As a reference, you can take a look at the code in \verb|hardware/src/accelerator/dma_controller.v| to see some examples of how to setup a burst read/write request, and then how to convert the AXI interface to the BlockRAM interface and vice versa. You could do something similar to that in your accelerator. When implementing the bus read/write logic, adopt good practice when it comes to handshake: don't wire ready to valid or vice versa. Another good practice is to break the design to two modules: compute unit and memory interface unit. The memory interface unit handles reading and writing data to the DDR, while the compute unit performs some computation (e.g., conv3D). For the compute unit, simplify the interface (e.g., BRAM interface) so that it allows you to concentrate on implementing and testing the functionality of the computation core.
+
 As an additional tip for debugging, you can take advantage of Vivado Integrated Logic Analyzer, especially when you debug your AXI read and write logic in your accelerator design. Check the Appendix \ref{sec:vivado_ila} for more detail. Nonetheless, don't rely too much on ILA since it would add extra time to the already arduous Place-and-Route process. The best way to debug is still writing your own testbenches and doing RTL simulation before you run Vivado implementation. A testbench for conv3D has been provided to you. Please feel free to use or change the testbench as you see fit.
 
 \begin{minted}{bash}
@@ -1311,11 +1313,21 @@ cd hardware
 make iverilog-sim tb=xcel_testbench
 \end{minted}
 
-The testbench does not invoke any software MIF file nor the RISC-V core that you designed in Checkpoint 2. Rather, it tests the functionality of the xcel accelerator (conv3D) with a simple \verb|hardware/sim/mem_model.v| in place, a memory block is used to initialize data for testing. You may want to use the testbench when you design your own conv3D.
-
-Start with something simple that works first, then worry about optimization later. It makes sense to just copying all the weight data and a test image to on-chip BRAM before you start doing the computatation. Buffering the temporary result to another local buffer, and only write back to the DDR once everything is done. Using burst mode is highly recommended. As a reference, you can take a look at the code in \verb|hardware/src/accelerator/dma_controller.v| to see some examples of how to setup a burst read/write request, and then how to convert the AXI interface to the BlockRAM interface and vice versa. You could do something similar to that in your accelerator. When implementing the bus read/write logic, adopt good practice when it comes to handshake: don't wire ready to valid or vice versa.
+The testbench does not invoke any software MIF file nor the RISC-V core that you designed in Checkpoint 2. Rather, it tests the functionality of the xcel accelerator (conv3D) with a simple \verb|hardware/sim/mem_model.v| in place. A memory block is instantiate in the memory model to initialize data for testing. You may want to use the testbench when you design your own conv3D.
 
 Once you have the data on chip, the low hanging fruit is to do some unrolling or pipelining for parallel execution. Make use of dual-port memory modules to allow you to have more parallel accesses. In addition, try not to use a monolithic memory for everything, but instead split it to smaller modules and assign one for each compute unit.
+
+When doing on-board testing (running the LeNet code on your FPGA), you may want to use the checksum function to verify if your implementation works correctly (similar to \texttt{mmult} case). Set \textit{NUM\_TEST\_IMAGES} to 1 to test with only the first image. The prediction result is 7, and below are the checksums of the OFM returned by each layer
+
+\begin{itemize}
+\item conv1\_ofm: \textbf{0x005a\_3760}
+\item pool1\_ofm: \textbf{0xffff\_def0}
+\item conv2\_ofm: \textbf{0xff41\_e211}
+\item pool1\_ofm: \textbf{0xffff\_f629}
+\item fc\_ofm: \textbf{0xb827\_b474}
+\end{itemize}
+
+If you are unsure why your prediction result is different from the expectation, try to isolate the problem by verifying the checksum of your accelerator execution against the software version at each layer of the network.
 
 Please also feel free to add extra parameters to your accelerator. You need to change the IO memory-mapped addresses in software and your Riscv151 IO controller to support the new parameters.
 
@@ -1495,8 +1507,7 @@ You do not need to strictly follow this outline, it is here just to give you an 
 \end{itemize}
 
 When we grade your report, we will grade for clarity, organization, and grammar.
-Submit your report to the Gradescope assignment.
-Only one partner needs to submit the shared report, while each individual will need to submit the division of labor report to a separate Gradescope assignment.
+Both team members need to submit the Final Report assignment (same report content, but with different writeup for division of labor) to Gradescope.
 
 \subsection{Extra Credit}
 \label{extra_credit}
@@ -1507,7 +1518,7 @@ The following are suggested projects that may or may not be feasible in one week
   \item Branch Predictor: Implement a two bit (or more complicated) branch predictor with a branch history table (BHT) to replace the naive 'always taken' predictor used in the project
   \item 5-Stage Pipeline: Add more pipeline stages and push the clock frequency past 100MHz
   \item RISC-V M Extension: Extend the processor with a hardware multiplier and divider
-  \item Everything 100MHz or beyond: Push the frequency of the full \verb|z1top\_axi| (including your \verb|xcel_opt| accelerator) to 100MHz or better.
+  \item Everything 100MHz or beyond: Push the frequency of the full \verb|z1top_axi| (including your \verb|xcel_opt| accelerator) to 100MHz or better.
   \item High-throughput LeNet accelerator: Improve the image processing throughput of your LeNet accelerator (overlap reading new image with processing the current image).
 \end{itemize}
 
