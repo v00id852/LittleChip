@@ -120,7 +120,7 @@ build-project: $(Z1TOP_XPR)
 
 .PHONY: sim
 sim: $(sw) $(BIOS_MIF)
-		vivado -mode batch -source scripts/sim.tcl -tclargs $(tb) $(sw) $(test) | tee output.log
+		vivado -mode batch -source scripts/sim.tcl -tclargs $(proj) $(tb) $(sw) $(test) | tee output.log
 		sed -n '/\[[a-zA-Z]*\]/p' output.log ; \
 
 .PHONY: write-bitstream

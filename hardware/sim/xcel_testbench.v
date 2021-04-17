@@ -182,7 +182,7 @@ module xcel_testbench();
                   wt_data[f * IFM_DEPTH * WT_DIM * WT_DIM + d * WT_DIM * WT_DIM + m * WT_DIM + n];
               end // m
             end // n
-            ofm_sw_data[f * OFM_DIM * OFM_DIM + i * OFM_DIM + j] = ofm_sw_data[f * OFM_DIM * OFM_DIM + i * OFM_DIM + j] + {$signed(tmp) >>> 9};
+            ofm_sw_data[f * OFM_DIM * OFM_DIM + i * OFM_DIM + j] = ofm_sw_data[f * OFM_DIM * OFM_DIM + i * OFM_DIM + j] + tmp;
 
           end // j
         end // i

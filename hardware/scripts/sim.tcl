@@ -1,13 +1,14 @@
 
-set project_name   "z1top"
-set testbench_name [lindex $argv 0]
-set sw             [lindex $argv 1]
-set test_name      [lindex $argv 2]
+set project_name   [lindex $argv 0]
+set testbench_name [lindex $argv 1]
+set sw             [lindex $argv 2]
+set test_name      [lindex $argv 3]
 
 set sources_file scripts/${project_name}.tcl
 
 if {![file exists $sources_file]} {
     puts "Invalid project name!"
+    puts ${project_name}
     exit
 }
 
@@ -21,6 +22,8 @@ update_compile_order -fileset sources_1
 
 # Add simulation file
 add_files -fileset sim_1 -norecurse sim/${testbench_name}.v
+add_files -fileset sim_1 -norecurse sim/mem_model.v
+
 # Add memory initialization file
 if {[string match "" ${sw}]} {
   set test_name ${testbench_name}
