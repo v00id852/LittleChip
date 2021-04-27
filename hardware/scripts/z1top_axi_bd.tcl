@@ -13,11 +13,19 @@ apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_ex
 
 set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ ${f_mhz} CONFIG.PCW_USE_M_AXI_GP0 {0} CONFIG.PCW_USE_S_AXI_HP0 {1} CONFIG.PCW_QSPI_GRP_SINGLE_SS_ENABLE {1}] [get_bd_cells processing_system7_0]
 
-apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {Auto} Clk_slave {Auto} Clk_xbar {Auto} Master {/z1top_axi_0/interface_aximm} Slave {/processing_system7_0/S_AXI_HP0} intc_ip {Auto} master_apm {0}}  [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
+#apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {Auto} Clk_slave {Auto} Clk_xbar {Auto} Master {/z1top_axi_0/interface_aximm} Slave {/processing_system7_0/S_AXI_HP0} intc_ip {Auto} master_apm {0}}  [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
 
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0" }  [get_bd_pins z1top_axi_0/axi_clk]
+#apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0" }  [get_bd_pins z1top_axi_0/axi_clk]
+
+create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0
+set_property -dict [list CONFIG.NUM_SI {1}] [get_bd_cells smartconnect_0]
+connect_bd_intf_net [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
+connect_bd_intf_net [get_bd_intf_pins z1top_axi_0/interface_aximm] [get_bd_intf_pins smartconnect_0/S00_AXI]
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config { Clk {/processing_system7_0/FCLK_CLK0 } Freq {} Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}}  [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK]
+apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config { Clk {/processing_system7_0/FCLK_CLK0 } Freq {} Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}}  [get_bd_pins z1top_axi_0/axi_clk]
 
 set_property CONFIG.CLK_DOMAIN z1top_axi_bd_processing_system7_0_0_FCLK_CLK0 [get_bd_intf_pins /z1top_axi_0/interface_aximm]
+assign_bd_address -target_address_space /z1top_axi_0/interface_aximm [get_bd_addr_segs processing_system7_0/S_AXI_HP0/HP0_DDR_LOWOCM]
 
 set ps_clk [get_property CONFIG.FREQ_HZ [get_bd_pin processing_system7_0/FCLK_CLK0]]
 set_property -dict [list CONFIG.FREQ_HZ ${ps_clk}] [get_bd_intf_pins z1top_axi_0/interface_aximm]
