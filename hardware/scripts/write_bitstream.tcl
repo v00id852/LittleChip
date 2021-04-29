@@ -48,6 +48,7 @@ file mkdir bitstream_files
 file copy -force [glob ${project_name}_proj/${project_name}_proj.runs/impl_1/*.bit] bitstream_files/${project_name}.bit
 
 if {${project_name} eq "z1top_axi"} {
-write_hwdef -force  -file ${project_name}_proj/${project_name}_proj.sdk/hwdef.zip
-exec unzip -o ${project_name}_proj/${project_name}_proj.sdk/hwdef.zip -d ${project_name}_proj/${project_name}_proj.sdk
+file mkdir bitstream_files/sdk
+write_hwdef -force  -file bitstream_files/sdk/hwdef.zip
+exec unzip -o bitstream_files/sdk/hwdef.zip -d bitstream_files/sdk
 }
