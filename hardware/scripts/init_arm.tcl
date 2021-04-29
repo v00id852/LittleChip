@@ -6,9 +6,9 @@ set port_number 3121
 
 connect -url tcp:127.0.0.1:${port_number}
 
-source ${project_name}_proj/${project_name}_proj.sdk/ps7_init.tcl
+source bitstream_files/sdk/ps7_init.tcl
 targets -set -nocase -filter {name =~"APU*"} -index 0
-loadhw -hw ${project_name}_proj/${project_name}_proj.sdk/hwdef.xml -mem-ranges [list {0x40000000 0xbfffffff}]
+loadhw -hw bitstream_files/sdk/hwdef.xml -mem-ranges [list {0x40000000 0xbfffffff}]
 configparams force-mem-access 1
 targets -set -nocase -filter {name =~"APU*"} -index 0
 stop
