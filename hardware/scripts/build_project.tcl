@@ -10,8 +10,12 @@ if {![file exists $sources_file]} {
     exit
 }
 
-create_project -force ${project_name}_proj ${project_name}_proj -part xc7z020clg400-1
-set_property board_part www.digilentinc.com:pynq-z1:part0:1.0 [current_project]
+if {[file exists ${project_name}_proj/${project_name}_proj.xpr]} {
+  open_project ${project_name}_proj/${project_name}_proj.xpr
+} else {
+  create_project -force ${project_name}_proj ${project_name}_proj -part xc7z020clg400-1
+  set_property board_part www.digilentinc.com:pynq-z1:part0:1.0 [current_project]
+}
 
 source $sources_file
 
