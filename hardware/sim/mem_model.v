@@ -165,7 +165,7 @@ module mem_model #(
       end
 
       STATE_R_RUN_DELAY: begin
-        if (read_cnt_value == read_len_value + 1)
+        if (read_cnt_value == read_len_value + 1 && read_data_fire)
           state_r_next = STATE_R_DONE;
       end
 
