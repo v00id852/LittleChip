@@ -450,7 +450,7 @@ module xcel_naive_compute #(
   // current result of the sliding window
   assign ofm_y_next = ofm_y_value + 1;
   assign ofm_y_ce   = write_ofm & ofm_din1_fire & (ofm_x_value == ofm_dim - 1);
-  assign ofm_y_rst  = conv2D_done | idle | rst;
+  assign ofm_y_rst  = conv2D_done | idle;
 
   // next OFM row
   assign ofm_offset1_next = ofm_offset1_value + ofm_dim;

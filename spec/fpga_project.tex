@@ -1326,10 +1326,10 @@ When doing on-board testing (running the LeNet code on your FPGA), you may want 
 
 \begin{itemize}
 \item conv1\_ofm: \verb|0x005a3760|
-\item pool1\_ofm: \verb|0xffffdef0|
-\item conv2\_ofm: \verb|0xff41e211|
-\item pool2\_ofm: \verb|0xfffff629|
-\item fc\_ofm: \verb|0xb827b474|
+\item pool1\_ofm: \verb|0x00002d6b|
+\item conv2\_ofm: \verb|0xff41b202|
+\item pool2\_ofm: \verb|0x00001451|
+\item fc\_ofm: \verb|0xffffa09a|
 \end{itemize}
 
 If you are unsure why your prediction result is different from the expectation, try to isolate the problem by verifying the checksum of your accelerator execution against the software version at each layer of the network.

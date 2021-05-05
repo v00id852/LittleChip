@@ -176,7 +176,7 @@ module xcel_naive_memif #(
     STATE_IDLE: begin
       if (fetch_ifm_pipe | fetch_wt_pipe | fetch_ofm_pipe)
         state_next = STATE_READ_DDR_REQ;
-      else if (write_ofm)
+      else if (write_ofm_pipe)
         state_next = STATE_WRITE_DDR_REQ;
     end
 
