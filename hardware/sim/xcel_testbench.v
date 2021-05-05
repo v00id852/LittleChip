@@ -142,7 +142,7 @@ module xcel_testbench();
     for (d = 0; d < IFM_DEPTH; d = d + 1) begin
       for (i = 0; i < IFM_DIM; i = i + 1) begin
         for (j = 0; j < IFM_DIM; j = j + 1) begin
-          ifm_data[d * IFM_DIM * IFM_DIM + i * IFM_DIM + j] = (i * IFM_DIM + j) % 256 - 128;
+          ifm_data[d * IFM_DIM * IFM_DIM + i * IFM_DIM + j] = (d * IFM_DIM * IFM_DIM + i * IFM_DIM + j) % 256 - 128;
         end
       end
     end
@@ -151,7 +151,7 @@ module xcel_testbench();
       for (d = 0; d < IFM_DEPTH; d = d + 1) begin
         for (m = 0; m < WT_DIM; m = m + 1) begin
           for (n = 0; n < WT_DIM; n = n + 1) begin
-            wt_data[f * IFM_DEPTH * WT_DIM * WT_DIM + d * WT_DIM * WT_DIM + m * WT_DIM + n] = (n % 2 == 0) ? -(f + n) : (f + n);
+            wt_data[f * IFM_DEPTH * WT_DIM * WT_DIM + d * WT_DIM * WT_DIM + m * WT_DIM + n] = (n % 2 == 0) ? -(f + d + m + n) : (f + d + m + n);
           end
         end
       end
@@ -247,6 +247,8 @@ module xcel_testbench();
     end
   end
 
+  integer k;
+
   initial begin
     //$dumpfile("xcel_testbench.vcd");
     //$dumpvars;
@@ -261,19 +263,23 @@ module xcel_testbench();
     @(negedge clk);
     rst = 1'b0;
 
-    @(negedge clk);
-    xcel_start = 1'b1;
-    $display("Start!");
+    // Run twice to make sure everything is reset properly
+    for (k = 0; k < 2; k = k + 1) begin
+      @(negedge clk);
+      xcel_start = 1'b1;
+      $display("Start!");
 
-    @(negedge clk);
-    xcel_start = 1'b0;
+      @(negedge clk);
+      xcel_start = 1'b0;
 
-    wait (xcel_done === 1'b1);
-    @(posedge clk); #1;
+      wait (xcel_done === 1'b1);
+      @(posedge clk); #1;
 
-    check_result();
+      check_result();
 
-    $display("Done in %d simulation cycles!", sim_cycle);
+      $display("Done in %d simulation cycles!", sim_cycle);
+    end
+
     $finish();
   end
 
