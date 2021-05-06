@@ -71,8 +71,10 @@ module mem_model #(
   localparam STATE_W_MEM_DELAY = 2;
   localparam STATE_W_DONE      = 3;
 
-  wire [2:0] state_r_value, state_w_value;
-  reg  [1:0] state_r_next,  state_w_next;
+  wire [2:0] state_r_value;
+  reg  [2:0] state_r_next;
+  wire [1:0] state_w_value;
+  reg  [1:0] state_w_next;
 
   REGISTER_R #(.N(3), .INIT(STATE_R_IDLE)) state_r_reg (
     .clk(clk),
