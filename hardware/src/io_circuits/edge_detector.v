@@ -8,6 +8,24 @@ module edge_detector #(
   output [WIDTH-1:0] edge_detect_pulse
 );
 
-  // TODO: Your code
+  wire [WIDTH - 1: 0] oldval;
+  wire [WIDTH - 1: 0] old_oldval;
 
+  genvar i;
+  generate for(i = 0; i < WIDTH; i = i + 1) begin
+    REGISTER r1(
+      .clk(clk),
+      .d(signal_in[i]),
+      .q(oldval[i])
+    );
+
+    REGISTER r2(
+      .clk(clk),
+      .d(oldval[i]),
+      .q(old_oldval[i])
+    );
+
+    assign edge_detect_pulse[i] = oldval[i] & (~old_oldval[i]);
+  end
+  endgenerate
 endmodule
