@@ -2,6 +2,7 @@
 *.toc
 *.out
 *.log
+*.vcd
 _minted*
 *.swp
 hardware/src/.Xil
