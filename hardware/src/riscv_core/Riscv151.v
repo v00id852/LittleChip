@@ -47,7 +47,7 @@ module Riscv151 #(
   // Data Memory
   // Synchronous read: read takes one cycle
   // Synchronous write: write takes one cycle
-  // Write-byte-enable: select which of the four bytes to write
+  // Write-byte-enaBLe: select which of the four bytes to write
   SYNC_RAM_WBE #(
     .AWIDTH(DMEM_AWIDTH),
     .DWIDTH(DMEM_DWIDTH)
@@ -104,7 +104,7 @@ module Riscv151 #(
   ) rf (
     .d0(rf_wd),     // input
     .addr0(rf_wa),  // input
-    .we0(rf_we),    // input
+    .we0(rf_wr),    // input
 
     .q1(rf_rd1),    // output
     .addr1(rf_ra1), // input
