@@ -20,9 +20,9 @@ module if_testbench ();
   ) uut (
     .clk(clk),
     .rst(rst),
-    .pc_sel(pc_sel),
-    .pc_new_val(pc_new_val),
-    .pc_val(pc_val)
+    .pc_sel_in(pc_sel),
+    .pc_new_in(pc_new_val),
+    .pc_out(pc_val)
   );
 
   task check_pc_val;

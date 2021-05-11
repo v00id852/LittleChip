@@ -6,9 +6,9 @@ module IF #(
 ) (
   input clk,
   input rst,
-  input pc_sel,  // select which is the new pc value, old_pc + 4 or pc_new_val
-  input [AWIDTH - 1 : 0] pc_new_val,  // the new pc value from ALU
-  output [AWIDTH - 1 : 0] pc_val
+  input pc_sel_in,  // select which is the new pc value, old_pc + 4 or pc_new_val
+  input [AWIDTH - 1 : 0] pc_new_in,  // the new pc value from ALU
+  output [AWIDTH - 1 : 0] pc_out
 );
 
   wire [AWIDTH - 1 : 0] pc_value, pc_next;
@@ -26,7 +26,7 @@ module IF #(
 
   // if pc_sel is asserted, the next pc value will be pc_new_val, 
   // otherwise it will be the old pc value plus 4
-  assign pc_next = pc_sel ? pc_new_val : pc_value + 4;
-  assign pc_val  = pc_value;
+  assign pc_next = pc_sel_in ? pc_new_in : pc_value + 4;
+  assign pc_out  = pc_value;
 
 endmodule
