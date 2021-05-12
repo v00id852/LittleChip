@@ -23,6 +23,8 @@ module IMM_GEN #(
     {(DWIDTH - 21) {inst_in[31]}}, inst_in[31], inst_in[19:12], inst_in[20], inst_in[30:21], 1'b0
   };
 
+  reg [DWIDTH - 1:0] imm_out;
+
   always @(*) begin
     case (inst_in[6:5])
       2'b00: begin
@@ -30,7 +32,7 @@ module IMM_GEN #(
         else imm_out = imm_I;
       end
       2'b01: begin
-        if (inst_in[4] == 1'b1) imm_out = imm_S;
+        if (inst_in[4] == 1'b0) imm_out = imm_S;
         else imm_out = imm_U;
       end
       2'b11: begin
