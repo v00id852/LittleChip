@@ -29,13 +29,14 @@ module if_testbench ();
     input [31:0] expected_value;
     input [31:0] pc_value;
     input [10:0] test_num;
-    if (expected_value !== pc_value) begin
-      $display("FAIL - test %d, got: %h, expected: %h", test_num, pc_value, expected_value);
-      $finish;
-    end else begin
-      $display("PASS - test %d, got: %h", test_num, expected_value);
+    begin
+      if (expected_value !== pc_value) begin
+        $display("FAIL - test %d, got: %h, expected: %h", test_num, pc_value, expected_value);
+        $finish;
+      end else begin
+        $display("PASS - test %d, got: %h", test_num, expected_value);
+      end
     end
-
   endtask
 
 
