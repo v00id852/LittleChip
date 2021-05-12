@@ -3,7 +3,7 @@
 // depends on the instruction type.
 //
 module IMM_GEN #(
-  parameter IWDITH = 32,
+  parameter IWIDTH = 32,
   parameter DWIDTH = 32
 ) (
   input  [IWIDTH - 1:0] inst_in,
