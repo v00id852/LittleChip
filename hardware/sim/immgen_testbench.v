@@ -113,7 +113,7 @@ module immgen_testbench ();
       // J jal negative
       inst = {1'b1, 10'b1111111111, 1'b0, 8'b01010101, 5'd0, 7'b1101111};
       #10;
-      check_imm(2, {11'hffff, 21'b1_01010101_0_1111111111_0}, imm_gen);
+      check_imm(2, {11'hfff, 21'b1_01010101_0_1111111111_0}, imm_gen);
     end
   endtask
 
