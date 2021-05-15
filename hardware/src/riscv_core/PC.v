@@ -1,21 +1,21 @@
 `timescale 1ns / 1ns
 
 module PC #(
-  parameter AWIDTH = 32,
+  parameter PC_WIDTH = 32,
   parameter RESET_PC_VAL = {AWIDTH{1'b0}}
 ) (
   input clk,
   input rst,
   input pc_sel_in,  // select which is the new pc value, old_pc + 4 or pc_new_val
-  input [AWIDTH - 1 : 0] pc_new_in,  // the new pc value from ALU
-  output [AWIDTH - 1 : 0] pc_out
+  input [PC_WIDTH - 1 : 0] pc_new_in,  // the new pc value from ALU
+  output [PC_WIDTH - 1 : 0] pc_out
 );
 
-  wire [AWIDTH - 1 : 0] pc_value, pc_next;
+  wire [PC_WIDTH - 1 : 0] pc_value, pc_next;
   wire pc_rst;
 
   REGISTER_R #(
-    .N(AWIDTH),
+    .N(PC_WIDTH),
     .INIT(RESET_PC_VAL)
   ) pc (
     .clk(clk),
