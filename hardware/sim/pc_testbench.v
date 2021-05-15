@@ -1,6 +1,6 @@
 `timescale 1ns / 1ns
 
-module if_testbench ();
+module pc_testbench ();
   reg clk, rst;
   parameter CPU_CLOCK_PERIOD = 20;
   parameter CPU_CLOCK_FREQ = 1_000_000_000 / CPU_CLOCK_PERIOD;

@@ -1,6 +1,6 @@
 `timescale 1ns / 1ns
 
-module IF #(
+module PC #(
   parameter AWIDTH = 32,
   parameter RESET_PC_VAL = {AWIDTH{1'b0}}
 ) (
