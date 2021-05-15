@@ -14,7 +14,7 @@ module pc_testbench ();
 
   localparam RESET_ADDR = 32'h4000_0000;
 
-  IF #(
+  PC #(
     .AWIDTH(32),
     .RESET_PC_VAL(RESET_ADDR)
   ) uut (
