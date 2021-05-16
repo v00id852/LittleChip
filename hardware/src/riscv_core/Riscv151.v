@@ -5,9 +5,9 @@ module Riscv151 #(
   parameter BAUD_RATE      = 115200,
   parameter BIOS_MIF_HEX   = "bios151v3.mif"
 ) (
-  input  clk,
-  input  rst,
-  input  FPGA_SERIAL_RX,
+  input clk,
+  input rst,
+  input FPGA_SERIAL_RX,
   output FPGA_SERIAL_TX,
   output [31:0] csr
 );
@@ -22,16 +22,16 @@ module Riscv151 #(
   // Synchronous read: read takes one cycle
   // Synchronous write: write takes one cycle
   SYNC_ROM_DP #(
-    .AWIDTH(BIOS_AWIDTH),
-    .DWIDTH(BIOS_DWIDTH),
+    .AWIDTH (BIOS_AWIDTH),
+    .DWIDTH (BIOS_DWIDTH),
     .MIF_HEX(BIOS_MIF_HEX)
-  ) bios_mem(
-    .q0(bios_douta),    // output
-    .addr0(bios_addra), // input
+  ) bios_mem (
+    .q0(bios_douta),  // output
+    .addr0(bios_addra),  // input
     .en0(1'b1),
 
-    .q1(bios_doutb),    // output
-    .addr1(bios_addrb), // input
+    .q1(bios_doutb),  // output
+    .addr1(bios_addrb),  // input
     .en1(1'b1),
 
     .clk(clk)
@@ -60,6 +60,65 @@ module Riscv151 #(
     .clk(clk)
   );
 
+
+
+
+  // UART Receiver
+  wire [7:0] uart_rx_data_out;
+  wire uart_rx_data_out_valid;
+  wire uart_rx_data_out_ready;
+
+  uart_receiver #(
+    .CLOCK_FREQ(CPU_CLOCK_FREQ),
+    .BAUD_RATE (BAUD_RATE)
+  ) uart_rx (
+    .clk           (clk),
+    .rst           (rst),
+    .data_out      (uart_rx_data_out),  // output
+    .data_out_valid(uart_rx_data_out_valid),  // output
+    .data_out_ready(uart_rx_data_out_ready),  // input
+    .serial_in     (FPGA_SERIAL_RX)  // input
+  );
+
+  // UART Transmitter
+  wire [7:0] uart_tx_data_in;
+  wire uart_tx_data_in_valid;
+  wire uart_tx_data_in_ready;
+
+  uart_transmitter #(
+    .CLOCK_FREQ(CPU_CLOCK_FREQ),
+    .BAUD_RATE (BAUD_RATE)
+  ) uart_tx (
+    .clk          (clk),
+    .rst          (rst),
+    .data_in      (uart_tx_data_in),  // input
+    .data_in_valid(uart_tx_data_in_valid),  // input
+    .data_in_ready(uart_tx_data_in_ready),  // output
+    .serial_out   (FPGA_SERIAL_TX)  // output
+  );
+
+  // TODO: Your code to implement a fully functioning RISC-V core
+  // Add as many modules as you want
+  // Feel free to move the memory modules around
+  localparam PC_WIDTH = 32;
+  localparam INST_WIDTH = 32;
+
+  wire ctrl_pc_src;
+  wire [PC_WIDTH - 1:0] pc_new_val, pc_if_out;
+
+  // IF part, fetch instruction from BIOS or IMEM
+
+  PC #(
+    .PC_WIDTH(PC_WIDTH),
+    .RESET_PC_VAL(RESET_PC)
+  ) pc (
+    .clk(clk),
+    .rst(rst),
+    .pc_sel_in(ctrl_pc_src),
+    .pc_new_in(pc_new_val),
+    .pc_out(pc_if_out)
+  );
+
   localparam IMEM_AWIDTH = 14;
   localparam IMEM_DWIDTH = 32;
 
@@ -67,6 +126,8 @@ module Riscv151 #(
   wire [IMEM_DWIDTH-1:0] imem_douta, imem_doutb;
   wire [IMEM_DWIDTH-1:0] imem_dina, imem_dinb;
   wire [3:0] imem_wea, imem_web;
+
+  wire [INST_WIDTH - 1:0] inst_if_out;
 
   // Instruction Memory
   // Synchronous read: read takes one cycle
@@ -91,66 +152,133 @@ module Riscv151 #(
     .clk(clk)
   );
 
-  wire rf_we;
-  wire [4:0]  rf_ra1, rf_ra2, rf_wa;
-  wire [31:0] rf_wd;
-  wire [31:0] rf_rd1, rf_rd2;
+  assign bios_addra  = pc_if_out[11:0];
+  assign imem_addrb  = pc_if_out[13:0];
+  assign inst_if_out = pc_if_out[30] == 1'b1 ? bios_douta : imem_doutb;
 
-  // Asynchronous read: read data is available in the same cycle
-  // Synchronous write: write takes one cycle
-  ASYNC_RAM_1W2R # (
-    .AWIDTH(5),
-    .DWIDTH(32)
-  ) rf (
-    .d0(rf_wd),     // input
-    .addr0(rf_wa),  // input
-    .we0(rf_wr),    // input
+  // IF/ID Registers
+  wire [  PC_WIDTH - 1:0] pc_id_in;
+  wire [INST_WIDTH - 1:0] inst_id_in;
 
-    .q1(rf_rd1),    // output
-    .addr1(rf_ra1), // input
+  assign inst_id_in = inst_if_out;
 
-    .q2(rf_rd2),    // output
-    .addr2(rf_ra2), // input
-
-    .clk(clk)
+  REGISTER_R #(
+    .N(PC_WIDTH),
+    .INIT(0)
+  ) if_id_pc (
+    .d  (pc_if_out),
+    .q  (pc_id_in),
+    .clk(clk),
+    .rst(rst)
   );
 
-  // UART Receiver
-  wire [7:0] uart_rx_data_out;
-  wire uart_rx_data_out_valid;
-  wire uart_rx_data_out_ready;
+  wire [DMEM_DWIDTH - 1:0] rs1_id_out, rs2_id_out;
+  wire [PC_WIDTH - 1:0] pc_branch_id_out;
+  wire ctrl_pc_src_id_out, ctrl_reg_we_id_out;
+  wire ctrl_alu_src_id_out, ctrl_mem_write_id_out;
+  wire ctrl_mem_read_id_out, ctrl_mem_to_reg_id_out;
 
-  uart_receiver #(
-    .CLOCK_FREQ(CPU_CLOCK_FREQ),
-    .BAUD_RATE(BAUD_RATE)
-  ) uart_rx (
+  ID #(
+    .PC_WIDTH(PC_WIDTH),
+    .INST_WDITH(INST_WIDTH),
+    .DWIDTH(DMEM_DWIDTH),
+  ) id (
     .clk(clk),
     .rst(rst),
-    .data_out(uart_rx_data_out),             // output
-    .data_out_valid(uart_rx_data_out_valid), // output
-    .data_out_ready(uart_rx_data_out_ready), // input
-    .serial_in(FPGA_SERIAL_RX)               // input
+    .pc(pc_id_in),
+    .inst(inst_id_in),
+    .reg_we(),  // FIXME
+    .data_rd(),  // FIXME
+    .data_rs1(rs1_id_out),
+    .data_rs2(rs2_id_out),
+    .ctrl_pc_src(ctrl_pc_src_id_out),
+    .ctrl_reg_we(ctrl_reg_we_id_out),
+    .ctrl_alu_src(ctrl_alu_src_id_out),
+    .ctrl_mem_write(ctrl_mem_write_id_out),
+    .ctrl_mem_read(ctrl_mem_read_id_out),
+    .ctrl_mem_to_reg(ctrl_mem_to_reg_id_out)
   );
 
-  // UART Transmitter
-  wire [7:0] uart_tx_data_in;
-  wire uart_tx_data_in_valid;
-  wire uart_tx_data_in_ready;
+  // ID-EX pipeline
 
-  uart_transmitter #(
-    .CLOCK_FREQ(CPU_CLOCK_FREQ),
-    .BAUD_RATE(BAUD_RATE)
-  ) uart_tx (
+  wire [INST_WIDTH - 1:0] inst_ex_in;
+  wire [DMEM_DWIDTH - 1:0] rs1_ex_in, rs2_ex_in;
+  wire [DMEM_DWIDTH - 1:0] imm_ex_in;
+
+  wire ctrl_pc_src_ex_in, ctrl_reg_we_ex_in;
+  wire ctrl_alu_src_ex_in, ctrl_mem_we_ex_in;
+  wire ctrl_mem_rd_ex_in, ctrl_mem_to_reg_ex_in;
+
+  REGISTER #(.N(1)) id_ex_ctrl_alu_src (
+    .clk(clk), .d(ctrl_alu_src_id_out), .q(ctrl_alu_src_ex_in));
+
+  REGISTER #(.N(1)) id_ex_ctrl_pc_src (
+    .clk(clk), .d(ctrl_pc_src_id_out), .q(ctrl_pc_src_ex_in));
+
+  REGISTER #(.N(1)) id_ex_ctrl_reg_we (
+    .clk(clk), .d(ctrl_reg_we_id_out), .q(ctrl_reg_we_ex_in));
+  
+  REGISTER #(.N(1)) id_ex_ctrl_mem_write (
+    .clk(clk), .d(ctrl_mem_write_id_out), .q(ctrl_mem_we_ex_in));
+
+  REGISTER #(.N(1)) id_ex_ctrl_mem_read (
+    .clk(clk), .d(ctrl_mem_read_id_out), .q(ctrl_mem_rd_ex_in));
+  
+  REGISTER #(.N(1)) id_ex_ctrl_mem_to_reg (
+    .clk(clk), .d(ctrl_mem_to_reg_id_out), .q(ctrl_mem_to_reg_ex_in));
+
+  REGISTER_R #(
+    .N(DMEM_DWIDTH)
+  ) id_ex_rs1 (
     .clk(clk),
     .rst(rst),
-    .data_in(uart_tx_data_in),             // input
-    .data_in_valid(uart_tx_data_in_valid), // input
-    .data_in_ready(uart_tx_data_in_ready), // output
-    .serial_out(FPGA_SERIAL_TX)            // output
+    .d  (rs1_id_out),
+    .q  (rs1_ex_in)
   );
 
-  // TODO: Your code to implement a fully functioning RISC-V core
-  // Add as many modules as you want
-  // Feel free to move the memory modules around
+  REGISTER_R #(
+    .N(DMEM_DWIDTH)
+  ) id_ex_rs2 (
+    .clk(clk),
+    .rst(rst),
+    .d  (rs2_id_out),
+    .q  (rs2_ex_in)
+  );
+
+  REGISTER_R #(
+    .N(DMEM_DWIDTH)
+  ) id_ex_imm (
+    .clk(clk),
+    .rst(rst),
+    .d  (imm_id_out),
+    .q  (imm_ex_in)
+  );
+
+  REGISTER_R #(
+    .N(INST_WIDTH)
+  ) id_ex_inst (
+    .clk(clk),
+    .rst(rst),
+    .d  (inst_id_in),
+    .q  (inst_ex_in)
+  );
+
+  wire [3:0] func;
+  assign func = {inst_ex_in[30], inst_ex_in[14:12]};  
+
+  EX #(.DWIDTH(DMEM_DWIDTH)) ex (
+    .clk(clk),
+    .data_rs1(rs1_ex_in),
+    .data_rs2(rs2_ex_in),
+    .data_imm(imm_ex_in),
+    .data_func(func),
+    .ctrl_alu_op(), // FIXME
+    .ctrl_alu_src_a(), // FIXME
+    .ctrl_alu_src_b(), // FIXME
+    .ctrl_mem_we(ctrl_mem_we_ex_in),
+    .ctrl_mem_rd(ctrl_mem_rd_ex_in),
+    .ctrl_mem_to_reg(ctrl_mem_to_reg_ex_in)
+  );
+
 
 endmodule
