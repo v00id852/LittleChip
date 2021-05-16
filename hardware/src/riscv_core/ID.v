@@ -14,6 +14,7 @@ module ID #(
   output [DWIDTH - 1:0] data_rs1, data_rs2,
 
   output [PC_WIDTH - 1:0] branch_pc_new,
+  output [DWIDTH - 1:0] imm,
   output ctrl_pc_src,
   output ctrl_reg_we,
   output ctrl_alu_src,
@@ -58,8 +59,6 @@ module ID #(
 
   assign data_rs1 = rf_rd1;
   assign data_rs2 = rf_rd2;
-
-  wire [DWIDTH - 1:0] imm;
 
   IMM_GEN #(
     .INST_WIDTH(INST_WIDTH),
