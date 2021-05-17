@@ -175,9 +175,9 @@ module Riscv151 #(
   wire [DMEM_DWIDTH - 1:0] rs1_id_out, rs2_id_out;
   wire [PC_WIDTH - 1:0] pc_branch_id_out;
   wire ctrl_pc_src_id_out, ctrl_reg_we_id_out;
-  wire ctrl_alu_src_id_out, ctrl_mem_write_id_out;
+  wire ctrl_mem_write_id_out;
   wire ctrl_mem_read_id_out, ctrl_mem_to_reg_id_out;
-  wire [1:0] ctrl_alu_op_id_out;
+  wire [1:0] ctrl_alu_op_id_out, ctrl_alu_src_id_out;
 
   wire ctrl_reg_we_id_in;
   wire [DMEM_DWIDTH - 1:0] rd_id_in;
@@ -225,7 +225,7 @@ module Riscv151 #(
   wire [1:0] ctrl_alu_op_ex_in;
 
   REGISTER #(
-    .N(1)
+    .N(2)
   ) id_ex_ctrl_alu_src (
     .clk(clk),
     .d  (ctrl_alu_src_id_out),
@@ -349,8 +349,8 @@ module Riscv151 #(
     .data_imm(imm_ex_in),
     .ctrl_alu_func(alu_func),
     .ctrl_alu_op(ctrl_alu_op_ex_in),
-    .ctrl_alu_src_a(),  // FIXME
-    .ctrl_alu_src_b(),  // FIXME
+    .ctrl_alu_src_a(2'b00),  // FIXME
+    .ctrl_alu_src_b(ctrl_alu_src_ex_in),  // FIXME
     .ctrl_mem_we(ctrl_mem_we_ex_in),
     .ctrl_mem_rd(ctrl_mem_rd_ex_in),
     .ctrl_mem_to_reg(ctrl_mem_to_reg_ex_in),

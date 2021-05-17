@@ -19,7 +19,7 @@ module ID #(
   output [1:0] ctrl_alu_op,
   output ctrl_pc_src,
   output ctrl_reg_we,
-  output ctrl_alu_src,
+  output [1:0] ctrl_alu_src,
   output ctrl_mem_write,
   output ctrl_mem_read,
   output ctrl_mem_to_reg
