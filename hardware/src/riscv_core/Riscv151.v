@@ -179,7 +179,9 @@ module Riscv151 #(
   wire ctrl_mem_read_id_out, ctrl_mem_to_reg_id_out;
   wire [1:0] ctrl_alu_op_id_out;
 
+  wire ctrl_reg_we_id_in;
   wire [DMEM_DWIDTH - 1:0] rd_id_in;
+  wire [4:0] addr_rs1_id_in, addr_rs2_id_in, addr_rd_id_in;
 
   ID #(
     .PC_WIDTH(PC_WIDTH),
@@ -188,10 +190,15 @@ module Riscv151 #(
   ) id (
     .clk(clk),
     .rst(rst),
+    // input
     .pc(pc_id_in),
+    .addr_rs1(addr_rs1_id_in),
+    .addr_rs2(addr_rs2_id_in),
+    .addr_rd(addr_rd_id_in),
     .inst(inst_id_in),
-    .reg_we(),  // FIXME
-    .data_rd(rd_id_in),  // FIXME
+    .reg_we(ctrl_reg_we_id_in),
+    .data_rd(rd_id_in),
+    // output
     .data_rs1(rs1_id_out),
     .data_rs2(rs2_id_out),
     .ctrl_alu_op(ctrl_alu_op_id_out),
@@ -202,6 +209,9 @@ module Riscv151 #(
     .ctrl_mem_read(ctrl_mem_read_id_out),
     .ctrl_mem_to_reg(ctrl_mem_to_reg_id_out)
   );
+
+  assign addr_rs1_id_in = inst_id_in[19:15];
+  assign addr_rs2_id_in = inst_id_in[24:20];
 
   // ID-EX pipeline
 
@@ -306,10 +316,29 @@ module Riscv151 #(
     .q  (inst_ex_in)
   );
 
-  wire [3:0] func;
+
+  wire [3:0] func, addr_rd_ex_in;
   wire [DMEM_DWIDTH - 1:0] rd_ex_out;
 
   assign func = {inst_ex_in[30], inst_ex_in[14:12]};
+  assign addr_rd_ex_in = inst_ex_in[11:7];
+
+  // Part of ID pipeline, buffer reg_we and addr_rd from EX
+  REGISTER #(
+    .N(1)
+  ) ex_id_reg_we (
+    .clk(clk),
+    .d  (ctrl_reg_we_ex_in),
+    .q  (ctrl_reg_we_id_in)
+  );
+
+  REGISTER #(
+    .N(5)
+  ) ex_id_addr_rd (
+    .clk(clk),
+    .d  (addr_rd_ex_in),
+    .q  (addr_rd_id_in)
+  );
 
   EX #(
     .DWIDTH(DMEM_DWIDTH)
@@ -329,5 +358,6 @@ module Riscv151 #(
   );
 
   assign rd_id_in = rd_ex_out;
+
 
 endmodule

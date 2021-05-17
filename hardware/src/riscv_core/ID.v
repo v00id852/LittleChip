@@ -9,6 +9,7 @@ module ID #(
   input [PC_WIDTH - 1:0] pc,
 
   input reg_we,
+  input [4:0] addr_rs1, addr_rs2, addr_rd,
   input [INST_WIDTH - 1:0] inst,
   input [DWIDTH - 1:0] data_rd,
   output [DWIDTH - 1:0] data_rs1, data_rs2,
@@ -48,12 +49,15 @@ module ID #(
     .clk(clk)
   );
 
-  // register 1
-  assign rf_ra1 = inst[19:15];
-  // register 2
-  assign rf_ra2 = inst[24:20];
-  // register rd
-  assign rf_wa  = inst[11:7];
+  assign rf_wa = addr_rd;
+  assign rf_ra1 = addr_rs1;
+  assign rf_ra2 = addr_rs2;
+  // // register 1
+  // assign rf_ra1 = inst[19:15];
+  // // register 2
+  // assign rf_ra2 = inst[24:20];
+  // // register rd
+  // assign rf_wa  = inst[11:7];
   // register files write enable
   assign rf_we  = reg_we;
   assign rf_wd = data_rd;
