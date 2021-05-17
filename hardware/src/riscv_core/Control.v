@@ -7,7 +7,8 @@ module CONTROL (
   output mem_write,
   output mem_read,
   output mem_to_reg,
-  output pc_src
+  output pc_src,
+  output [1:0] alu_op
 );
 
   // expecpt B and S
@@ -19,5 +20,9 @@ module CONTROL (
 
   assign mem_to_reg = opcode == `OPC_LOAD;
   assign pc_src = opcode == `OPC_BRANCH;
+
+  assign alu_op[0] = (opcode == `OPC_ARI_ITYPE || opcode == `OPC_ARI_RTYPE) ? 1'b0 : 
+                     (opcode == `OPC_BRANCH);
+  assign alu_op[1] = (opcode == `OPC_ARI_ITYPE) || (opcode == `OPC_ARI_RTYPE);
 
 endmodule
