@@ -15,6 +15,7 @@ module ID #(
 
   output [PC_WIDTH - 1:0] branch_pc_new,
   output [DWIDTH - 1:0] imm,
+  output [1:0] ctrl_alu_op,
   output ctrl_pc_src,
   output ctrl_reg_we,
   output ctrl_alu_src,
@@ -71,6 +72,7 @@ module ID #(
   // Control Unit
   CONTROL control(
     .opcode(inst[6:0]),
+    .alu_op(ctrl_alu_op),
     .reg_write(ctrl_reg_we),
     .alu_src(ctrl_alu_src),
     .mem_write(ctrl_mem_write),
