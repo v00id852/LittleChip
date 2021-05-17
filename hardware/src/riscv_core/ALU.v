@@ -9,6 +9,8 @@ module ALU #(
   output zero
 );
 
+  reg [DWIDTH - 1:0] out;
+  
   assign zero = (out == 0);
 
   always @(*) begin
