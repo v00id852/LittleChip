@@ -174,6 +174,7 @@ module Riscv151 #(
 
   wire [DMEM_DWIDTH - 1:0] rs1_id_out, rs2_id_out;
   wire [PC_WIDTH - 1:0] pc_branch_id_out;
+  wire [DMEM_DWIDTH - 1:0] imm_id_out;
   wire ctrl_pc_src_id_out, ctrl_reg_we_id_out;
   wire ctrl_mem_write_id_out;
   wire ctrl_mem_read_id_out, ctrl_mem_to_reg_id_out;
