@@ -7,8 +7,8 @@ module EX #(
   input [3:0] ctrl_alu_func,
   input [1:0] ctrl_alu_op,
   input [1:0] ctrl_alu_src_a, ctrl_alu_src_b,
-  input ctrl_mem_we, ctrl_mem_rd,
-  input ctrl_mem_to_reg,
+  // input ctrl_mem_we, ctrl_mem_rd,
+  // input ctrl_mem_to_reg,
 
   output [DWIDTH - 1:0] alu_out,
   output alu_zero
@@ -51,40 +51,30 @@ module EX #(
     .zero(alu_zero)
   );
 
-  localparam DMEM_AWIDTH = 14;
-  localparam DMEM_DWIDTH = DWIDTH;
+  // localparam DMEM_AWIDTH = 14;
+  // localparam DMEM_DWIDTH = DWIDTH;
 
-  wire [DMEM_AWIDTH-1:0] dmem_addra;
-  wire [DMEM_DWIDTH-1:0] dmem_dina, dmem_douta;
-  wire [3:0] dmem_wea;
-  wire dmem_en;
+  // wire [DMEM_AWIDTH-1:0] dmem_addra;
+  // wire [DMEM_DWIDTH-1:0] dmem_dina, dmem_douta;
+  // wire [3:0] dmem_wea;
+  // wire dmem_en;
 
-  // Data Memory
-  // Synchronous read: read takes one cycle
-  // Synchronous write: write takes one cycle
-  // Write-byte-enaBLe: select which of the four bytes to write
-  SYNC_RAM_WBE #(
-    .AWIDTH(DMEM_AWIDTH),
-    .DWIDTH(DMEM_DWIDTH)
-  ) dmem (
-    .q(dmem_douta),    // output
-    .d(dmem_dina),     // input
-    .addr(dmem_addra), // input
-    .wbe(dmem_wea),    // input
-    .en(dmem_en),
-    .clk(clk)
-  );
+  // // Data Memory
+  // // Synchronous read: read takes one cycle
+  // // Synchronous write: write takes one cycle
+  // // Write-byte-enaBLe: select which of the four bytes to write
+  // SYNC_RAM_WBE #(
+  //   .AWIDTH(DMEM_AWIDTH),
+  //   .DWIDTH(DMEM_DWIDTH)
+  // ) dmem (
+  //   .q(dmem_douta),    // output
+  //   .d(dmem_dina),     // input
+  //   .addr(dmem_addra), // input
+  //   .wbe(dmem_wea),    // input
+  //   .en(dmem_en),
+  //   .clk(clk)
+  // );
 
-  // FIXME: lh/lb
-
-  assign dmem_dina = data_rs2;
-  assign dmem_addra = alu_out[15:2];
-  assign dmem_en = ctrl_mem_we;
-  assign dmem_wea = 4'b1 << alu_addra[1:0];
-
-  always @(*) begin
-    if (ctrl_mem_to_reg == 1'b1) data_out = dmem_douta;
-    else data_out = alu_out;
-  end
+  // // FIXME: lh/lb
 
 endmodule
