@@ -6,37 +6,46 @@ module EX #(
   input [DWIDTH - 1:0] data_imm,
   input [3:0] ctrl_alu_func,
   input [1:0] ctrl_alu_op,
-  input ctrl_alu_src_a, ctrl_alu_src_b,
+  input [1:0] ctrl_alu_src_a, ctrl_alu_src_b,
   input ctrl_mem_we, ctrl_mem_rd,
   input ctrl_mem_to_reg,
-  
+
   output [DWIDTH - 1:0] data_out
 );
 
   wire [DWIDTH - 1:0] alu_a, alu_b;
-  
-  // always @(*) begin
-  //   case (ctrl_alu_src_a) 
-  //   endcase
-  // end
 
-  // always @(*) begin
-  //   case (ctrl_alu_src_b)
-  //   endcase 
-  // end
+  always @(*) begin
+    case (ctrl_alu_src_a)
+      2'b00:   alu_a = data_rs1;
+      // TODO: add forwarding signals
+      default: alu_a = data_rs1;
+    endcase
+  end
+
+  always @(*) begin
+    case (ctrl_alu_src_b)
+      2'b00:   alu_b = data_rs2;
+      2'b01:   alu_b = data_imm;
+      // TODO: add forwarding signals
+      default: alu_b = data_rs2;
+    endcase
+  end
 
   wire [DWIDTH - 1:0] alu_out;
   wire [3:0] alu_ctrl_out;
-  ALUCtrl alu_ctrl(
+  ALUCtrl alu_ctrl (
     .func(ctrl_alu_func),
     .alu_op(ctrl_alu_op),
     .alu_ctrl(alu_ctrl_out)
   );
 
-  ALU #(.DWIDTH(DWIDTH)) alu (
-    .A(data_alu_a), 
+  ALU #(
+    .DWIDTH(DWIDTH)
+  ) alu (
+    .A(data_alu_a),
     .B(data_alu_b),
-    .ctl(alu_ctrl_out), 
+    .ctl(alu_ctrl_out),
     .out(alu_out),
     .zero(alu_zero)
   );
@@ -68,15 +77,13 @@ module EX #(
   // FIXME: lh/lb
 
   assign dmem_dina = data_rs2;
-  assign dmem_addra = alu_out[15: 2];
+  assign dmem_addra = alu_out[15:2];
   assign dmem_en = ctrl_mem_we;
   assign dmem_wea = 4'b1 << alu_addra[1:0];
 
   always @(*) begin
-    if (ctrl_mem_to_reg == 1'b1)
-      data_out = dmem_douta;
-    else
-      data_out = alu_out;
+    if (ctrl_mem_to_reg == 1'b1) data_out = dmem_douta;
+    else data_out = alu_out;
   end
 
 endmodule
