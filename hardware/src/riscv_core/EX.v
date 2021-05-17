@@ -10,7 +10,8 @@ module EX #(
   input ctrl_mem_we, ctrl_mem_rd,
   input ctrl_mem_to_reg,
 
-  output [DWIDTH - 1:0] data_out
+  output [DWIDTH - 1:0] alu_out,
+  output alu_zero
 );
 
   wire [DWIDTH - 1:0] alu_a, alu_b;
@@ -43,8 +44,8 @@ module EX #(
   ALU #(
     .DWIDTH(DWIDTH)
   ) alu (
-    .A(data_alu_a),
-    .B(data_alu_b),
+    .A(alu_a),
+    .B(alu_b),
     .ctl(alu_ctrl_out),
     .out(alu_out),
     .zero(alu_zero)

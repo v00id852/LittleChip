@@ -186,7 +186,7 @@ module Riscv151 #(
   ID #(
     .PC_WIDTH(PC_WIDTH),
     .INST_WDITH(INST_WIDTH),
-    .DWIDTH(DMEM_DWIDTH),
+    .DWIDTH(DMEM_DWIDTH)
   ) id (
     .clk(clk),
     .rst(rst),
@@ -354,7 +354,8 @@ module Riscv151 #(
     .ctrl_mem_we(ctrl_mem_we_ex_in),
     .ctrl_mem_rd(ctrl_mem_rd_ex_in),
     .ctrl_mem_to_reg(ctrl_mem_to_reg_ex_in),
-    .data_out(rd_ex_out)
+    .alu_out(rd_ex_out),
+    .alu_zero()
   );
 
   assign rd_id_in = rd_ex_out;

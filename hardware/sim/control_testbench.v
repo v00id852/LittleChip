@@ -3,7 +3,8 @@
 module control_testbench;
 
   reg [6:0] opcode;
-  wire ctrl_reg_write, ctrl_alu_src, ctrl_mem_write, ctrl_mem_read, ctrl_mem_to_reg, ctrl_pc_src;
+  wire ctrl_reg_write, ctrl_mem_write, ctrl_mem_read, ctrl_mem_to_reg, ctrl_pc_src;
+  wire [1:0] ctrl_alu_src;
   CONTROL uut (
     .opcode(opcode),
     .reg_write(ctrl_reg_write),
@@ -55,23 +56,23 @@ module control_testbench;
     begin
       $display("====Check AluSrc signal====");
       opcode = `OPC_ARI_ITYPE;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_alu_src);
+      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src);
       opcode = `OPC_ARI_RTYPE;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_alu_src);
+      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src);
       opcode = `OPC_LOAD;
-      #1 check_ctrl_signal(opcode, 1'b1, ctrl_alu_src);
+      #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src);
       opcode = `OPC_STORE;
-      #1 check_ctrl_signal(opcode, 1'b1, ctrl_alu_src);
+      #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src);
       opcode = `OPC_BRANCH;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_alu_src);
+      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src);
       opcode = `OPC_LUI;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_alu_src);
+      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src);
       opcode = `OPC_AUIPC;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_alu_src);
+      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src);
       opcode = `OPC_JAL;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_alu_src);
+      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src);
       opcode = `OPC_JALR;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_alu_src); 
+      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src); 
     end
   endtask
 

@@ -24,12 +24,13 @@ module CONTROL (
                      (opcode == `OPC_BRANCH);
   assign alu_op[1] = (opcode == `OPC_ARI_ITYPE) || (opcode == `OPC_ARI_RTYPE);
 
+  reg [1:0] alu_src;
   always @(*) begin
     if (opcode == `OPC_LOAD || opcode == `OPC_STORE) begin
-      alu_src = 2'b00;
+      alu_src = 2'b01;
     end else begin
       // FIXME
-      alu_src = 2'b01;
+      alu_src = 2'b00;
     end
   end
 
