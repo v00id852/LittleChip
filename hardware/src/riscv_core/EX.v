@@ -4,7 +4,7 @@ module EX #(
   input clk,
   input [DWIDTH - 1:0] data_rs1, data_rs2,
   input [DWIDTH - 1:0] data_imm,
-  input [3:0] data_func,
+  input [3:0] ctrl_alu_func,
   input [1:0] ctrl_alu_op,
   input ctrl_alu_src_a, ctrl_alu_src_b,
   input ctrl_mem_we, ctrl_mem_rd,
@@ -28,7 +28,7 @@ module EX #(
   wire [DWIDTH - 1:0] alu_out;
   wire [3:0] alu_ctrl_out;
   ALUCtrl alu_ctrl(
-    .func(data_func),
+    .func(ctrl_alu_func),
     .alu_op(ctrl_alu_op),
     .alu_ctrl(alu_ctrl_out)
   );

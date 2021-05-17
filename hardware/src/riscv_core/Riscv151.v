@@ -317,10 +317,10 @@ module Riscv151 #(
   );
 
 
-  wire [3:0] func, addr_rd_ex_in;
+  wire [3:0] alu_func, addr_rd_ex_in;
   wire [DMEM_DWIDTH - 1:0] rd_ex_out;
 
-  assign func = {inst_ex_in[30], inst_ex_in[14:12]};
+  assign alu_func = {inst_ex_in[30], inst_ex_in[14:12]};
   assign addr_rd_ex_in = inst_ex_in[11:7];
 
   // Part of ID pipeline, buffer reg_we and addr_rd from EX
@@ -347,7 +347,7 @@ module Riscv151 #(
     .data_rs1(rs1_ex_in),
     .data_rs2(rs2_ex_in),
     .data_imm(imm_ex_in),
-    .data_func(func),
+    .ctrl_alu_func(alu_func),
     .ctrl_alu_op(ctrl_alu_op_ex_in),
     .ctrl_alu_src_a(),  // FIXME
     .ctrl_alu_src_b(),  // FIXME
