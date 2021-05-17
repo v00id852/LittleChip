@@ -33,7 +33,7 @@ module ID #(
   // Asynchronous read: read data is available in the same cycle
   // Synchronous write: write takes one cycle
   ASYNC_RAM_1W2R #(
-    .PC_WIDTH(5),
+    .AWIDTH(5),
     .DWIDTH(32)
   ) rf (
     .d0(rf_wd),     // input
@@ -66,7 +66,7 @@ module ID #(
   assign data_rs2 = rf_rd2;
 
   IMM_GEN #(
-    .INST_WIDTH(INST_WIDTH),
+    .IWIDTH(INST_WIDTH),
     .DWIDTH(DWIDTH)
   ) imm_gen (
     .inst_in(inst),

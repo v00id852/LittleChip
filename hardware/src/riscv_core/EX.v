@@ -14,7 +14,7 @@ module EX #(
   output alu_zero
 );
 
-  wire [DWIDTH - 1:0] alu_a, alu_b;
+  reg [DWIDTH - 1:0] alu_a, alu_b;
 
   always @(*) begin
     case (ctrl_alu_src_a)

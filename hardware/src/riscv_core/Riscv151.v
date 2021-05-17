@@ -184,7 +184,7 @@ module Riscv151 #(
 
   ID #(
     .PC_WIDTH(PC_WIDTH),
-    .INST_WDITH(INST_WIDTH),
+    .INST_WIDTH(INST_WIDTH),
     .DWIDTH(DMEM_DWIDTH)
   ) id (
     .clk(clk),
@@ -220,9 +220,9 @@ module Riscv151 #(
   wire [PC_WIDTH - 1:0] pc_ex_in;
 
   wire ctrl_pc_src_ex_in, ctrl_reg_we_ex_in;
-  wire ctrl_alu_src_ex_in, ctrl_mem_we_ex_in;
+  wire ctrl_mem_we_ex_in;
   wire ctrl_mem_rd_ex_in, ctrl_mem_to_reg_ex_in;
-  wire [1:0] ctrl_alu_op_ex_in;
+  wire [1:0] ctrl_alu_op_ex_in, ctrl_alu_src_ex_in;
 
   REGISTER #(
     .N(2)
@@ -326,7 +326,8 @@ module Riscv151 #(
   );
 
 
-  wire [3:0] alu_func, addr_rd_ex_in;
+  wire [3:0] alu_func;
+  wire [4:0] addr_rd_ex_in;
   wire [DMEM_DWIDTH - 1:0] alu_ex_out;
 
   assign alu_func = {inst_ex_in[30], inst_ex_in[14:12]};
@@ -366,7 +367,7 @@ module Riscv151 #(
   );
 
   wire [1:0] mem_wea;
-  reg [DMEM_DWIDTH - 1:0] mem_ex_out;
+  wire [DMEM_DWIDTH - 1:0] mem_ex_out;
 
   assign bios_addrb = alu_ex_out[13:2];
   assign dmem_addra = alu_ex_out[15:2];
@@ -380,8 +381,8 @@ module Riscv151 #(
   assign imem_wea = mem_wea & (alu_ex_out[31:28] & 4'b1110 == 4'b0010) & (pc_ex_in[30] == 1'b1);
   // Data out from memory selection
   assign mem_ex_out = (alu_ex_out[30] == 1'b1) ? bios_doutb : dmem_douta;
-  // 
-  assign rd_id_in = rd_ex_out;
+  // EX output selection
+  assign rd_id_in = ctrl_mem_to_reg_ex_in ? mem_ex_out : alu_ex_out;
   
 
 endmodule
