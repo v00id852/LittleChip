@@ -34,7 +34,7 @@ module ALUCtrl (
 );
 
   assign alu_ctrl[0] = alu_op[1] & (func[3] | func[0]);
-  assign alu_ctrl[1] = !alu_op[1] & !func[2];
+  assign alu_ctrl[1] = !alu_op[1] | !func[2];
   assign alu_ctrl[2] = alu_op[0] | (alu_op[1] & func[1]);
   assign alu_ctrl[3] = 0;
 
