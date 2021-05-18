@@ -15,7 +15,7 @@ module ID #(
   output [DWIDTH - 1:0] data_rs1, data_rs2,
 
   output [PC_WIDTH - 1:0] branch_pc_new,
-  output [DWIDTH - 1:0] imm,
+  output [DWIDTH - 1:0] data_imm,
   output [1:0] ctrl_alu_op,
   output ctrl_pc_src,
   output ctrl_reg_we,
@@ -70,7 +70,7 @@ module ID #(
     .DWIDTH(DWIDTH)
   ) imm_gen (
     .inst_in(inst),
-    .imm_out(imm)
+    .imm_out(data_imm)
   );
 
   // Control Unit
@@ -86,7 +86,7 @@ module ID #(
   );
   
   // PC + immediate
-  assign branch_pc_new = pc + imm;
+  assign branch_pc_new = pc + data_imm;
    
 endmodule
 

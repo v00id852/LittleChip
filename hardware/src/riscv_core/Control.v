@@ -26,9 +26,9 @@ module CONTROL (
 
   reg [1:0] alu_src;
   always @(*) begin
-    if (opcode == `OPC_LOAD || opcode == `OPC_STORE) begin
+    if (opcode == `OPC_LOAD || opcode == `OPC_STORE || opcode == `OPC_ARI_ITYPE) begin
       alu_src = 2'b01;
-    end else begin
+    end else begin     
       // FIXME
       alu_src = 2'b00;
     end

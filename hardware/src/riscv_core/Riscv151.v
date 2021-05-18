@@ -200,6 +200,7 @@ module Riscv151 #(
     // output
     .data_rs1(rs1_id_out),
     .data_rs2(rs2_id_out),
+    .data_imm(imm_id_out),
     .ctrl_alu_op(ctrl_alu_op_id_out),
     .ctrl_pc_src(ctrl_pc_src_id_out),
     .ctrl_reg_we(ctrl_reg_we_id_out),
