@@ -1,13 +1,17 @@
 // Module: ALU
 // Disc: ALU supports AND,OR,Add,Subtract operations
 `include "Opcode.vh"
-`define ALU_CTRL_AND 4'b0000
-`define ALU_CTRL_OR 4'b0001
-`define ALU_CTRL_ADD 4'b0010
-`define ALU_CTRL_SUB 4'b0110
-`define ALU_CTRL_LE 4'b0111
-`define ALU_CTRL_SLL 4'b1000
-`define ALU_CTRL_NOR 4'b1100
+`define ALU_CTRL_AND  4'b0000
+`define ALU_CTRL_OR   4'b0001
+`define ALU_CTRL_XOR  4'b0010
+`define ALU_CTRL_ADD  4'b0011
+`define ALU_CTRL_SUB  4'b0100
+`define ALU_CTRL_SLT  4'b0101
+`define ALU_CTRL_SLTU 4'b0110
+`define ALU_CTRL_SLL  4'b0111
+`define ALU_CTRL_SRL  4'b1000
+`define ALU_CTRL_SRA  4'b1001
+`define ALU_CTRL_NOR  4'b1010
 
 module ALU #(
   parameter DWIDTH = 32
@@ -29,9 +33,13 @@ module ALU #(
       `ALU_CTRL_OR:   out = A | B;
       `ALU_CTRL_ADD:  out = A + B;
       `ALU_CTRL_SUB:  out = A - B;
-      `ALU_CTRL_LE:   out = A < B ? 1 : 0;
+      `ALU_CTRL_SLT:  out = $signed(A) < $signed(B) ? 1 : 0;
+      `ALU_CTRL_SLTU: out = A < B ? 1 : 0;
       `ALU_CTRL_NOR:  out = ~(A | B);
       `ALU_CTRL_SLL:  out = A << (B & 32'h001f);
+      `ALU_CTRL_XOR:  out = A ^ B;
+      `ALU_CTRL_SRL:  out = A >> (B & 32'h001f);
+      `ALU_CTRL_SRA:  out = $signed(A) >>> (B & 32'h001f);
       default: out = 0;
     endcase
   end
@@ -57,9 +65,14 @@ module ALUCtrl (
         case (func)
           4'b0000: alu_ctrl = `ALU_CTRL_ADD;
           4'b1000: alu_ctrl = `ALU_CTRL_SUB;
-          4'b0111: alu_ctrl = `ALU_CTRL_AND;
-          4'b0110: alu_ctrl = `ALU_CTRL_OR;
+          {1'b0, `FNC_AND} : alu_ctrl = `ALU_CTRL_AND;
+          {1'b0, `FNC_OR}  : alu_ctrl = `ALU_CTRL_OR;
+          {1'b0, `FNC_XOR} : alu_ctrl = `ALU_CTRL_XOR;
           {1'b0, `FNC_SLL} : alu_ctrl = `ALU_CTRL_SLL;
+          {1'b0, `FNC_SLT} : alu_ctrl = `ALU_CTRL_SLT;
+          {1'b0, `FNC_SLTU}: alu_ctrl = `ALU_CTRL_SLTU;
+          {1'b0, `FNC_SRL_SRA} : alu_ctrl = `ALU_CTRL_SRL;
+          {1'b1, `FNC_SRL_SRA} : alu_ctrl = `ALU_CTRL_SRA;
           default: alu_ctrl = `ALU_CTRL_ADD;
         endcase
       end
