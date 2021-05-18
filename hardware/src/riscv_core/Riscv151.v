@@ -151,7 +151,7 @@ module Riscv151 #(
 
   assign bios_addra = pc_if_out[11:0];
   assign imem_addrb = pc_if_out[15:2];
-  assign imem_web = 4'h0;
+  assign imem_web = 4'h0; // FIXME
   assign inst_if_out = pc_if_out[30] == 1'b1 ? bios_douta : imem_doutb;
 
   // IF/ID Registers
@@ -393,5 +393,5 @@ module Riscv151 #(
 
   // EX output selection
   assign rd_id_in = ctrl_mem_to_reg_ex_in ? mem_ex_out : alu_ex_out;
-  
+
 endmodule
