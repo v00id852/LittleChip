@@ -45,7 +45,7 @@ module aluctrl_testbench;
       func = 4'b0000;
       #1 check_alu_ctrl(1, 4'b0110, ctrl_out);
       op   = 2'b10;
-      func = 4'b0010;
+      func = 4'b1000;
       #1 check_alu_ctrl(2, 4'b0110, ctrl_out);
     end
   endtask
@@ -54,7 +54,7 @@ module aluctrl_testbench;
     begin
       $display("====Check AND Operation====");
       op   = 2'b10;
-      func = 4'b0100;
+      func = 4'b0111;
       #1 check_alu_ctrl(1, 4'b0000, ctrl_out);
     end
   endtask
@@ -63,17 +63,8 @@ module aluctrl_testbench;
     begin
       $display("====Check OR Operation====");
       op   = 2'b10;
-      func = 4'b0101;
+      func = 4'b0110;
       #1 check_alu_ctrl(1, 4'b0001, ctrl_out);
-    end
-  endtask
-
-  task check_LESS_op;
-    begin
-      $display("====Check LESS Operation====");
-      op   = 2'b10;
-      func = 4'b1010;
-      #1 check_alu_ctrl(1, 4'b0111, ctrl_out);
     end
   endtask
 
@@ -82,7 +73,6 @@ module aluctrl_testbench;
     check_subtract_op();
     check_AND_op();
     check_OR_op();
-    check_LESS_op();
     $display("ALL ALUCTRL TESTS PASSED!");
     $finish;
   end
