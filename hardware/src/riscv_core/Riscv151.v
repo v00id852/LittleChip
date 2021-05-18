@@ -150,8 +150,8 @@ module Riscv151 #(
   );
 
   assign bios_addra = pc_if_out[11:0];
-  assign imem_addrb = pc_if_out[13:0];
-  assign imem_web = 1'b0;
+  assign imem_addrb = pc_if_out[15:2];
+  assign imem_web = 4'h0;
   assign inst_if_out = pc_if_out[30] == 1'b1 ? bios_douta : imem_doutb;
 
   // IF/ID Registers
@@ -162,7 +162,7 @@ module Riscv151 #(
 
   REGISTER_R #(
     .N(PC_WIDTH),
-    .INIT(0)
+    .INIT(RESET_PC)
   ) if_id_pc (
     .d  (pc_if_out),
     .q  (pc_id_in),
