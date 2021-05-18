@@ -1,5 +1,12 @@
 // Module: ALU
 // Disc: ALU supports AND,OR,Add,Subtract operations
+`define ALU_CTRL_AND 4'b0000
+`define ALU_CTRL_OR  4'b0001
+`define ALU_CTRL_ADD 4'b0010
+`define ALU_CTRL_SUB 4'b0110
+`define ALU_CTRL_LE  4'b0111
+`define ALU_CTRL_NOR 4'b1100
+
 module ALU #(
   parameter DWIDTH = 32
 ) (
@@ -37,18 +44,21 @@ module ALUCtrl (
 
   always @(*) begin
     case (alu_op)
-      2'b00: alu_ctrl = 4'b0010;
-      2'b01: alu_ctrl = 4'b0110;
+      // ld/sd
+      2'b00: alu_ctrl = `ALU_CTRL_ADD;
+      // beq
+      2'b01: alu_ctrl = `ALU_CTRL_SUB;
+      // R-Type
       2'b10: begin
         case (func)
-          4'b0000: alu_ctrl = 4'b0010;
-          4'b1000: alu_ctrl = 4'b0110;
-          4'b0111: alu_ctrl = 4'b0000;
-          4'b0110: alu_ctrl = 4'b0001;
-          default: alu_ctrl = 4'b0010;
+          4'b0000: alu_ctrl = `ALU_CTRL_ADD;
+          4'b1000: alu_ctrl = `ALU_CTRL_SUB;
+          4'b0111: alu_ctrl = `ALU_CTRL_AND;
+          4'b0110: alu_ctrl = `ALU_CTRL_OR;
+          default: alu_ctrl = `ALU_CTRL_ADD;
         endcase
       end
-      default: alu_ctrl = 4'b0010;
+      default: alu_ctrl = `ALU_CTRL_ADD;
     endcase
   end
 
