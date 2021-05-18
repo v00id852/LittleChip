@@ -56,7 +56,7 @@ module control_testbench;
     begin
       $display("====Check AluSrc signal====");
       opcode = `OPC_ARI_ITYPE;
-      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src);
+      #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src);
       opcode = `OPC_ARI_RTYPE;
       #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src);
       opcode = `OPC_LOAD;
