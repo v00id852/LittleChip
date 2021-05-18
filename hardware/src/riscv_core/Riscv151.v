@@ -149,8 +149,8 @@ module Riscv151 #(
     .clk(clk)
   );
 
-  assign bios_addra  = pc_if_out[11:0];
-  assign imem_addrb  = pc_if_out[13:0];
+  assign bios_addra = pc_if_out[11:0];
+  assign imem_addrb = pc_if_out[13:0];
   assign imem_web = 1'b0;
   assign inst_if_out = pc_if_out[30] == 1'b1 ? bios_douta : imem_doutb;
 
@@ -321,19 +321,20 @@ module Riscv151 #(
   ) id_ex_pc (
     .clk(clk),
     .rst(rst),
-    .d (pc_id_in),
-    .q (pc_ex_in)
+    .d  (pc_id_in),
+    .q  (pc_ex_in)
   );
 
+  assign ctrl_pc_src = ctrl_pc_src_ex_in;
 
   wire [3:0] alu_func;
   wire [4:0] addr_rd_ex_in;
-  wire [DMEM_DWIDTH - 1:0] alu_ex_out;
+  wire [DMEM_DWIDTH - 1:0] alu_out, alu_ex_out;
 
   assign alu_func = {inst_ex_in[30], inst_ex_in[14:12]};
   assign addr_rd_ex_in = inst_ex_in[11:7];
 
- 
+
   EX #(
     .DWIDTH(DMEM_DWIDTH)
   ) ex (
@@ -345,11 +346,11 @@ module Riscv151 #(
     .ctrl_alu_op(ctrl_alu_op_ex_in),
     .ctrl_alu_src_a(2'b00),  // FIXME
     .ctrl_alu_src_b(ctrl_alu_src_ex_in),  // FIXME
-    .alu_out(alu_ex_out),
+    .alu_out(alu_out),
     .alu_zero()
   );
 
-   // Part of ID pipeline, buffer reg_we and addr_rd from EX
+  // Part of ID pipeline, buffer reg_we and addr_rd from EX
   REGISTER #(
     .N(1)
   ) ex_id_reg_we (
@@ -369,20 +370,28 @@ module Riscv151 #(
   wire [1:0] mem_wea;
   wire [DMEM_DWIDTH - 1:0] mem_ex_out;
 
-  assign bios_addrb = alu_ex_out[13:2];
-  assign dmem_addra = alu_ex_out[15:2];
-  assign imem_addra = alu_ex_out[15:2];
-  
+  assign bios_addrb = alu_out[13:2];
+  assign dmem_addra = alu_out[15:2];
+  assign imem_addra = alu_out[15:2];
+
   assign dmem_dina = rs2_ex_in;
   assign imem_dina = rs2_ex_in;
-  assign mem_wea = ctrl_mem_we_ex_in ? (4'b0001 << alu_ex_out[1:0]) : 4'h0;
-  assign dmem_wea = mem_wea & (alu_ex_out[31:28] & 4'b1101 == 4'b0001);
+  assign mem_wea = ctrl_mem_we_ex_in ? (4'b0001 << alu_out[1:0]) : 4'h0;
+  assign dmem_wea = mem_wea & (alu_out[31:28] & 4'b1101 == 4'b0001);
   // Instruction Memory can be writted only if PC[30] == 1'b1;
-  assign imem_wea = mem_wea & (alu_ex_out[31:28] & 4'b1110 == 4'b0010) & (pc_ex_in[30] == 1'b1);
+  assign imem_wea = mem_wea & (alu_out[31:28] & 4'b1110 == 4'b0010) & (pc_ex_in[30] == 1'b1);
   // Data out from memory selection
-  assign mem_ex_out = (alu_ex_out[30] == 1'b1) ? bios_doutb : dmem_douta;
+  assign mem_ex_out = (alu_out[30] == 1'b1) ? bios_doutb : dmem_douta;
+
+  REGISTER #(
+    .N(DMEM_DWIDTH)
+  ) ex_id_alu_out (
+    .clk(clk),
+    .d  (alu_out),
+    .q  (alu_ex_out)
+  );
+
   // EX output selection
   assign rd_id_in = ctrl_mem_to_reg_ex_in ? mem_ex_out : alu_ex_out;
   
-
 endmodule
