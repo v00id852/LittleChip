@@ -1,17 +1,7 @@
 // Module: ALU
 // Disc: ALU supports AND,OR,Add,Subtract operations
 `include "Opcode.vh"
-`define ALU_CTRL_AND 4'b0000
-`define ALU_CTRL_OR 4'b0001
-`define ALU_CTRL_XOR 4'b0010
-`define ALU_CTRL_ADD 4'b0011
-`define ALU_CTRL_SUB 4'b0100
-`define ALU_CTRL_SLT 4'b0101
-`define ALU_CTRL_SLTU 4'b0110
-`define ALU_CTRL_SLL 4'b0111
-`define ALU_CTRL_SRL 4'b1000
-`define ALU_CTRL_SRA 4'b1001
-`define ALU_CTRL_NOR 4'b1010
+`include "ALUCtrlCode.vh"
 
 module ALU #(
   parameter DWIDTH = 32
