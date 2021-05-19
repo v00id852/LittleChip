@@ -20,9 +20,16 @@ module CONTROL (
   assign mem_to_reg = opcode == `OPC_LOAD;
   assign pc_src = opcode == `OPC_BRANCH;
 
-  assign alu_op[0] = (opcode == `OPC_ARI_ITYPE || opcode == `OPC_ARI_RTYPE) ? 1'b0 : 
-                     (opcode == `OPC_BRANCH);
-  assign alu_op[1] = (opcode == `OPC_ARI_ITYPE) || (opcode == `OPC_ARI_RTYPE);
+  reg [1:0] alu_op;
+
+  always @(*) begin
+    case (opcode)
+      `OPC_ARI_ITYPE: alu_op = 2'b11;
+      `OPC_ARI_RTYPE: alu_op = 2'b10;
+      `OPC_BRANCH: alu_op = 2'b01;
+      default: alu_op = 2'b00;
+    endcase
+  end
 
   reg [1:0] alu_src;
   always @(*) begin
