@@ -4,6 +4,7 @@ module control_testbench;
 
   reg [6:0] opcode;
   wire ctrl_reg_write, ctrl_mem_write, ctrl_mem_read, ctrl_mem_to_reg, ctrl_pc_src;
+  wire ctrl_utype_src;
   wire [1:0] ctrl_alu_src_a, ctrl_alu_src_b;
   wire [1:0] ctrl_alu_op;
   CONTROL uut (
@@ -15,7 +16,8 @@ module control_testbench;
     .mem_read(ctrl_mem_read),
     .mem_to_reg(ctrl_mem_to_reg),
     .pc_src(ctrl_pc_src),
-    .alu_op(ctrl_alu_op)
+    .alu_op(ctrl_alu_op),
+    .utype_src(ctrl_utype_src)
   );
 
   task check_ctrl_signal;
@@ -201,7 +203,7 @@ module control_testbench;
 
   task check_ctrl_alu_op;
     begin
-      $display("====Check ALU Op====");
+      $display("====Check ALUOp====");
       opcode = `OPC_ARI_ITYPE;
       #1 check_ctrl_signal(opcode, 2'b11, ctrl_pc_src);
       opcode = `OPC_ARI_RTYPE;
@@ -223,6 +225,30 @@ module control_testbench;
     end
   endtask
 
+  task check_ctrl_utype_src;
+    begin
+      $display("====Check UTypeSrc====");
+      opcode = `OPC_ARI_ITYPE;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);
+      opcode = `OPC_ARI_RTYPE;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);
+      opcode = `OPC_LOAD;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);
+      opcode = `OPC_STORE;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);
+      opcode = `OPC_BRANCH;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);
+      opcode = `OPC_LUI;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);
+      opcode = `OPC_AUIPC;
+      #1 check_ctrl_signal(opcode, 1'b1, ctrl_utype_src);
+      opcode = `OPC_JAL;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);
+      opcode = `OPC_JALR;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);    
+    end
+  endtask
+
   initial begin
     check_ctrl_reg_write();
     check_ctrl_alu_src_a();
@@ -231,6 +257,7 @@ module control_testbench;
     check_ctrl_mem_write();
     check_ctrl_mem_to_reg();
     check_ctrl_pc_src();
+    check_ctrl_utype_src();
     $display("ALL CONTROL TESTS PASSED!");
     $finish;
   end

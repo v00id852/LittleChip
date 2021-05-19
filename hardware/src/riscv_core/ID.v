@@ -13,6 +13,7 @@ module ID #(
   input [INST_WIDTH - 1:0] inst,
   input [DWIDTH - 1:0] data_rd,
   output [DWIDTH - 1:0] data_rs1, data_rs2,
+  output [DWIDTH - 1:0] data_utype_rs1,
 
   output [PC_WIDTH - 1:0] branch_pc_new,
   output [DWIDTH - 1:0] data_imm,
@@ -74,6 +75,7 @@ module ID #(
     .imm_out(data_imm)
   );
 
+  wire ctrl_utype_src;
   // Control Unit
   CONTROL control(
     .opcode(inst[6:0]),
@@ -84,11 +86,13 @@ module ID #(
     .mem_write(ctrl_mem_write),
     .mem_read(ctrl_mem_read),
     .mem_to_reg(ctrl_mem_to_reg),
-    .pc_src(ctrl_pc_src)
+    .pc_src(ctrl_pc_src),
+    .utype_src(ctrl_utype_src)
   );
   
   // PC + immediate
   assign branch_pc_new = pc + data_imm;
+  assign data_utype_rs1 = ctrl_utype_src ? pc : {DWIDTH{1'b0}}; 
    
 endmodule
 

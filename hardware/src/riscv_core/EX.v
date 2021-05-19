@@ -4,6 +4,7 @@ module EX #(
   input clk,
   input [DWIDTH - 1:0] data_rs1, data_rs2,
   input [DWIDTH - 1:0] data_imm,
+  input [DWIDTH - 1:0] data_utype_rs1,
   input [3:0] ctrl_alu_func,
   input [1:0] ctrl_alu_op,
   input [1:0] ctrl_alu_src_a, ctrl_alu_src_b,
@@ -19,7 +20,7 @@ module EX #(
   always @(*) begin
     case (ctrl_alu_src_a)
       2'b00:   alu_a = data_rs1;
-      2'b01:   alu_a = 0; // For LUI inst
+      2'b01:   alu_a = data_utype_rs1; // For LUI/AUIPC inst
       // TODO: add forwarding signals
       default: alu_a = data_rs1;
     endcase
