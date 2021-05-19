@@ -139,3 +139,6 @@ init-arm:
 # "make clean" won't remove your project folders
 clean:
 		rm -rf *.log *.jou *.str *.vcd *.out *.mif
+
+veryclean:
+		rm -rf z1top* bitstream_files
