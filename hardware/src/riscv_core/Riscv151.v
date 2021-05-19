@@ -360,13 +360,27 @@ module Riscv151 #(
   assign dmem_addra = alu_out[15:2];
   assign imem_addra = alu_out[15:2];
 
-  assign dmem_dina = rs2_ex_in;
-  assign imem_dina = rs2_ex_in;
+  wire [DMEM_DWIDTH - 1:0] mem_din;
+  wire [3:0] mem_din_mask;
 
-  assign mem_wea = (ctrl_mem_we_ex_in == 1'b0) ? 4'b0000 : 4'b1111;
-  assign dmem_wea = (alu_out[31:28] & 4'b1101 == 4'b0001) ? mem_wea : 4'h0;
+  MEM_DATA_GEN #(
+    .DATA_WIDTH(DMEM_DWIDTH)
+  ) mem_in_gen (
+    .data_in(rs2_ex_in),
+    .inst_func_in(inst_ex_in[14:12]),
+    .byte_addr_in(alu_out[1:0]),
+    .data_out(mem_din),
+    .wea_out(mem_din_mask)
+  );
+
+  assign dmem_dina = mem_din;
+  assign imem_dina = mem_din;
+
+  assign mem_wea = (ctrl_mem_we_ex_in == 1'b0) ? 4'b0000 : mem_din_mask;
+  // Note: see Address Space table
+  assign dmem_wea = ((alu_out[31:28] & 4'b1101) == 4'b0001) ? mem_wea : 4'h0;
   // Instruction Memory can be writted only if PC[30] == 1'b1;
-  assign imem_wea = ((alu_out[31:28] & 4'b1110 == 4'b0010) & (pc_ex_in[30] == 1'b1)) ? mem_wea : 4'h0;
+  assign imem_wea = (((alu_out[31:28] & 4'b1110) == 4'b0010) & (pc_ex_in[30] == 1'b1)) ? mem_wea : 4'h0;
   // Data out from memory selection
   assign mem_sel_out = (alu_out[30] == 1'b1) ? bios_doutb : dmem_douta;
 
