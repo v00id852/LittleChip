@@ -1,6 +1,6 @@
 `include "Opcode.vh"
 
-module MEM_MASK #(
+module MEM_DATA_MASK #(
   parameter DATA_WIDTH = 32
 ) (
   input [DATA_WIDTH - 1:0] data_in,

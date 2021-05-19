@@ -1,4 +1,3 @@
-
 module Riscv151 #(
   parameter CPU_CLOCK_FREQ = 50_000_000,
   parameter RESET_PC       = 32'h4000_0000,
@@ -151,7 +150,7 @@ module Riscv151 #(
 
   assign bios_addra = pc_if_out[11:0];
   assign imem_addrb = pc_if_out[15:2];
-  assign imem_web = 4'h0; // FIXME
+  assign imem_web = 4'h0;  // FIXME
   assign inst_if_out = pc_if_out[30] == 1'b1 ? bios_douta : imem_doutb;
 
   // IF/ID Registers
@@ -326,13 +325,14 @@ module Riscv151 #(
     .q  (pc_ex_in)
   );
 
+  // EX Stage 
   assign ctrl_pc_src = ctrl_pc_src_ex_in;
 
   wire [3:0] alu_func;
   wire [4:0] addr_rd_ex_in;
   wire [DMEM_DWIDTH - 1:0] alu_out, alu_ex_out;
   wire [INST_WIDTH - 1:0] mem_mask_inst_in;
-  
+
   assign alu_func = {inst_ex_in[30], inst_ex_in[14:12]};
   assign addr_rd_ex_in = inst_ex_in[11:7];
 
@@ -352,9 +352,8 @@ module Riscv151 #(
     .alu_zero()
   );
 
-  wire [1:0] mem_wea, mem_mask_byte_addr;
+  wire [3:0] mem_wea;
   wire [DMEM_DWIDTH - 1:0] mem_sel_out, mem_ex_out;
-  wire [2:0] mem_mask_inst_func_in;
   wire ctrl_mem_to_reg_ex_out;
 
   assign bios_addrb = alu_out[13:2];
@@ -363,26 +362,31 @@ module Riscv151 #(
 
   assign dmem_dina = rs2_ex_in;
   assign imem_dina = rs2_ex_in;
-  assign mem_wea = ctrl_mem_we_ex_in ? (4'b0001 << alu_out[1:0]) : 4'h0;
-  assign dmem_wea = mem_wea & (alu_out[31:28] & 4'b1101 == 4'b0001);
+
+  assign mem_wea = (ctrl_mem_we_ex_in == 1'b0) ? 4'b0000 : 4'b1111;
+  assign dmem_wea = (alu_out[31:28] & 4'b1101 == 4'b0001) ? mem_wea : 4'h0;
   // Instruction Memory can be writted only if PC[30] == 1'b1;
-  assign imem_wea = mem_wea & (alu_out[31:28] & 4'b1110 == 4'b0010) & (pc_ex_in[30] == 1'b1);
+  assign imem_wea = ((alu_out[31:28] & 4'b1110 == 4'b0010) & (pc_ex_in[30] == 1'b1)) ? mem_wea : 4'h0;
   // Data out from memory selection
   assign mem_sel_out = (alu_out[30] == 1'b1) ? bios_doutb : dmem_douta;
+
+
+  wire [1:0] mem_mask_byte_addr;
+  wire [2:0] mem_mask_inst_func_in;
 
   REGISTER #(
     .N(INST_WIDTH)
   ) mem_mask_inst_func (
     .clk(clk),
-    .d(inst_ex_in),
-    .q(mem_mask_inst_in)
+    .d  (inst_ex_in),
+    .q  (mem_mask_inst_in)
   );
 
   assign mem_mask_byte_addr = alu_ex_out[1:0];
   assign mem_mask_inst_func_in = mem_mask_inst_in[14:12];
 
   // Select part of mem_out according to byte address
-  MEM_MASK #(
+  MEM_DATA_MASK #(
     .DATA_WIDTH(DMEM_DWIDTH)
   ) mem_out_mask (
     .data_in(mem_sel_out),

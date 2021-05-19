@@ -2,7 +2,7 @@
 
 `include "../src/riscv_core/Opcode.vh"
 
-module memmask_testbench;
+module memdata_mask_testbench;
 
   reg [31:0] data_in;
   reg [2:0] func;
