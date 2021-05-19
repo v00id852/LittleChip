@@ -262,8 +262,6 @@ module Riscv151_testbench();
     `IMEM_PATH.mem[INST_ADDR + 4] = {IMM[11:0], RS1, `FNC_OR,      5'd7, `OPC_ARI_ITYPE};
     `IMEM_PATH.mem[INST_ADDR + 5] = {IMM[11:0], RS1, `FNC_AND,     5'd8, `OPC_ARI_ITYPE};
 
-    //$display("HERE %h %h, %h", `RF_PATH.mem[RS1] + IMM, IMM, IMM[11:0]);
-
     check_result_rf(5'd3,  32'hfffffed4, "I-Type ADD");
     check_result_rf(5'd4,  32'h00000000, "I-Type SLT");
     check_result_rf(5'd5,  32'h00000000, "I-Type SLTU");
@@ -274,7 +272,7 @@ module Riscv151_testbench();
     // Test I-type load instructions
     reset();
 
-    `RF_PATH.mem[1]   = 32'h3000_0100;
+    `RF_PATH.mem[1] = 32'h3000_0100;
     IMM0            = 32'h0000_0000;
     IMM1            = 32'h0000_0001;
     IMM2            = 32'h0000_0002;
@@ -307,7 +305,7 @@ module Riscv151_testbench();
     check_result_rf(5'd2,   32'hdeadbeef, "I-Type LW");
 
     check_result_rf(5'd3,   32'hffffbeef, "I-Type LH 0");
-    check_result_rf(5'd4,   32'hffffadbe, "I-Type LH 1");
+    check_result_rf(5'd4,   32'hffffbeef, "I-Type LH 1");
     check_result_rf(5'd5,   32'hffffdead, "I-Type LH 2");
     check_result_rf(5'd6,   32'hffffdead, "I-Type LH 3");
 
@@ -317,7 +315,7 @@ module Riscv151_testbench();
     check_result_rf(5'd10,  32'hffffffde, "I-Type LB 3");
 
     check_result_rf(5'd11,  32'h0000beef, "I-Type LHU 0");
-    check_result_rf(5'd12,  32'h0000adbe, "I-Type LHU 1");
+    check_result_rf(5'd12,  32'h0000beef, "I-Type LHU 1");
     check_result_rf(5'd13,  32'h0000dead, "I-Type LHU 2");
     check_result_rf(5'd14,  32'h0000dead, "I-Type LHU 3");
 
