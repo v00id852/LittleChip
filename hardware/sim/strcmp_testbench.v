@@ -6,6 +6,8 @@ module strcmp_testbench();
   parameter CPU_CLOCK_PERIOD = 20;
   parameter CPU_CLOCK_FREQ   = 1_000_000_000 / CPU_CLOCK_PERIOD;
 
+  localparam TIMEOUT_CYCLE = 1000;
+
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;
 
@@ -21,8 +23,13 @@ module strcmp_testbench();
     .csr(csr)
   );
 
-  reg done = 0;
-  reg [31:0] cycle = 0;
+  reg [31:0] cycle;
+  always @(posedge clk) begin
+    if (rst === 1)
+      cycle <= 0;
+    else
+      cycle <= cycle + 1;
+  end
 
   initial begin
     $dumpfile("strcmp_testbench.vcd");
@@ -37,18 +44,16 @@ module strcmp_testbench();
     // Hold reset for a while
     repeat (10) @(posedge clk);
 
+    @(negedge clk);
     rst = 0;
 
     // Delay for some time
     repeat (10) @(posedge clk);
 
     // Wait until csr is updated
-    while (csr === 0) begin
-      @(posedge clk);
-    end
-    done = 1;
+    wait (csr !== 0);
 
-    if (csr[0] === 1'b1 && csr[31:1] === 31'd0) begin
+    if (csr === 32'b1) begin
       $display("[%d sim. cycles] CSR test PASSED! Strings matched.", cycle);
     end else begin
       $display("[%d sim. cycles] CSR test FAILED! Strings mismatched.", cycle);
@@ -59,17 +64,9 @@ module strcmp_testbench();
   end
 
   initial begin
-    while (rst == 1) begin
-      @(posedge clk);
-    end
-
-    for (cycle = 0; cycle < 1000; cycle = cycle + 1) begin
-      if (!done) @(posedge clk);
-    end
-
-    if (!done) begin
-      $display("[FAILED] Timing out");
-      $finish();
-    end
+    repeat (TIMEOUT_CYCLE) @(posedge clk);
+    $display("Timeout!");
+    $finish();
   end
+
 endmodule

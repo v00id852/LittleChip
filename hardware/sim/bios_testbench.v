@@ -7,6 +7,8 @@ module bios_testbench();
   localparam BAUD_RATE       = 115_200;
   localparam BAUD_PERIOD     = 1_000_000_000 / BAUD_RATE; // 8680.55 ns
 
+  localparam TIMEOUT_CYCLE = 500_000;
+
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;
 
@@ -25,8 +27,13 @@ module bios_testbench();
   );
 
   integer i, j;
-  reg done = 0;
-  reg [31:0] cycle = 0;
+  reg [31:0] cycle;
+  always @(posedge clk) begin
+    if (rst === 1)
+      cycle <= 0;
+    else
+      cycle <= cycle + 1;
+  end
 
   // Host off-chip UART --> FPGA on-chip UART (receiver)
   // The host (testbench) sends a character to the CPU via the serial line
@@ -58,16 +65,16 @@ module bios_testbench();
     input [7:0] expected_char;
     begin
       // Wait until serial_out is LOW (start of transaction)
-      while (serial_out == 1) begin
-        @(posedge clk);
-      end
+      wait (serial_out === 1'b0);
 
       for (j = 0; j < 10; j = j + 1) begin
+        // sample output half-way through the baud period to avoid tricky edge cases
+        #(BAUD_PERIOD / 2);
         char_out[j] = serial_out;
-        #(BAUD_PERIOD);
+        #(BAUD_PERIOD / 2);
       end
 
-      if (expected_char == char_out[8:1])
+      if (expected_char === char_out[8:1])
         test_status = "PASSED";
       else
         test_status = "FAILED";
@@ -88,6 +95,7 @@ module bios_testbench();
     // Hold reset for a while
     repeat (10) @(posedge clk);
 
+    @(negedge clk);
     rst = 0;
 
     // Delay for some time
@@ -161,25 +169,14 @@ module bios_testbench();
       end
     join
 
-    done = 1;
     #100;
     $finish();
   end
 
   initial begin
-    while (rst == 1) begin
-      @(posedge clk);
-    end
-
-    // Timeout in 500000 cycles
-    for (cycle = 0; cycle < 500000; cycle = cycle + 1) begin
-      if (!done) @(posedge clk);
-    end
-
-    if (!done) begin
-      $display("[FAILED] Timing out");
-      $finish();
-    end
+    repeat (TIMEOUT_CYCLE) @(posedge clk);
+    $display("Timeout!");
+    $finish();
   end
 
 endmodule

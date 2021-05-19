@@ -8,7 +8,7 @@ module xcel_testbench();
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;
 
-  localparam TIMEOUT_CYCLE = 10000_000;
+  localparam TIMEOUT_CYCLE = 10_000_000;
 
   localparam DWIDTH     = 8;
   localparam IFM_DIM    = 28;

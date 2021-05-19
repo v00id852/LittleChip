@@ -6,6 +6,8 @@ module isa_testbench();
   parameter CPU_CLOCK_PERIOD = 20;
   parameter CPU_CLOCK_FREQ   = 1_000_000_000 / CPU_CLOCK_PERIOD;
 
+  localparam TIMEOUT_CYCLE = 1000;
+
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;
 
@@ -22,8 +24,14 @@ module isa_testbench();
     .csr(csr)
   );
 
-  reg done = 0;
-  reg [31:0] cycle = 0;
+  reg [31:0] cycle;
+  always @(posedge clk) begin
+    if (rst === 1)
+      cycle <= 0;
+    else
+      cycle <= cycle + 1;
+  end
+
   reg [255:0] MIF_FILE;
   initial begin
     $dumpfile("isa_testbench.vcd");
@@ -37,20 +45,17 @@ module isa_testbench();
     $readmemh(MIF_FILE, `IMEM_PATH.mem);
     $readmemh(MIF_FILE, `DMEM_PATH.mem);
 
-    rst = 0;
-
     // Reset the CPU
     rst = 1;
-    repeat (30) @(posedge clk); #1; // Hold reset for 30 cycles
+    repeat (30) @(posedge clk); // Hold reset for 30 cycles
+
+    @(negedge clk);
     rst = 0;
 
     // Wait until csr[0] is asserted
-    while (csr[0] !== 1'b1) begin
-      @(posedge clk);
-    end
-    done = 1;
+    wait (csr[0] === 1'b1);
 
-    if (csr[0] === 1'b1 && csr[31:1] === 31'd0) begin
+    if (csr[0] === 1'b1 && csr[31:1] === 31'b0) begin
       $display("[passed] - %s in %d simulation cycles", MIF_FILE, cycle);
     end else begin
       $display("[failed] - %s. Failed test: %d", MIF_FILE, csr[31:1]);
@@ -59,17 +64,9 @@ module isa_testbench();
   end
 
   initial begin
-    while (rst == 1) begin
-      @(posedge clk);
-    end
-
-    // Timeout in 10000 cycles
-    for (cycle = 0; cycle < 10000; cycle = cycle + 1) begin
-      if (!done) @(posedge clk);
-    end
-    if (!done) begin
-      $display("[failed] - %s. Timing out", MIF_FILE);
-      $finish();
-    end
+    repeat (TIMEOUT_CYCLE) @(posedge clk);
+    $display("Timeout!");
+    $finish();
   end
+
 endmodule

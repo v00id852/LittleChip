@@ -55,7 +55,7 @@ module Riscv151_testbench();
     .csr(csr)
   );
 
-  wire [31:0] timeout_cycle = 5000;
+  wire [31:0] timeout_cycle = 10;
 
   // Reset IMem, DMem, and RegFile before running new test
   task reset;
@@ -161,9 +161,8 @@ module Riscv151_testbench();
 
   integer i;
 
-  reg [31:0] num_cycles      = 0;
-  reg [31:0] num_pipe_stages = 0;
-  reg [31:0] num_insts       = 0;
+  reg [31:0] num_cycles = 0;
+  reg [31:0] num_insts  = 0;
   reg [4:0]  RD, RS1, RS2;
   reg [31:0] RD1, RD2;
   reg [4:0]  SHAMT;
@@ -214,19 +213,19 @@ module Riscv151_testbench();
     SHAMT           = 5'd20;
     INST_ADDR       = 14'h0000;
 
-    `IMEM_PATH.mem[INST_ADDR + 0]   = {`FNC7_0, RS2,   RS1, `FNC_ADD_SUB, 5'd3,  `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 1]   = {`FNC7_1, RS2,   RS1, `FNC_ADD_SUB, 5'd4,  `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 2]   = {`FNC7_0, RS2,   RS1, `FNC_SLL,     5'd5,  `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 3]   = {`FNC7_0, RS2,   RS1, `FNC_SLT,     5'd6,  `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 4]   = {`FNC7_0, RS2,   RS1, `FNC_SLTU,    5'd7,  `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 5]   = {`FNC7_0, RS2,   RS1, `FNC_XOR,     5'd8,  `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 6]   = {`FNC7_0, RS2,   RS1, `FNC_OR,      5'd9,  `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 7]   = {`FNC7_0, RS2,   RS1, `FNC_AND,     5'd10, `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 8]   = {`FNC7_0, RS2,   RS1, `FNC_SRL_SRA, 5'd11, `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 9]   = {`FNC7_1, RS2,   RS1, `FNC_SRL_SRA, 5'd12, `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[INST_ADDR + 10]  = {`FNC7_0, SHAMT, RS1, `FNC_SLL,     5'd13, `OPC_ARI_ITYPE};
-    `IMEM_PATH.mem[INST_ADDR + 11]  = {`FNC7_0, SHAMT, RS1, `FNC_SRL_SRA, 5'd14, `OPC_ARI_ITYPE};
-    `IMEM_PATH.mem[INST_ADDR + 12]  = {`FNC7_1, SHAMT, RS1, `FNC_SRL_SRA, 5'd15, `OPC_ARI_ITYPE};
+    `IMEM_PATH.mem[INST_ADDR + 0]  = {`FNC7_0, RS2,   RS1, `FNC_ADD_SUB, 5'd3,  `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 1]  = {`FNC7_1, RS2,   RS1, `FNC_ADD_SUB, 5'd4,  `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 2]  = {`FNC7_0, RS2,   RS1, `FNC_SLL,     5'd5,  `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 3]  = {`FNC7_0, RS2,   RS1, `FNC_SLT,     5'd6,  `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 4]  = {`FNC7_0, RS2,   RS1, `FNC_SLTU,    5'd7,  `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 5]  = {`FNC7_0, RS2,   RS1, `FNC_XOR,     5'd8,  `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 6]  = {`FNC7_0, RS2,   RS1, `FNC_OR,      5'd9,  `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 7]  = {`FNC7_0, RS2,   RS1, `FNC_AND,     5'd10, `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 8]  = {`FNC7_0, RS2,   RS1, `FNC_SRL_SRA, 5'd11, `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 9]  = {`FNC7_1, RS2,   RS1, `FNC_SRL_SRA, 5'd12, `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 10] = {`FNC7_0, SHAMT, RS1, `FNC_SLL,     5'd13, `OPC_ARI_ITYPE};
+    `IMEM_PATH.mem[INST_ADDR + 11] = {`FNC7_0, SHAMT, RS1, `FNC_SRL_SRA, 5'd14, `OPC_ARI_ITYPE};
+    `IMEM_PATH.mem[INST_ADDR + 12] = {`FNC7_1, SHAMT, RS1, `FNC_SRL_SRA, 5'd15, `OPC_ARI_ITYPE};
 
     check_result_rf(5'd3,  32'h00000064, "R-Type ADD");
     check_result_rf(5'd4,  32'hfffffed4, "R-Type SUB");
@@ -280,15 +279,15 @@ module Riscv151_testbench();
     INST_ADDR       = 14'h0000;
     DATA_ADDR       = (`RF_PATH.mem[1] + IMM0[11:0]) >> 2;
 
-    `IMEM_PATH.mem[INST_ADDR + 0]  = {IMM0[11:0], 5'd1, `FNC_LW,  5'd2,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 1]  = {IMM0[11:0], 5'd1, `FNC_LH,  5'd3,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 3]  = {IMM1[11:0], 5'd1, `FNC_LH,  5'd4,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 4]  = {IMM2[11:0], 5'd1, `FNC_LH,  5'd5,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 5]  = {IMM3[11:0], 5'd1, `FNC_LH,  5'd6,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 6]  = {IMM0[11:0], 5'd1, `FNC_LB,  5'd7,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 7]  = {IMM1[11:0], 5'd1, `FNC_LB,  5'd8,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 8]  = {IMM2[11:0], 5'd1, `FNC_LB,  5'd9,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 9]  = {IMM3[11:0], 5'd1, `FNC_LB,  5'd10, `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 0] = {IMM0[11:0], 5'd1, `FNC_LW,  5'd2,  `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 1] = {IMM0[11:0], 5'd1, `FNC_LH,  5'd3,  `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 3] = {IMM1[11:0], 5'd1, `FNC_LH,  5'd4,  `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 4] = {IMM2[11:0], 5'd1, `FNC_LH,  5'd5,  `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 5] = {IMM3[11:0], 5'd1, `FNC_LH,  5'd6,  `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 6] = {IMM0[11:0], 5'd1, `FNC_LB,  5'd7,  `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 7] = {IMM1[11:0], 5'd1, `FNC_LB,  5'd8,  `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 8] = {IMM2[11:0], 5'd1, `FNC_LB,  5'd9,  `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 9] = {IMM3[11:0], 5'd1, `FNC_LB,  5'd10, `OPC_LOAD};
 
     `IMEM_PATH.mem[INST_ADDR + 10] = {IMM0[11:0], 5'd1, `FNC_LHU, 5'd11, `OPC_LOAD};
     `IMEM_PATH.mem[INST_ADDR + 11] = {IMM1[11:0], 5'd1, `FNC_LHU, 5'd12, `OPC_LOAD};
@@ -302,27 +301,27 @@ module Riscv151_testbench();
 
     `DMEM_PATH.mem[DATA_ADDR] = 32'hdeadbeef;
 
-    check_result_rf(5'd2,   32'hdeadbeef, "I-Type LW");
+    check_result_rf(5'd2,  32'hdeadbeef, "I-Type LW");
 
-    check_result_rf(5'd3,   32'hffffbeef, "I-Type LH 0");
-    check_result_rf(5'd4,   32'hffffbeef, "I-Type LH 1");
-    check_result_rf(5'd5,   32'hffffdead, "I-Type LH 2");
-    check_result_rf(5'd6,   32'hffffdead, "I-Type LH 3");
+    check_result_rf(5'd3,  32'hffffbeef, "I-Type LH 0");
+    check_result_rf(5'd4,  32'hffffbeef, "I-Type LH 1");
+    check_result_rf(5'd5,  32'hffffdead, "I-Type LH 2");
+    check_result_rf(5'd6,  32'hffffdead, "I-Type LH 3");
 
-    check_result_rf(5'd7,   32'hffffffef, "I-Type LB 0");
-    check_result_rf(5'd8,   32'hffffffbe, "I-Type LB 1");
-    check_result_rf(5'd9,   32'hffffffad, "I-Type LB 2");
-    check_result_rf(5'd10,  32'hffffffde, "I-Type LB 3");
+    check_result_rf(5'd7,  32'hffffffef, "I-Type LB 0");
+    check_result_rf(5'd8,  32'hffffffbe, "I-Type LB 1");
+    check_result_rf(5'd9,  32'hffffffad, "I-Type LB 2");
+    check_result_rf(5'd10, 32'hffffffde, "I-Type LB 3");
 
-    check_result_rf(5'd11,  32'h0000beef, "I-Type LHU 0");
-    check_result_rf(5'd12,  32'h0000beef, "I-Type LHU 1");
-    check_result_rf(5'd13,  32'h0000dead, "I-Type LHU 2");
-    check_result_rf(5'd14,  32'h0000dead, "I-Type LHU 3");
+    check_result_rf(5'd11, 32'h0000beef, "I-Type LHU 0");
+    check_result_rf(5'd12, 32'h0000beef, "I-Type LHU 1");
+    check_result_rf(5'd13, 32'h0000dead, "I-Type LHU 2");
+    check_result_rf(5'd14, 32'h0000dead, "I-Type LHU 3");
 
-    check_result_rf(5'd15,  32'h000000ef, "I-Type LBU 0");
-    check_result_rf(5'd16,  32'h000000be, "I-Type LBU 1");
-    check_result_rf(5'd17,  32'h000000ad, "I-Type LBU 2");
-    check_result_rf(5'd18,  32'h000000de, "I-Type LBU 3");
+    check_result_rf(5'd15, 32'h000000ef, "I-Type LBU 0");
+    check_result_rf(5'd16, 32'h000000be, "I-Type LBU 1");
+    check_result_rf(5'd17, 32'h000000ad, "I-Type LBU 2");
+    check_result_rf(5'd18, 32'h000000de, "I-Type LBU 3");
 
     // Test S-Type Insts --------------------------------------------------
     // - SW, SH, SB
@@ -343,24 +342,24 @@ module Riscv151_testbench();
     `RF_PATH.mem[9]  = 32'h3000_0080;
     `RF_PATH.mem[10] = 32'h3000_0090;
 
-    IMM0            = 32'h0000_0100;
-    IMM1            = 32'h0000_0101;
-    IMM2            = 32'h0000_0102;
-    IMM3            = 32'h0000_0103;
+    IMM0 = 32'h0000_0100;
+    IMM1 = 32'h0000_0101;
+    IMM2 = 32'h0000_0102;
+    IMM3 = 32'h0000_0103;
 
-    INST_ADDR       = 14'h0000;
+    INST_ADDR = 14'h0000;
 
-    DATA_ADDR0      = (`RF_PATH.mem[2]  + IMM0[11:0]) >> 2;
+    DATA_ADDR0 = (`RF_PATH.mem[2]  + IMM0[11:0]) >> 2;
 
-    DATA_ADDR1      = (`RF_PATH.mem[3]  + IMM0[11:0]) >> 2;
-    DATA_ADDR2      = (`RF_PATH.mem[4]  + IMM1[11:0]) >> 2;
-    DATA_ADDR3      = (`RF_PATH.mem[5]  + IMM2[11:0]) >> 2;
-    DATA_ADDR4      = (`RF_PATH.mem[6]  + IMM3[11:0]) >> 2;
+    DATA_ADDR1 = (`RF_PATH.mem[3]  + IMM0[11:0]) >> 2;
+    DATA_ADDR2 = (`RF_PATH.mem[4]  + IMM1[11:0]) >> 2;
+    DATA_ADDR3 = (`RF_PATH.mem[5]  + IMM2[11:0]) >> 2;
+    DATA_ADDR4 = (`RF_PATH.mem[6]  + IMM3[11:0]) >> 2;
 
-    DATA_ADDR5      = (`RF_PATH.mem[7]  + IMM0[11:0]) >> 2;
-    DATA_ADDR6      = (`RF_PATH.mem[8]  + IMM1[11:0]) >> 2;
-    DATA_ADDR7      = (`RF_PATH.mem[9]  + IMM2[11:0]) >> 2;
-    DATA_ADDR8      = (`RF_PATH.mem[10] + IMM3[11:0]) >> 2;
+    DATA_ADDR5 = (`RF_PATH.mem[7]  + IMM0[11:0]) >> 2;
+    DATA_ADDR6 = (`RF_PATH.mem[8]  + IMM1[11:0]) >> 2;
+    DATA_ADDR7 = (`RF_PATH.mem[9]  + IMM2[11:0]) >> 2;
+    DATA_ADDR8 = (`RF_PATH.mem[10] + IMM3[11:0]) >> 2;
 
     `IMEM_PATH.mem[INST_ADDR + 0] = {IMM0[11:5], 5'd1, 5'd2,  `FNC_SW, IMM0[4:0], `OPC_STORE};
 
@@ -374,14 +373,14 @@ module Riscv151_testbench();
     `IMEM_PATH.mem[INST_ADDR + 7] = {IMM2[11:5], 5'd1, 5'd9,  `FNC_SB, IMM2[4:0], `OPC_STORE};
     `IMEM_PATH.mem[INST_ADDR + 8] = {IMM3[11:5], 5'd1, 5'd10, `FNC_SB, IMM3[4:0], `OPC_STORE};
 
-    `DMEM_PATH.mem[DATA_ADDR0]    = 0;
-    `DMEM_PATH.mem[DATA_ADDR1]    = 0;
-    `DMEM_PATH.mem[DATA_ADDR3]    = 0;
-    `DMEM_PATH.mem[DATA_ADDR4]    = 0;
-    `DMEM_PATH.mem[DATA_ADDR5]    = 0;
-    `DMEM_PATH.mem[DATA_ADDR6]    = 0;
-    `DMEM_PATH.mem[DATA_ADDR7]    = 0;
-    `DMEM_PATH.mem[DATA_ADDR8]    = 0;
+    `DMEM_PATH.mem[DATA_ADDR0] = 0;
+    `DMEM_PATH.mem[DATA_ADDR1] = 0;
+    `DMEM_PATH.mem[DATA_ADDR3] = 0;
+    `DMEM_PATH.mem[DATA_ADDR4] = 0;
+    `DMEM_PATH.mem[DATA_ADDR5] = 0;
+    `DMEM_PATH.mem[DATA_ADDR6] = 0;
+    `DMEM_PATH.mem[DATA_ADDR7] = 0;
+    `DMEM_PATH.mem[DATA_ADDR8] = 0;
 
     check_result_dmem(DATA_ADDR0, 32'h12345678, "S-Type SW");
 
@@ -402,8 +401,8 @@ module Riscv151_testbench();
     IMM = 32'h7FFF_0123;
     INST_ADDR = 14'h0000;
 
-    `IMEM_PATH.mem[INST_ADDR + 0]   = {IMM[31:12], 5'd3, `OPC_LUI};
-    `IMEM_PATH.mem[INST_ADDR + 1]   = {IMM[31:12], 5'd4, `OPC_AUIPC};
+    `IMEM_PATH.mem[INST_ADDR + 0] = {IMM[31:12], 5'd3, `OPC_LUI};
+    `IMEM_PATH.mem[INST_ADDR + 1] = {IMM[31:12], 5'd4, `OPC_AUIPC};
 
     check_result_rf(3,  32'h7fff0000, "U-Type LUI");
     check_result_rf(4,  32'h8fff0004, "U-Type AUIPC"); // assume PC is 1000_0004
@@ -441,9 +440,9 @@ module Riscv151_testbench();
     INST_ADDR = 14'h0000;
     JUMP_ADDR = (`RF_PATH.mem[1] + IMM) >> 2;
 
-    `IMEM_PATH.mem[INST_ADDR + 0]   = {IMM[11:0],          5'd1, 3'b000, 5'd5, `OPC_JALR};
-    `IMEM_PATH.mem[INST_ADDR + 1]   = {`FNC7_0, 5'd2, 5'd1, `FNC_ADD_SUB, 5'd6, `OPC_ARI_RTYPE};
-    `IMEM_PATH.mem[JUMP_ADDR[13:0]] = {`FNC7_0, 5'd4, 5'd3, `FNC_ADD_SUB, 5'd7, `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 0]   = {IMM[11:0], 5'd1, 3'b000, 5'd5, `OPC_JALR};
+    `IMEM_PATH.mem[INST_ADDR + 1]   = {`FNC7_0,   5'd2, 5'd1, `FNC_ADD_SUB, 5'd6, `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[JUMP_ADDR[13:0]] = {`FNC7_0,   5'd4, 5'd3, `FNC_ADD_SUB, 5'd7, `OPC_ARI_RTYPE};
 
     check_result_rf(5'd5, 32'h1000_0004, "J-Type JALR");
     check_result_rf(5'd7, 700, "J-Type JALR");
@@ -523,8 +522,8 @@ module Riscv151_testbench();
       `RF_PATH.mem[4] = 400;
 
       // Test branch not taken
-      `IMEM_PATH.mem[INST_ADDR + 0]   = {IMM[12], IMM[10:5], 5'd2, 5'd1, BR_TYPE[i], IMM[4:1], IMM[11], `OPC_BRANCH};
-      `IMEM_PATH.mem[INST_ADDR + 1]   = {`FNC7_0, 5'd4, 5'd3, `FNC_ADD_SUB, 5'd5, `OPC_ARI_RTYPE};
+      `IMEM_PATH.mem[INST_ADDR + 0] = {IMM[12], IMM[10:5], 5'd2, 5'd1, BR_TYPE[i], IMM[4:1], IMM[11], `OPC_BRANCH};
+      `IMEM_PATH.mem[INST_ADDR + 1] = {`FNC7_0, 5'd4, 5'd3, `FNC_ADD_SUB, 5'd5, `OPC_ARI_RTYPE};
 
       check_result_rf(5'd5, 700, BR_NAME_NTK[i]);
     end
@@ -534,18 +533,16 @@ module Riscv151_testbench();
     reset();
 
     `RF_PATH.mem[1] = 100;
-    IMM           = 5'd16;
+    IMM       = 5'd16;
     INST_ADDR = 14'h0000;
 
-    `IMEM_PATH.mem[INST_ADDR + 0]   = {12'h51e, 5'd1, 3'b001, 5'd0, `OPC_CSR};
-    `IMEM_PATH.mem[INST_ADDR + 1]   = {12'h51e, IMM[4:0],  3'b101, 5'd0, `OPC_CSR};
+    `IMEM_PATH.mem[INST_ADDR + 0] = {12'h51e, 5'd1,     3'b001, 5'd0, `OPC_CSR};
+    `IMEM_PATH.mem[INST_ADDR + 1] = {12'h51e, IMM[4:0], 3'b101, 5'd0, `OPC_CSR};
 
     current_test_id = current_test_id + 1;
     current_test_type = "CSRRW Test";
     done = 0;
-    while (!(csr === `RF_PATH.mem[1])) begin
-      @(posedge clk);
-    end
+    wait (csr === `RF_PATH.mem[1]);
     done = 1;
 
     $display("[%d] Test CSRRW passed!", current_test_id);
@@ -553,9 +550,7 @@ module Riscv151_testbench();
     current_test_id = current_test_id + 1;
     current_test_type = "CSRRWI Test";
     done = 0;
-    while (!(csr === IMM)) begin
-      @(posedge clk);
-    end
+    wait (csr === IMM);
     done = 1;
 
     $display("[%d] Test CSRRWI passed!", current_test_id);
@@ -610,7 +605,7 @@ module Riscv151_testbench();
     // ALU->MEM hazard
     reset();
     init_rf();
-    `RF_PATH.mem[4]   = 32'h3000_0100;
+    `RF_PATH.mem[4] = 32'h3000_0100;
     IMM             = 32'h0000_0000;
     INST_ADDR       = 14'h0000;
     DATA_ADDR       = (`RF_PATH.mem[4] + IMM[11:0]) >> 2;
@@ -622,7 +617,7 @@ module Riscv151_testbench();
     // MEM->ALU hazard
     reset();
     init_rf();
-    `RF_PATH.mem[1]   = 32'h3000_0100;
+    `RF_PATH.mem[1] = 32'h3000_0100;
     IMM             = 32'h0000_0000;
     INST_ADDR       = 14'h0000;
     DATA_ADDR       = (`RF_PATH.mem[1] + IMM[11:0]) >> 2;
@@ -635,8 +630,8 @@ module Riscv151_testbench();
     // MEM->MEM hazard (store data)
     reset();
     init_rf();
-    `RF_PATH.mem[1]   = 32'h3000_0100;
-    `RF_PATH.mem[4]   = 32'h3000_0200;
+    `RF_PATH.mem[1] = 32'h3000_0100;
+    `RF_PATH.mem[4] = 32'h3000_0200;
     IMM             = 32'h0000_0000;
     INST_ADDR       = 14'h0000;
     DATA_ADDR0      = (`RF_PATH.mem[1] + IMM[11:0]) >> 2;
@@ -651,7 +646,7 @@ module Riscv151_testbench();
     // MEM->MEM hazard (store address)
     reset();
     init_rf();
-    `RF_PATH.mem[1]   = 32'h3000_0100;
+    `RF_PATH.mem[1] = 32'h3000_0100;
     IMM             = 32'h0000_0000;
     INST_ADDR       = 14'h0000;
     DATA_ADDR0      = (`RF_PATH.mem[1] + IMM[11:0]) >> 2;
@@ -706,6 +701,7 @@ module Riscv151_testbench();
 
     // ... what else?
     all_tests_passed = 1'b1;
+
     #100;
     $display("All tests passed!");
     $finish();
