@@ -369,7 +369,6 @@ module Riscv151 #(
   assign imem_wea = mem_wea & (alu_out[31:28] & 4'b1110 == 4'b0010) & (pc_ex_in[30] == 1'b1);
   // Data out from memory selection
   assign mem_sel_out = (alu_out[30] == 1'b1) ? bios_doutb : dmem_douta;
-  // Select part of mem_out according to byte address
 
   REGISTER #(
     .N(INST_WIDTH)
@@ -382,6 +381,7 @@ module Riscv151 #(
   assign mem_mask_byte_addr = alu_ex_out[1:0];
   assign mem_mask_inst_func_in = mem_mask_inst_in[14:12];
 
+  // Select part of mem_out according to byte address
   MEM_MASK #(
     .DATA_WIDTH(DMEM_DWIDTH)
   ) mem_out_mask (
@@ -391,6 +391,7 @@ module Riscv151 #(
     .data_out(mem_ex_out)
   );
 
+  // Registers used to synchronize clock between mem and alu
   REGISTER #(
     .N(DMEM_DWIDTH)
   ) ex_id_alu_out (
@@ -406,6 +407,9 @@ module Riscv151 #(
     .d  (ctrl_mem_to_reg_ex_in),
     .q  (ctrl_mem_to_reg_ex_out)
   );
+
+  // EX output selection
+  assign rd_id_in = ctrl_mem_to_reg_ex_out ? mem_ex_out : alu_ex_out;
 
   // Part of ID pipeline, buffer reg_we and addr_rd from EX
   REGISTER #(
@@ -423,8 +427,5 @@ module Riscv151 #(
     .d  (addr_rd_ex_in),
     .q  (addr_rd_id_in)
   );
-
-  // EX output selection
-  assign rd_id_in = ctrl_mem_to_reg_ex_out ? mem_ex_out : alu_ex_out;
 
 endmodule
