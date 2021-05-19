@@ -331,7 +331,8 @@ module Riscv151 #(
   wire [3:0] alu_func;
   wire [4:0] addr_rd_ex_in;
   wire [DMEM_DWIDTH - 1:0] alu_out, alu_ex_out;
-
+  wire [INST_WIDTH - 1:0] mem_mask_inst_in;
+  
   assign alu_func = {inst_ex_in[30], inst_ex_in[14:12]};
   assign addr_rd_ex_in = inst_ex_in[11:7];
 
@@ -351,25 +352,9 @@ module Riscv151 #(
     .alu_zero()
   );
 
-  // Part of ID pipeline, buffer reg_we and addr_rd from EX
-  REGISTER #(
-    .N(1)
-  ) ex_id_reg_we (
-    .clk(clk),
-    .d  (ctrl_reg_we_ex_in),
-    .q  (ctrl_reg_we_id_in)
-  );
-
-  REGISTER #(
-    .N(5)
-  ) ex_id_addr_rd (
-    .clk(clk),
-    .d  (addr_rd_ex_in),
-    .q  (addr_rd_id_in)
-  );
-
-  wire [1:0] mem_wea;
-  wire [DMEM_DWIDTH - 1:0] mem_ex_out;
+  wire [1:0] mem_wea, mem_mask_byte_addr;
+  wire [DMEM_DWIDTH - 1:0] mem_sel_out, mem_ex_out;
+  wire [2:0] mem_mask_inst_func_in;
   wire ctrl_mem_to_reg_ex_out;
 
   assign bios_addrb = alu_out[13:2];
@@ -383,7 +368,28 @@ module Riscv151 #(
   // Instruction Memory can be writted only if PC[30] == 1'b1;
   assign imem_wea = mem_wea & (alu_out[31:28] & 4'b1110 == 4'b0010) & (pc_ex_in[30] == 1'b1);
   // Data out from memory selection
-  assign mem_ex_out = (alu_out[30] == 1'b1) ? bios_doutb : dmem_douta;
+  assign mem_sel_out = (alu_out[30] == 1'b1) ? bios_doutb : dmem_douta;
+  // Select part of mem_out according to byte address
+
+  REGISTER #(
+    .N(INST_WIDTH)
+  ) mem_mask_inst_func (
+    .clk(clk),
+    .d(inst_ex_in),
+    .q(mem_mask_inst_in)
+  );
+
+  assign mem_mask_byte_addr = alu_ex_out[1:0];
+  assign mem_mask_inst_func_in = mem_mask_inst_in[14:12];
+
+  MEM_MASK #(
+    .DATA_WIDTH(DMEM_DWIDTH)
+  ) mem_out_mask (
+    .data_in(mem_sel_out),
+    .inst_func_in(mem_mask_inst_func_in),
+    .byte_addr_in(mem_mask_byte_addr),
+    .data_out(mem_ex_out)
+  );
 
   REGISTER #(
     .N(DMEM_DWIDTH)
@@ -399,6 +405,23 @@ module Riscv151 #(
     .clk(clk),
     .d  (ctrl_mem_to_reg_ex_in),
     .q  (ctrl_mem_to_reg_ex_out)
+  );
+
+  // Part of ID pipeline, buffer reg_we and addr_rd from EX
+  REGISTER #(
+    .N(1)
+  ) ex_id_reg_we (
+    .clk(clk),
+    .d  (ctrl_reg_we_ex_in),
+    .q  (ctrl_reg_we_id_in)
+  );
+
+  REGISTER #(
+    .N(5)
+  ) ex_id_addr_rd (
+    .clk(clk),
+    .d  (addr_rd_ex_in),
+    .q  (addr_rd_id_in)
   );
 
   // EX output selection
