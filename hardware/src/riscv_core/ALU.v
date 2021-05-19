@@ -7,7 +7,7 @@ module ALU #(
   parameter DWIDTH = 32
 ) (
   input [DWIDTH - 1:0] A,
-  B,
+  input [DWIDTH - 1:0] B,
   input [3:0] ctl,
   output [DWIDTH - 1:0] out,
   output zero
