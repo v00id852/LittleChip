@@ -3,7 +3,8 @@
 module CONTROL (
   input [6:0] opcode,
   output reg_write,
-  output [1:0] alu_src,
+  output [1:0] alu_src_a,
+  output [1:0] alu_src_b,
   output mem_write,
   output mem_read,
   output mem_to_reg,
@@ -30,14 +31,26 @@ module CONTROL (
       default: alu_op = 2'b00;
     endcase
   end
+  
+  reg [1:0] alu_src_a, alu_src_b;
 
-  reg [1:0] alu_src;
   always @(*) begin
-    if (opcode == `OPC_LOAD || opcode == `OPC_STORE || opcode == `OPC_ARI_ITYPE) begin
-      alu_src = 2'b01;
+    if (opcode == `OPC_LUI)
+      alu_src_a = 2'b01;
+    else
+      alu_src_a = 2'b00;
+  end
+
+  always @(*) begin
+    if (opcode == `OPC_LOAD  || 
+        opcode == `OPC_STORE || 
+        opcode == `OPC_ARI_ITYPE ||
+        opcode == `OPC_LUI) begin
+      // Immediate
+      alu_src_b = 2'b01;
     end else begin     
       // FIXME
-      alu_src = 2'b00;
+      alu_src_b = 2'b00;
     end
   end
 

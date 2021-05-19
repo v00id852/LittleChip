@@ -175,7 +175,8 @@ module Riscv151 #(
   wire ctrl_pc_src_id_out, ctrl_reg_we_id_out;
   wire ctrl_mem_write_id_out;
   wire ctrl_mem_read_id_out, ctrl_mem_to_reg_id_out;
-  wire [1:0] ctrl_alu_op_id_out, ctrl_alu_src_id_out;
+  wire [1:0] ctrl_alu_op_id_out;
+  wire [1:0] ctrl_alu_src_a_id_out, ctrl_alu_src_b_id_out;
 
   wire ctrl_reg_we_id_in;
   wire [DMEM_DWIDTH - 1:0] rd_id_in;
@@ -203,7 +204,8 @@ module Riscv151 #(
     .ctrl_alu_op(ctrl_alu_op_id_out),
     .ctrl_pc_src(ctrl_pc_src_id_out),
     .ctrl_reg_we(ctrl_reg_we_id_out),
-    .ctrl_alu_src(ctrl_alu_src_id_out),
+    .ctrl_alu_src_a(ctrl_alu_src_a_id_out),
+    .ctrl_alu_src_b(ctrl_alu_src_b_id_out),
     .ctrl_mem_write(ctrl_mem_write_id_out),
     .ctrl_mem_read(ctrl_mem_read_id_out),
     .ctrl_mem_to_reg(ctrl_mem_to_reg_id_out)
@@ -222,14 +224,23 @@ module Riscv151 #(
   wire ctrl_pc_src_ex_in, ctrl_reg_we_ex_in;
   wire ctrl_mem_we_ex_in;
   wire ctrl_mem_rd_ex_in, ctrl_mem_to_reg_ex_in;
-  wire [1:0] ctrl_alu_op_ex_in, ctrl_alu_src_ex_in;
+  wire [1:0] ctrl_alu_op_ex_in;
+  wire [1:0] ctrl_alu_src_a_ex_in, ctrl_alu_src_b_ex_in;
 
   REGISTER #(
     .N(2)
-  ) id_ex_ctrl_alu_src (
+  ) id_ex_ctrl_alu_src_a (
     .clk(clk),
-    .d  (ctrl_alu_src_id_out),
-    .q  (ctrl_alu_src_ex_in)
+    .d  (ctrl_alu_src_a_id_out),
+    .q  (ctrl_alu_src_a_ex_in)
+  );
+
+  REGISTER #(
+    .N(2)
+  ) id_ex_ctrl_alu_src_b(
+    .clk(clk),
+    .d(ctrl_alu_src_b_id_out),
+    .q(ctrl_alu_src_b_ex_in)
   );
 
   REGISTER #(
@@ -346,8 +357,8 @@ module Riscv151 #(
     .data_imm(imm_ex_in),
     .ctrl_alu_func(alu_func),
     .ctrl_alu_op(ctrl_alu_op_ex_in),
-    .ctrl_alu_src_a(2'b00),  // FIXME
-    .ctrl_alu_src_b(ctrl_alu_src_ex_in),  // FIXME
+    .ctrl_alu_src_a(ctrl_alu_src_a_ex_in),
+    .ctrl_alu_src_b(ctrl_alu_src_b_ex_in),
     .alu_out(alu_out),
     .alu_zero()
   );

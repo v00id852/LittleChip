@@ -19,6 +19,7 @@ module EX #(
   always @(*) begin
     case (ctrl_alu_src_a)
       2'b00:   alu_a = data_rs1;
+      2'b01:   alu_a = 0; // For LUI inst
       // TODO: add forwarding signals
       default: alu_a = data_rs1;
     endcase
