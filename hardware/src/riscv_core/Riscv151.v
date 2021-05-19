@@ -370,6 +370,7 @@ module Riscv151 #(
 
   wire [1:0] mem_wea;
   wire [DMEM_DWIDTH - 1:0] mem_ex_out;
+  wire ctrl_mem_to_reg_ex_out;
 
   assign bios_addrb = alu_out[13:2];
   assign dmem_addra = alu_out[15:2];
@@ -392,7 +393,15 @@ module Riscv151 #(
     .q  (alu_ex_out)
   );
 
+  REGISTER #(
+    .N(1)
+  ) ex_id_ctrl_mem_to_reg (
+    .clk(clk),
+    .d  (ctrl_mem_to_reg_ex_in),
+    .q  (ctrl_mem_to_reg_ex_out)
+  );
+
   // EX output selection
-  assign rd_id_in = ctrl_mem_to_reg_ex_in ? mem_ex_out : alu_ex_out;
+  assign rd_id_in = ctrl_mem_to_reg_ex_out ? mem_ex_out : alu_ex_out;
 
 endmodule
