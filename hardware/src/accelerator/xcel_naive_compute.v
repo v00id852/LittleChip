@@ -427,7 +427,7 @@ module xcel_naive_compute #(
 
 
   assign compute_idle = idle;
-  assign compute_done = compute_done_value & (~compute_start);
+  assign compute_done = compute_done_value;
 
   assign compute_done_next = 1'b1;
   assign compute_done_ce   = done;

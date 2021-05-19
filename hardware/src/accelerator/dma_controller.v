@@ -151,7 +151,7 @@ module dma_controller #(
   end
 
   assign dma_idle = idle;
-  assign dma_done = dma_done_value & (~dma_start);
+  assign dma_done = dma_done_value;
 
   assign dma_done_next = 1'b1;
   assign dma_done_ce   = done;

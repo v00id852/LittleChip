@@ -1351,9 +1351,11 @@ In-lab Checkoff: Demonstrate that your accelerator implementation \verb|xcel_opt
 Additionally, please write a short report (push to \textit{docs/}) with your answers to the following questions
 \begin{itemize}
 \item Sketch the block diagram of your accelerator design. What memory and compute optimizations would you like to highlight in your design?
-\item What is the speedup of your optimized accelerator on testing 128 images over the software execution? What about the baseline (naive) accelerator implementation?
+\item What is the speedup of your optimized accelerator on testing 128 images over the software execution in terms of \textbf{cycle count}? What about the baseline (naive) accelerator implementation?
 \item Where do you think the speedup comes from? What makes the software (CPU) execution so inefficient in comparison to the specialized hardware implementation?
-\item The RV32I instruction set encoding implemented in our Riscv151 does not have a multiply instruction. Therefore, a multiplication is carried out by a software routine instead (look at the \textbf{times} function in \texttt{mmult.c} as well as \texttt{cnn.c}). Can you come up with an approach to implement a \textit{multiply operation} for your processor (that should be more efficient than invoking \textbf{times} function)? How would you go about modifying the software code (e.g., \texttt{mmult.c}, \texttt{cnn.c} to support this new operation to improve the performance? You don't have to implement it, just briefly describe how you would do it and how many cycles it would take.
+\item The RV32I instruction set encoding implemented in our Riscv151 does not have a multiply instruction. Therefore, a multiplication is carried out by a software routine instead (look at the \textbf{times} function in \verb|mmult/mmult.c| as well as \verb|lenet/cnn.c|). Can you come up with an approach to implement a \textit{multiply operation} for your processor (that should be more efficient than invoking \textbf{times} function)? You don't have to implement it, just briefly describe how you would do it and how many cycles it would take.
+
+Your approach should also consider how you would go about modifying the software code (e.g., \verb|mmult/mmult.c|, or \verb|lenet/cnn.c|) to support this new operation in order to improve the performance of the program execution.
 
 \item What is the maximum achievable frequency of your implementation now? What is the resource utilization of your implementation (LUTs, FFs, BRAMs, DSPs)?
 \end{itemize}
