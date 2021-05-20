@@ -7,6 +7,7 @@ _minted*
 *.jou
 hardware/.Xil
 hardware/*_proj
+hardware/NA
 hardware/bitstream_files
 
 *.o

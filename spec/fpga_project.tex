@@ -186,7 +186,7 @@ The testbench only runs one test at a time. To run multiple tests, use the scrip
         \end{itemize}
           \item \verb|echo_testbench.v|: The testbench works with the software in \texttt{software/echo}. The CPU reads a character sent from the serial rx line and echoes it back to the serial tx line.
           \item \verb|bios_testbench.v|: The testbench works with the BIOS program. The testbench checks if your CPU can execute the instructions stored in the BIOS memory. The testbench also emulates user input sent over the serial rx line, and checks the BIOS message output obtained from the serial tx line.
-          \item \verb|strcmp_testbench.v|: The testbench works with the software in \texttt{software/strcmp}. This is an extra test for debugging.
+          \item \verb|software_testbench.v|: The testbench works with some software programs in \texttt{software/}. This is an extra test for debugging.
           \item \verb|c_testbench.v|: The testbench works with the software in \texttt{software/c\_test}. This is an extra test for debugging.
 
     \end{itemize}
@@ -430,7 +430,7 @@ A reasonable order in which to complete your testing is as follows:
   \item Test that your Riscv151 work with the \verb|Riscv151_testbench.v|
   \item Test the entire CPU one instruction at a time with hand-written assembly --- see \verb|assembly_testbench.v|
   \item Run the \verb|riscv-tests| ISA test suite
-  \item Some extra tests with other software C program, such as \verb|c_test| and \verb|strcmp|. They could help reveal more bugs -- see \verb|c_testbench.v| and \verb|strcmp_testbench.v|
+  \item Some extra tests with other software C program, such as \verb|c_test| and \verb|strcmp|. They could help reveal more bugs -- see \verb|c_testbench.v| and \verb|software_testbench.v|
   \item Test the CPU's memory mapped I/O --- see \verb|echo_testbench.v|
   \item Test the CPU's memory mapped I/O with BIOS software program --- see \verb|bios_testbench.v|
 \end{enumerate}
@@ -559,7 +559,11 @@ The testbench, acts like a host, sends multiple characters via the serial line, 
 
 In addition to the echo program, we also have other software programs such as
 
-\verb|software/c_test/c_test.c| and \verb|software/strcmp_test/strcmp_test.c|. 
+\verb|software/c_test/c_test.c|, \verb|software/strcmp/strcmp.c|, \verb|software/vecadd/vecadd.c|,
+
+\verb|software/fib/fib.c|, \verb|software/sum/sum.c|, \verb|software/replace/replace.c|,
+
+\verb|software/cachetest/cachetest.c|
 
 which you can test with the following commands
 
@@ -567,11 +571,13 @@ which you can test with the following commands
 
 # with iverilog
 make iverilog-sim tb=c_testbench
-make iverilog-sim tb=strcmp_testbench
+make iverilog-sim tb=software_testbench sw=strcmp
+make iverilog-sim tb=software_testbench sw=vecadd
 
 # with Vivado
 make sim tb=c_testbench
-make sim tb=strcmp_testbench
+make sim tb=software_testbench sw=strcmp
+make sim tb=software_testbench sw=vecadd
 
 \end{minted}
 
@@ -877,7 +883,7 @@ To keep things simple, your conv3D module is only required to handle convolution
 \includegraphics[width=0.5\textwidth]{images/conv3D.png}
 \end{center}
 
-\begin{minted}{C}
+\begin{minted}[fontsize=\footnotesize]{C}
 // Since the stride is 1 and no padding required, OFM_DIM = IFM_DIM - WT_DIM + 1
 
 #define OFM_SIZE  (OFM_DIM * OFM_DIM)
@@ -913,10 +919,10 @@ for (f = 0; f < OFM_DEPTH; f++) {
 
 \end{minted}
 
+\newpage
 \subsubsection{maxpool2D}
 
-\begin{minted}{C}
-
+\begin{minted}[fontsize=\footnotesize]{C}
 #define OFM_DIM  (IFM_SIZE / 2)
 #define OFM_SIZE (OFM_DIM * OFM_DIM)
 #define IFM_SIZE (IFM_DIM * IFM_DIM)
@@ -940,9 +946,11 @@ for (f = 0; f < OFM_DEPTH; f++) {
 }
 
 \end{minted}
+
+\newpage
 \subsubsection{fconn}
 
-\begin{minted}{C}
+\begin{minted}[fontsize=\footnotesize]{C}
 // In some sense, a fully-connected operation can also be view as conv3D
 // with WT_DIM == IFM_DIM (and OFM_DIM = 1)
 
@@ -1303,7 +1311,7 @@ in \verb|z1top_axi.v|.
 
 You are encouraged to visit the \href{http://eyeriss.mit.edu/tutorial.html}{MIT DNN Eyeriss tutorial} for ideas on how to build the accelerator for the 3D Convolution operation or CNN in general. The DNN Accelerators slides: \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-05-DNN-Accelerator-Architectures.pdf}{Part 1} and \href{http://www.rle.mit.edu/eems/wp-content/uploads/2019/06/Tutorial-on-DNN-06-RS-Dataflow-and-NoC.pdf}{Part 2} are particularly informative and might be useful for you as a starting point (check the \textit{Row-stationary architecture}). You can also design a conv2D accelerator and augment it to compute 3D Convolution. The slides \href{https://drive.google.com/file/d/1SJ6eUK9qJZXzZpeHY_D31d1M95nZMTjR/view?usp=sharing}{\textbf{here}} shows some detailed cycle-by-cycle operation of the engine and might be able to give you some ideas to get started.
 
-Alternatively, start with something simple that works first, then worry about optimization later. It makes sense to just copying all the weight data and a test image to on-chip BRAM before you start doing the computatation. Buffering the temporary result to another local buffer, and only write back to the DRAM once everything is done. Using burst mode is highly recommended. As a reference, you can take a look at the code in \verb|hardware/src/accelerator/dma_controller.v| to see some examples of how to setup a burst read/write request, and then how to convert the AXI interface to the BlockRAM interface and vice versa. You could do something similar to that in your accelerator. When implementing the bus read/write logic, adopt good practice when it comes to handshake: don't wire ready to valid or vice versa. Another good practice is to break the design to two modules as similar to the naive implementation: compute unit and memory interface unit. The memory interface unit handles reading and writing data to the DRAM, while the compute unit performs some computation (e.g., conv3D). For the compute unit, simplify the interface (e.g., BRAM interface) so that it allows you to concentrate on implementing and testing the functionality of the computation core.
+Alternatively, start with something simple that works first, then worry about optimization later. It makes sense to just copying all the weight data and a test image to on-chip BRAM before you start doing the computatation. Buffering the temporary result to another local buffer, and only writing back to the DRAM once everything is done. Using burst mode is highly recommended. As a reference, you can take a look at the code in \verb|hardware/src/accelerator/dma_controller.v| to see some examples of how to setup a burst read/write request, and then how to convert the AXI interface to the BlockRAM interface and vice versa. You could do something similar to that in your accelerator. When implementing the bus read/write logic, adopt good practice when it comes to handshake: don't wire ready to valid or vice versa. Another good practice is to break the design to two modules as similar to the naive implementation: compute unit and memory interface unit. The memory interface unit handles reading and writing data to the DRAM, while the compute unit performs some computation (e.g., conv3D). For the compute unit, simplify the interface (e.g., BRAM interface) so that it allows you to concentrate on implementing and testing the functionality of the computation core.
 
 Once you have the data on chip, the low-hanging fruit is doing some unrolling or pipelining for parallel execution. Make use of dual-port memory modules to allow you to have more parallel accesses. In addition, try not to use a monolithic memory for everything, but instead split it to smaller modules and assign one for each compute unit.
 
@@ -1323,7 +1331,7 @@ make iverilog-sim tb=conv3D_testbench
 
 If you would like to start from the naive version, you could try optimizing one unit at a time so that it becomes less overwhelming when you implement and debug your design. For example, start with the naive memory unit module: add burst mode or local memory buffers for memory optimization. Keep the naive compute unit module intact, then simulate with the \verb|xcel_testbench|, and test on the board to verify that your memory optimization works correctly. Once you're confident about your optimized memory unit, the next step is optimizing the compute unit. The loosely decoupling or handshaking interface between the given compute and the memory modules allows us to modularize the accelerator design to focus on doing and testing one thing at a time, which to a greater extent help ease the debugging effort. Once you have everything working, you can further simplify your implementation by removing the handshake mechanism if your compute unit only retrieves or writes data to some local buffers whose the access latency is statically known.
 
-Regarding the choices of buffers for memory optimization, you may use your own FIFO modules, or \verb|ASYNC_RAM| / \verb|SYNC_RAM| module templates from \verb|hardware/src/EECS151.v| depending on your implementation. However, recall in Lab3 and lectures, an \verb|ASYNC_RAM| gets mapped to the LUTRAM, while a \verb|SYNC_RAM| is synthesized to BRAM on the FPGA. Typically, LUTRAMs makes sense for implementing small data storage such as a $32\times32$ Register File in your RISC-V processor. At a greater scale and density, BRAMs would be a more appropriate choice and would help your design achieve much better QoR in terms of area and fmax. Note that on our PYNQ-Z1 platform, there are 17400x 64b LUTRAM cells in total, while the number of 36Kb BRAM cells is 140. You should do the calculation and budget your memory allocation appropriately to make sure that your design can accommodate the amount of data that you decide to fetch from the DRAM to on-chip storage.
+Regarding the choices of buffers for memory optimization, you may use your own FIFO modules, or \verb|ASYNC_RAM| / \verb|SYNC_RAM| module templates from \verb|hardware/src/EECS151.v| depending on your implementation. However, recall in Lab3 and lectures, an \verb|ASYNC_RAM| gets mapped to the LUTRAM, while a \verb|SYNC_RAM| is synthesized to BRAM on the FPGA. Typically, LUTRAMs makes sense for implementing small data storage such as a $32\times32$ Register File in your RISC-V processor. At a greater scale and density, BRAMs would be a more appropriate choice and would help your design achieve much better QoR in terms of area and maximum achievable frequency. Note that on our PYNQ-Z1 platform, there are 17400$\times$64b LUTRAM cells in total, while the number of 36Kb BRAM cells is 140. You should do the calculation and budget your memory allocation appropriately to make sure that your design can accommodate the amount of data that you decide to fetch from the DRAM to on-chip storage.
 
 When doing on-board testing (running the LeNet code on your FPGA), you may want to use the checksum function to verify if your implementation works correctly (similar to \texttt{mmult} case). Set \textit{NUM\_TEST\_IMAGES} to 1 to test with only the first image. The prediction result is 7, and below are the checksums of the OFM returned by each layer
 
