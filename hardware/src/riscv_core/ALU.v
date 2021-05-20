@@ -48,8 +48,16 @@ module ALUCtrl (
     case (alu_op)
       // ld/sd
       2'b00:   alu_ctrl = `ALU_CTRL_ADD;
-      // beq
-      2'b01:   alu_ctrl = `ALU_CTRL_SUB;
+      // B-Type
+      2'b01: begin
+        case (func[2:0])
+          `FNC_BLT:  alu_ctrl = `ALU_CTRL_SLT;
+          `FNC_BGE:  alu_ctrl = `ALU_CTRL_SLT;
+          `FNC_BLTU: alu_ctrl = `ALU_CTRL_SLTU;
+          `FNC_BGEU: alu_ctrl = `ALU_CTRL_SLTU;
+          default:   alu_ctrl = `ALU_CTRL_SUB;
+        endcase
+      end
       // R-Type
       2'b10: begin
         case (func)

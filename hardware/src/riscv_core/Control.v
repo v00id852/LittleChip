@@ -6,9 +6,11 @@ module CONTROL (
   output mem_write,
   output mem_read,
   output mem_to_reg,
-  output pc_src,
   output utype_src,
   output jtype_src,
+  output jalr_src,
+  output branch,
+  output jump,
   output [1:0] alu_op,
   output [1:0] alu_src_a,
   output [1:0] alu_src_b
@@ -21,16 +23,19 @@ module CONTROL (
   assign mem_read = opcode == `OPC_LOAD;
   assign mem_to_reg = opcode == `OPC_LOAD;
 
-  assign pc_src = (opcode == `OPC_BRANCH) ||
-                  (opcode == `OPC_JAL);
   // Decide utype rs1 is zero(LUI) or PC(AUIPC/J-type)
   assign utype_src = (opcode == `OPC_AUIPC) || 
                      (opcode == `OPC_JAL)   || 
                      (opcode == `OPC_JALR); 
   // Decide jtype rs2 is immediate or 4(JAL/JALR). 
-  // When jtype_src is asserted, utype_src must be asserted
+  // When jtype_src is asserted, utype_src must be asserted to use PC as rs1
   assign jtype_src = (opcode == `OPC_JAL) || 
                      (opcode == `OPC_JALR);
+
+  assign branch = opcode == `OPC_BRANCH;
+  assign jump = (opcode == `OPC_JAL) || (opcode == `OPC_JALR); 
+  // jalr_src is used to determine which is used to calculate next pc address
+  assign jalr_src = opcode == `OPC_JALR; 
 
   reg [1:0] alu_op;
 

@@ -3,6 +3,7 @@
 module HAZARD_DETECTION (
   input clk,
   input [6:0] opcode,
+  input ctrl_pc_src,
   output ctrl_id_reg_flush,
   output ctrl_zero_sel
 );
@@ -16,8 +17,8 @@ module HAZARD_DETECTION (
     .d(inst_flush_value),
     .q(ctrl_id_reg_flush)
   );
-  
-  assign inst_flush_value = (opcode == `OPC_JAL) || (opcode == `OPC_JALR);
+
+  assign inst_flush_value = ctrl_pc_src;
   // NOP
   assign ctrl_zero_sel = opcode == 6'b0;
 

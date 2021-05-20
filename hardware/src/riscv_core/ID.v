@@ -83,6 +83,8 @@ module ID #(
   wire ctrl_reg_we_inner;
   wire [1:0] ctrl_alu_src_a_inner, ctrl_alu_src_b_inner;
   wire ctrl_mem_write_inner, ctrl_mem_read_inner, ctrl_mem_to_reg_inner;
+  wire ctrl_jump, ctrl_branch;
+  wire ctrl_jalr_src;
 
   // Control Unit
   CONTROL control(
@@ -94,7 +96,9 @@ module ID #(
     .mem_write(ctrl_mem_write_inner),
     .mem_read(ctrl_mem_read_inner),
     .mem_to_reg(ctrl_mem_to_reg_inner),
-    .pc_src(ctrl_pc_src),
+    .branch(ctrl_branch),
+    .jump(ctrl_jump),
+    .jalr_src(ctrl_jalr_src),
     .utype_src(ctrl_utype_src),
     .jtype_src(ctrl_jtype_src)
   );
@@ -104,11 +108,24 @@ module ID #(
   HAZARD_DETECTION hd (
     .clk(clk),
     .opcode(inst[6:0]),
+    .ctrl_pc_src(ctrl_pc_src),
     .ctrl_id_reg_flush(ctrl_id_reg_flush),
     .ctrl_zero_sel(ctrl_zero_sel)
   );
 
-  // Avoid data hazard and control hazard
+  wire branch_taken;
+  wire [INST_WIDTH - 1:0] branch_pc_rs1;
+
+  BRANCH branch (
+    .rs1_in(rf_rd1),
+    .rs2_in(rf_rd2),
+    .func(inst[14:12]),
+    .taken(branch_taken)
+  );
+
+  assign ctrl_pc_src = ctrl_jump || (ctrl_branch && branch_taken);
+
+  // zero ex stage signals to avoid data hazard and control hazard
   assign ctrl_alu_op = ctrl_zero_sel ? 2'b00 : ctrl_alu_op_inner;
   assign ctrl_reg_we = ctrl_zero_sel ? 1'b0 : ctrl_reg_we_inner;
   assign ctrl_alu_src_a = ctrl_zero_sel ? 2'b00 : ctrl_alu_src_a_inner;
@@ -116,9 +133,10 @@ module ID #(
   assign ctrl_mem_write = ctrl_zero_sel ? 1'b0 : ctrl_mem_write_inner;
   assign ctrl_mem_read = ctrl_zero_sel ? 1'b0 : ctrl_mem_read_inner;
   assign ctrl_mem_to_reg = ctrl_zero_sel ? 1'b0 : ctrl_mem_to_reg_inner;
-  
-  // PC + immediate
-  assign branch_pc_new = pc + imm_gen_out;
+
+  // pc_new = rs1/PC + immediate
+  assign branch_pc_rs1 = ctrl_jalr_src ? data_rs1 : pc;
+  assign branch_pc_new = branch_pc_rs1 + imm_gen_out;
   assign data_utype_rs1 = ctrl_utype_src ? pc : {DWIDTH{1'b0}}; 
   assign data_imm = ctrl_jtype_src ? {{(DWIDTH - 3){1'b0}}, 3'd4} : imm_gen_out;
    
