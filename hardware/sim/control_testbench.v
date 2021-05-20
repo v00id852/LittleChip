@@ -4,7 +4,7 @@ module control_testbench;
 
   reg [6:0] opcode;
   wire ctrl_reg_write, ctrl_mem_write, ctrl_mem_read, ctrl_mem_to_reg, ctrl_pc_src;
-  wire ctrl_utype_src;
+  wire ctrl_utype_src, ctrl_jtype_src;
   wire [1:0] ctrl_alu_src_a, ctrl_alu_src_b;
   wire [1:0] ctrl_alu_op;
   CONTROL uut (
@@ -17,7 +17,8 @@ module control_testbench;
     .mem_to_reg(ctrl_mem_to_reg),
     .pc_src(ctrl_pc_src),
     .alu_op(ctrl_alu_op),
-    .utype_src(ctrl_utype_src)
+    .utype_src(ctrl_utype_src),
+    .jtype_src(ctrl_jtype_src)
   );
 
   task check_ctrl_signal;
@@ -73,11 +74,11 @@ module control_testbench;
       opcode = `OPC_LUI;
       #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src_a);
       opcode = `OPC_AUIPC;
-      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src_a);
+      #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src_a);
       opcode = `OPC_JAL;
-      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src_a);
+      #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src_a);
       opcode = `OPC_JALR;
-      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src_a); 
+      #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src_a); 
     end
   endtask
 
@@ -97,11 +98,11 @@ module control_testbench;
       opcode = `OPC_LUI;
       #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src_b);
       opcode = `OPC_AUIPC;
-      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src_b);
+      #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src_b);
       opcode = `OPC_JAL;
-      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src_b);
+      #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src_b);
       opcode = `OPC_JALR;
-      #1 check_ctrl_signal(opcode, 2'b00, ctrl_alu_src_b); 
+      #1 check_ctrl_signal(opcode, 2'b01, ctrl_alu_src_b); 
     end
   endtask
 
@@ -195,7 +196,7 @@ module control_testbench;
       opcode = `OPC_AUIPC;
       #1 check_ctrl_signal(opcode, 1'b0, ctrl_pc_src);
       opcode = `OPC_JAL;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_pc_src);
+      #1 check_ctrl_signal(opcode, 1'b1, ctrl_pc_src);
       opcode = `OPC_JALR;
       #1 check_ctrl_signal(opcode, 1'b0, ctrl_pc_src);   
     end
@@ -243,9 +244,33 @@ module control_testbench;
       opcode = `OPC_AUIPC;
       #1 check_ctrl_signal(opcode, 1'b1, ctrl_utype_src);
       opcode = `OPC_JAL;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);
+      #1 check_ctrl_signal(opcode, 1'b1, ctrl_utype_src);
       opcode = `OPC_JALR;
-      #1 check_ctrl_signal(opcode, 1'b0, ctrl_utype_src);    
+      #1 check_ctrl_signal(opcode, 1'b1, ctrl_utype_src);    
+    end
+  endtask
+
+  task check_ctrl_jtype_src;
+    begin
+      $display("====Check JTypeSrc====");
+      opcode = `OPC_ARI_ITYPE;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_jtype_src);
+      opcode = `OPC_ARI_RTYPE;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_jtype_src);
+      opcode = `OPC_LOAD;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_jtype_src);
+      opcode = `OPC_STORE;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_jtype_src);
+      opcode = `OPC_BRANCH;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_jtype_src);
+      opcode = `OPC_LUI;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_jtype_src);
+      opcode = `OPC_AUIPC;
+      #1 check_ctrl_signal(opcode, 1'b0, ctrl_jtype_src);
+      opcode = `OPC_JAL;
+      #1 check_ctrl_signal(opcode, 1'b1, ctrl_jtype_src);
+      opcode = `OPC_JALR;
+      #1 check_ctrl_signal(opcode, 1'b1, ctrl_jtype_src);   
     end
   endtask
 
@@ -258,6 +283,7 @@ module control_testbench;
     check_ctrl_mem_to_reg();
     check_ctrl_pc_src();
     check_ctrl_utype_src();
+    check_ctrl_jtype_src();
     $display("ALL CONTROL TESTS PASSED!");
     $finish;
   end

@@ -100,7 +100,7 @@ module Riscv151 #(
   localparam INST_WIDTH = 32;
 
   wire ctrl_pc_src;
-  wire [PC_WIDTH - 1:0] pc_new_val, pc_if_out;
+  wire [PC_WIDTH - 1:0] pc_new_if_in, pc_if_out;
 
   // IF part, fetch instruction from BIOS or IMEM
 
@@ -111,7 +111,7 @@ module Riscv151 #(
     .clk(clk),
     .rst(rst),
     .pc_sel_in(ctrl_pc_src),
-    .pc_new_in(pc_new_val),
+    .pc_new_in(pc_new_if_in),
     .pc_out(pc_if_out)
   );
 
@@ -122,8 +122,10 @@ module Riscv151 #(
   wire [IMEM_DWIDTH-1:0] imem_douta, imem_doutb;
   wire [IMEM_DWIDTH-1:0] imem_dina, imem_dinb;
   wire [3:0] imem_wea, imem_web;
+  wire imem_enb;
 
   wire [INST_WIDTH - 1:0] inst_if_out;
+  wire inst_if_flush;
 
   // Instruction Memory
   // Synchronous read: read takes one cycle
@@ -151,7 +153,8 @@ module Riscv151 #(
   assign bios_addra = pc_if_out[11:0];
   assign imem_addrb = pc_if_out[15:2];
   assign imem_web = 4'h0;  // FIXME
-  assign inst_if_out = pc_if_out[30] == 1'b1 ? bios_douta : imem_doutb;
+  assign inst_if_out = inst_if_flush ? 32'b0 : 
+                       (pc_if_out[30] == 1'b1) ? bios_douta : imem_doutb;
 
   // IF/ID Registers
   wire [  PC_WIDTH - 1:0] pc_id_in;
@@ -161,7 +164,7 @@ module Riscv151 #(
 
   REGISTER_R #(
     .N(PC_WIDTH),
-    .INIT(RESET_PC)
+    .INIT(0)
   ) if_id_pc (
     .d  (pc_if_out),
     .q  (pc_id_in),
@@ -173,9 +176,11 @@ module Riscv151 #(
   wire [DMEM_DWIDTH - 1:0] utype_rs1_id_out;
   wire [PC_WIDTH - 1:0] pc_branch_id_out;
   wire [DMEM_DWIDTH - 1:0] imm_id_out;
+  wire [INST_WIDTH - 1:0] pc_new_id_out;
   wire ctrl_pc_src_id_out, ctrl_reg_we_id_out;
   wire ctrl_mem_write_id_out;
   wire ctrl_mem_read_id_out, ctrl_mem_to_reg_id_out;
+  wire ctrl_id_reg_flush_id_out;
   wire [1:0] ctrl_alu_op_id_out;
   wire [1:0] ctrl_alu_src_a_id_out, ctrl_alu_src_b_id_out;
 
@@ -203,6 +208,7 @@ module Riscv151 #(
     .data_rs2(rs2_id_out),
     .data_imm(imm_id_out),
     .data_utype_rs1(utype_rs1_id_out),
+    .branch_pc_new(pc_new_id_out),
     .ctrl_alu_op(ctrl_alu_op_id_out),
     .ctrl_pc_src(ctrl_pc_src_id_out),
     .ctrl_reg_we(ctrl_reg_we_id_out),
@@ -210,8 +216,15 @@ module Riscv151 #(
     .ctrl_alu_src_b(ctrl_alu_src_b_id_out),
     .ctrl_mem_write(ctrl_mem_write_id_out),
     .ctrl_mem_read(ctrl_mem_read_id_out),
-    .ctrl_mem_to_reg(ctrl_mem_to_reg_id_out)
+    .ctrl_mem_to_reg(ctrl_mem_to_reg_id_out),
+    // flush IF/ID inst
+    .ctrl_id_reg_flush(ctrl_id_reg_flush_id_out)
   );
+
+  // PcSrc doesn't need pipeline
+  assign ctrl_pc_src = ctrl_pc_src_id_out;
+  // Control line to flush instruction in IF/ID stage
+  assign inst_if_flush = ctrl_id_reg_flush_id_out;
 
   assign addr_rs1_id_in = inst_id_in[19:15];
   assign addr_rs2_id_in = inst_id_in[24:20];
@@ -224,11 +237,14 @@ module Riscv151 #(
   wire [DMEM_DWIDTH - 1:0] imm_ex_in;
   wire [PC_WIDTH - 1:0] pc_ex_in;
 
-  wire ctrl_pc_src_ex_in, ctrl_reg_we_ex_in;
+  wire ctrl_reg_we_ex_in;
   wire ctrl_mem_we_ex_in;
   wire ctrl_mem_rd_ex_in, ctrl_mem_to_reg_ex_in;
   wire [1:0] ctrl_alu_op_ex_in;
   wire [1:0] ctrl_alu_src_a_ex_in, ctrl_alu_src_b_ex_in;
+
+  // Note: new pc value doesn't need to use register
+  assign pc_new_if_in = pc_new_id_out; 
 
   REGISTER #(
     .N(2)
@@ -244,14 +260,6 @@ module Riscv151 #(
     .clk(clk),
     .d  (ctrl_alu_src_b_id_out),
     .q  (ctrl_alu_src_b_ex_in)
-  );
-
-  REGISTER #(
-    .N(1)
-  ) id_ex_ctrl_pc_src (
-    .clk(clk),
-    .d  (ctrl_pc_src_id_out),
-    .q  (ctrl_pc_src_ex_in)
   );
 
   REGISTER #(
@@ -349,7 +357,6 @@ module Riscv151 #(
   );
 
   // EX Stage 
-  assign ctrl_pc_src = ctrl_pc_src_ex_in;
 
   wire [3:0] alu_func;
   wire [4:0] addr_rd_ex_in;
