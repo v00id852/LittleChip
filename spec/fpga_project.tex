@@ -540,7 +540,7 @@ The assembly dump files are extremely helpful in debugging at this stage. If you
 The \verb|RESET_PC| parameter is used in \verb|isa_testbench| to start the test in the IMEM instead of the BIOS.
 Make sure you have used it in \verb|Riscv151.v|.
 
-\subsection{Software Tests: Echo}
+\subsection{Software Tests}
 
 You should have your UART modules integrated with the CPU before running this test. The test verifies if your CPU is able to: check the UART status, read a character from UART Receiver, and write a character to UART Transmitter. Take a look at the software code \verb|software/echo/echo.c| to see what it does. The testbench loads the MIF file compiled from the software code, and load it to the BIOS memory in a similar manner to the assembly test and riscv-isa tests.
 
@@ -555,7 +555,7 @@ make iverilog-sim tb=echo_testbench
 make sim tb=echo_testbench
 \end{minted}
 
-The testbench, acts like a host, sends multiple characters via the serial line, then waits until it receives all the characters back. In some sense, it is similar to the echo test in Lab 5, however, the UART modules are controlled by the softwrae program (\verb|software/echo/echo.c|) running on your RISC-V CPU 
+The testbench, acts like a host, sends multiple characters via the serial line, then waits until it receives all the characters back. In some sense, it is similar to the echo test in Lab 5, however, the UART modules are controlled by the software program (\verb|software/echo/echo.c|) running on your RISC-V CPU
 
 In addition to the echo program, we also have other software programs such as
 
@@ -771,7 +771,7 @@ addi x1, x2, 100
 \item How do you handle branch control hazards? (What is the mispredict latency, what prediction scheme are you using, are you just injecting NOPs until the branch is resolved, what about data hazards in the branch?)
 \item How do you handle jump control hazards? Consider jal and jalr separately. What optimizations can be made to special-case handle jal? 
 \item What is the most likely critical path in your design?
-\item Where do the UART modules, instruction, and cycle counters go? How are you going to drive uart\_tx\_data\_in\_valid and uart\_rx\_data\_out\_ready (give logic expressions)?
+\item Where do the UART modules, instruction, and cycle counters go? How are you going to drive \verb|uart_tx_data_in_valid| and \verb|uart_rx_data_out_ready| (give logic expressions)?
 \item What is the role of the CSR register? Where does it go?
 \item When do we read from BIOS for instructions? When do we read from IMem for instructions? How do we switch from BIOS address space to IMem address space? In which case can we write to IMem, and why do we need to write to IMem? How do we know if a memory instruction is intended for DMem or any IO device?
 \end{enumerate}
