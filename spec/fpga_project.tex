@@ -635,7 +635,9 @@ In addition to the command interface, the BIOS allows you to load programs to th
 \end{minted}
 
 This stores the \verb|.mif| file at the specified hex address.
-In order to write into both the data and instruction memories, \textbf{remember to set the top nibble to 0x3} (i.e. \verb|scripts/hex_to_serial echo.mif 30000000|, assuming the \verb|.ld| file sets the base address to \verb|0x10000000|).
+In order to write into both the data and instruction memories, \textbf{remember to set the top nibble to 0x3}
+
+(i.e. \verb|scripts/hex_to_serial echo.mif 30000000|, assuming the \verb|.ld| file sets the base address to \verb|0x10000000|).
 
 You also need to ensure that the stack and base address are set properly (See Section \ref{toolchain}).
 For example, before making the \verb|mmult| program you should set the set the base address to \verb|0x10000000| (see \ref{mmult}).
@@ -810,7 +812,7 @@ Additionally, please find the maximum achievable frequency of your CPU implement
 In this checkpoint, your task is to design and implement an optimized hardware accelerator to speed up the inference execution of a small Convolutional Neural Network (CNN). You will be comparing the performance of your accelerator against the CNN software implementation running on the RISC-V processor that you have implemented in Checkpoint 2. Our target CNN is the classic LeNet-5 network used for handwritten digit classification. LeNet-5 is a feed-forward network that consists of 5 layers as shown in the following figure.
 
 \begin{center}
-\includegraphics[width=0.7\textwidth]{images/lenet.png}
+\includegraphics[width=0.8\textwidth]{images/lenet.png}
 \end{center}
 
 A rigorous understanding of deep neural networks is not required when you do this checkpoint, since we will provide the software model of the problem. Nonetheless, if you'd like to look at some introductory materials to get yourself acquainted with some Deep learning concepts, the \href{https://inst.eecs.berkeley.edu/~eecs151/sp21/files/EECS251Leture-JennyHuang_2021.pdf}{Deep Neural Networks Design and Examples} lecture or the lecture notes from \href{https://inst.eecs.berkeley.edu//~ee290-2/sp21/}{EE290-2} are good places to start.
@@ -947,7 +949,7 @@ for (f = 0; f < OFM_DEPTH; f++) {
 
 \end{minted}
 
-\newpage
+%\newpage
 \subsubsection{fconn}
 
 \begin{minted}[fontsize=\footnotesize]{C}
@@ -975,6 +977,7 @@ for (f = 0; f < OFM_DEPTH; f++) {
 
 \end{minted}
 
+\newpage
 \subsection{Naive conv3D: Sources of Inefficiency}
 
 A straight mapping from the software description to hardware implementation, without considering many inherent characteristics of the system (memory latency, buffering, available compute blocks, etc.), undoubtedly yields poor result. Have a look at the baseline conv3D implementation given to you: \verb|hardware/src/accelerator/xcel_naive.v|. There are a few weaknesses in this implementation.
@@ -1117,9 +1120,11 @@ Figure ~\ref{fig:z1top_axi} shows the Block design of the full system after runn
 make build-project proj=z1top_axi
 \end{minted}
 
-Our \verb|z1top.v| communicates with the Zynq PS through the AXI SmartConnect IP using the AXI4 bus interface. The Zynq PS also serves as a memory controller to the off-chip DRAM. Therefore, the only way for a module implemented in the Programmable Logic (PL) to access to the DRAM is through the Zynq PS. A High Performance AXI port (HP0) is used to communicate with the PL. The Zynq PS can be configured to use up to 4 HPs (HP0-3) to increase the memory bandwidth. For the sake of simplicity, we only use one HP port.
+Our \verb|z1top_axi.v| communicates with the Zynq PS through the AXI SmartConnect IP using the AXI4 bus interface. The Zynq PS also serves as a memory controller to the off-chip DRAM. Therefore, the only way for a module implemented in the Programmable Logic (PL) to access to the DRAM is through the Zynq PS. A High Performance AXI port (HP0) is used to communicate with the PL. The Zynq PS can be configured to use up to 4 HPs (HP0-3) to increase the memory bandwidth. For the sake of simplicity, we only use one HP port.
 
 Also note that the Zynq PS supplies the clock signal \verb|FCLK_CLK0| to the fabric modules. To avoid extra timing complexity concerning with multi-clock domains, we will not use our usual \verb|CLK_FPGA_125MHZ|, but rather rely on the clock signal from the PS to clock the synchronous logic of our implementation.
+
+If you are curious as how to build the project manually with the GUI, refer to the Appendix \ref{sec:vivado_bd} for the details.
 
 \subsection{System Integration with Riscv151}
 \subsubsection{Memory-mapped IO (MMIO) Registers for the DMA Controller and the Accelerator}
@@ -1329,7 +1334,7 @@ cd hardware
 make iverilog-sim tb=conv3D_testbench
 \end{minted}
 
-If you would like to start from the naive version, you could try optimizing one unit at a time so that it becomes less overwhelming when you implement and debug your design. For example, start with the naive memory unit module: add burst mode or local memory buffers for memory optimization. Keep the naive compute unit module intact, then simulate with the \verb|xcel_testbench|, and test on the board to verify that your memory optimization works correctly. Once you're confident about your optimized memory unit, the next step is optimizing the compute unit. The loosely decoupling or handshaking interface between the given compute and the memory modules allows us to modularize the accelerator design to focus on doing and testing one thing at a time, which to a greater extent help ease the debugging effort. Once you have everything working, you can further simplify your implementation by removing the handshake mechanism if your compute unit only retrieves or writes data to some local buffers whose the access latency is statically known.
+If you would like to start from the naive version, you could try optimizing one unit at a time so that it becomes less overwhelming when you implement and debug your design. For example, start with the naive memory unit module: add burst mode or local memory buffers for memory optimization. Keep the naive compute unit module intact, then simulate with the \verb|xcel_testbench|, and test on the board to verify that your memory optimization works correctly. Once you're confident about your optimized memory unit, the next step is optimizing the compute unit. The decoupled or handshake interface between the given compute and the memory modules allows us to modularize the accelerator design to focus on doing and testing one thing at a time, which to a greater extent help ease the debugging effort. Once you have everything working, you can further simplify your implementation by removing the handshake mechanism if your compute unit only retrieves or writes data to some local buffers whose the access latency is statically known.
 
 Regarding the choices of buffers for memory optimization, you may use your own FIFO modules, or \verb|ASYNC_RAM| / \verb|SYNC_RAM| module templates from \verb|hardware/src/EECS151.v| depending on your implementation. However, recall in Lab3 and lectures, an \verb|ASYNC_RAM| gets mapped to the LUTRAM, while a \verb|SYNC_RAM| is synthesized to BRAM on the FPGA. Typically, LUTRAMs makes sense for implementing small data storage such as a $32\times32$ Register File in your RISC-V processor. At a greater scale and density, BRAMs would be a more appropriate choice and would help your design achieve much better QoR in terms of area and maximum achievable frequency. Note that on our PYNQ-Z1 platform, there are 17400$\times$64b LUTRAM cells in total, while the number of 36Kb BRAM cells is 140. You should do the calculation and budget your memory allocation appropriately to make sure that your design can accommodate the amount of data that you decide to fetch from the DRAM to on-chip storage.
 
@@ -1345,7 +1350,7 @@ When doing on-board testing (running the LeNet code on your FPGA), you may want 
 
 If you are unsure why your prediction result is different from the expectation, try to isolate the problem by verifying the checksum of your accelerator execution against the software version at each layer of the network.
 
-As ever, always refer to the Synthesis log file as additional means for debugging, especially if your implementation passes the simulation (and you're sure that you have rigorously simulated it with different testcases), but fails to run correctly on the FPGA. The simulator takes the behavioral description (in Verilog) of your circuit as input, and that behavioral description gets translated to circuit netlist after Synthesis; mismatches could occur due to many reasons, so you should inspect the log file and check all the suspicious warnings. As we are using Block Design flow in this checkpoint, the Synthesis log file that you should pay attention to is located here \verb|z1top_axi_proj/z1top_axi_proj.runs/z1top_axi_bd_z1top_axi_0_0_synth_1/runme.log|.
+As ever, always refer to the Synthesis log file as an additional means for debugging, especially if your implementation passes the simulation (and you're sure that you have rigorously simulated it with different testcases), but fails to run correctly on the FPGA. The simulator takes the behavioral description (in Verilog) of your circuit as input, and that behavioral description gets translated to circuit netlist after Synthesis; mismatches could occur due to many reasons, so you should inspect the log file and check all the suspicious warnings. As we are using Block Design flow in this checkpoint, the Synthesis log file that you should pay attention to is located here \verb|z1top_axi_proj/z1top_axi_proj.runs/z1top_axi_bd_z1top_axi_0_0_synth_1/runme.log|.
 
 Please also feel free to add extra parameters to your accelerator. You need to change the MMIO addresses in software and your Riscv151 IO controller to support the new parameters.
 
@@ -1559,32 +1564,6 @@ Not included in the above tabulations are point assignments for extra credit as 
   \item[Up to 10\%] Additional functionality. Credit based on additional functionality will be qualified on a case by case basis. Students interested in expanding the functionality of their project must meet with a GSI well ahead of time to be qualified for extra credit. Point value will be decided by the course staff on a case by case basis, and will depend on the complexity of your proposal, the creativity of your idea, and relevance to the material taught.
 \end{description}
 
-%\section{Project Timeline}
-%\label{project_timeline}
-%
-%\begin{table}[h!]
-%  \centering
-%  \begin{center}
-%  \begin{tabular}{l l l}
-%    \toprule
-%    {Checkpoint} &{Deliverable} & {Due Date} \\
-%    \midrule
-%    1 \& 2: RISCV151 Processor & Design Review &  \blockDiagramDueDate\\
-%     & In-Lab Checkoff & \baseCPUDueDate \\
-%    \midrule
-%    3: IOs, FIFOs, PWM Controller, Synth & In-Lab Checkoff &  \audioDueDate \\
-%     & Project Interview & \\
-%    \midrule
-%    Final Checkoff, Extra Credit, &    In-Lab Checkoff        & \finalCheckoffDueDate \\
-%    and Optimizations             & Github code submission    &  \\
-%    \midrule
-%    Final Report                  &   Gradescope submission     & \finalReportDueDate \\
-%    \bottomrule
-%  \end{tabular}
-%  \end{center}
-%\caption{EECS151 \currentSemester \space Project Timeline}\label{tab:master}
-%\end{table}
-
 \newpage
 
 \appendix
@@ -1769,6 +1748,7 @@ features, you can either add to the code in the \verb|bios151v3.c| file or creat
 header files. Note that you do not have access to standard c libraries so you will have to add
 them yourself if you need additional library functionality.
 
+\newpage
 \section{Debugging with Vivado Integrated Logic Analyzer}
 \label{sec:vivado_ila}
 
@@ -1845,62 +1825,131 @@ We can also observe that the read data matches the write data.
 
 Try modifying the axi test program to test different scenarios until you understand how the bus works (e.g., increasing the DMA transfer length, or sending/receiving 32-bit data instead of 8-bit). Hopefully this example demonstrates to you how to use ILA to get meaningful messages in real time to debug your implementation.
 
+\newpage
+\section{Using Vivado IP Integrator for Block Design with Zynq Processing System}
+\label{sec:vivado_bd}
+
+This appendix shows you how to use Vivado IP Integrator (IPI) to build a Vivado project for Checkpoint 3 that involves the Zynq Processing System IP.
+
+As with many other Xilinx Zynq System-on-Chip platforms, the Zynq chip of our PYNQ-Z1 board consists of the Processing System part (PS) and the Programmable Logic part (PL) loosely coupled via the AXI bus. The Zynq PS contains the ARM cores controlling many hardware peripheral blocks as well as interfacing with the off-chip DRAM. For a user logic implemented in the PL, to communicate with the off-chip DRAM, it needs to talk to the Zynq PS using the AXI protocol. The user logic acts as an AXI master (initiates the bus transaction), and the Zynq PS is an AXI slave (services the transaction). To achieve high memory bandwidth, the Zynq PS provides four High-Performance AXI slave ports (HP). In some cases, an application running on the ARM cores may want to control or check the status of the user logic in the PL; that could be done with a lighter and low-bandwidth AXI bus (AXI-Lite) managed by the Zynq PS's general-purpose port (GP). This is the typical accelerator offload execution model in which a host processor offloads compute-intensive tasks to an accelerator (implemented in the Programmable Logic); there are numerous PYNQ design examples from which you can learn more if you're interested.
+
+\begin{center}
+\fbox{\includegraphics[width=1.0\textwidth]{images/vivado_ipi0.png}}
+\end{center}
+
+The setting in Checkpoint 3 is similar to this model in some sense. However, we use the RISC-V processor implemented in Checkpoint 2 instead of the ARM cores as the host processor to control the accelerator (xcel) and the DMA engine; the ARM processors are merely used to initialize the network data (images, weights, labels) in the main memory. Since the RISC-V core is implemented in the PL, we often refer to it as "soft processor" to distinguish with the hard processors such as ARM cores.
+
+We begin by creating a Vivado project as usual, then add all the source files under \verb|hardware/src| (excluding \verb|hardware/src/z1top.v| and \verb|hardware/src/clk_wiz.v|).
+Next, click \emph{Open Block Design} under \emph{IP Integrator}. Type the Design name (or just leave the default name), then click \emph{OK}.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi2.png}}
+\end{center}
+
+Next, on the Block Design canvas, right click, then type \texttt{Zynq Processing System} so that it appears on the drop-down menu, then add it to the canvas.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi3.png}}
+\end{center}
+
+On the green bar of the canvas, click on \emph{Run Block Automation}. A window will pop up, just click \emph{OK} to apply the default setting. This step automates the connection of the Zynq PS IP with the DDR as well as applying the board preset parameters defined in the board files.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi4.png}}
+\end{center}
+
+We can customize the Zynq IP by double-clicking on the IP. In the popped-up window, select tab \texttt{PS-PL Configuration}, expand the tab \texttt{HP Slave AXI Interface}, make sure to tick the \texttt{S AXI HP0 Interface}. This will enable the HP0 slave port of the IP. And since we are not using the ARM cores to control the accelerator, the General Purpose port is not necessary, so we can untick that option under the tab \texttt{AXI Non Secure Enablement} $\rightarrow$ \texttt{GP Master AXI Interface}.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi6.png}}
+\end{center}
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi9.png}}
+\end{center}
+
+Be sure to set the clock frequency of the Zynq PS as well, since the Zynq PS will generate the clock signal for the modules implemented in the programmable fabric. Also in the \texttt{Re-customize IP} window, select \texttt{Clock Configuration} $\rightarrow$ \texttt{PL Fabric clock}, set the \verb|FCLK_CLK0| clock requested frequency to 50MH (or any target clock you want to apply).
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi10.png}}
+\end{center}
+
+After we're done with the Zynq PS IP customization, click \emph{OK} to apply the changes.
+
+Next, add our source files to the Block Design canvas. Under the \texttt{Sources} pane, right click on \texttt{z1top\_axi}, then choose \emph{Add Module to Block Design}. This will add \verb|z1top_axi| to the Block Design canvas.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi5.png}}
+\end{center}
+
+Vivado will suggest some design assistance in the green bar. Click on \emph{Run Connection Automation}, then tick all the boxes in the popped-up window as follows to let Vivado manage the connections between the IPs and our \verb|z1top_axi| module, then hit \emph{OK} to close the window.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi7.png}}
+\end{center}
+
+The block connection should look like this. The AXI interface of the \verb|z1top_axi| module connects to port \texttt{S-HP0} of the Zynq PS via the SmartConnect IP. The SmartConnect IPs handles data-width conversion as well as protocol conversion (AXI4 vs. AXI3) to ensure that the bus transactions get requested and responsed correctly between the connected modules. There's another IP block named \texttt{Processor System Reset} which essentially generates the proper reset signal for the AXI bus logic of the IPs and ensures everything synchronized properly with the Zynq PS.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi8.png}}
+\end{center}
+
+Next, double click on the AXI interface of the \verb|z1top_axi|: \verb|aximm| to customize it. In the \texttt{Frequency} field, change the default value to \texttt{50000000} to match the requested clock frequency from the Zynq PS. This step is needed, otherwise Vivado will complains about frequency mismatch between different modules.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi11.png}}
+\end{center}
+
+Next, click on the ports \verb|CLK_125MHZ_FPGA|, \verb|BUTTONS[3:0]|, \verb|SWITCHES[1:0]|, \verb|LEDS[1:0]|. Right click and select \emph{Make External}. Vivado will create the block design's input and output pins connectting to those ports. Rename the external IO ports (drop the suffix \verb|_0|) to match the port names defined in the constraint file.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi12.png}}
+\end{center}
+
+Next, under the \texttt{Sources} pane, right click on the block design file (\verb|design_1|), select \emph{Create HDL Wrapper} to create an RTL wrapper for the block design. Just let Vivado manage wrapper and auto-update.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi13.png}}
+\end{center}
+
+Switch to the tab \texttt{Address Editor}, check if the AXIMM port of our user logic is mapped properly to the DRAM's memory address space.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi17.png}}
+\end{center}
+
+The final block design should be as follows.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi16.png}}
+\end{center}
+
+Click the \emph{Validate Design} button to validate the design to see if there is any outstanding issue. We can safely ignore the warning related to the SmartConnect IP on the common clock source. Save the design and generate the bitstream as how we usually do. After the bitstream is generated, we need to generate the Hardware Description File (hdf) so that we can bootstrap the ARM processors later. Click \emph{File} $\rightarrow$ \emph{Export} $\rightarrow$ \emph{Export Hardware}. Save the file to \verb|hardware/bitstream_files/sdk|.
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi17.png}}
+\end{center}
+
+
+Next, under the \texttt{TCL Console}, type the command
+
+\begin{verbatim}
+exec unzip -o bitstream_files/sdk/design_1_wrapper.hdf -d bitstream_files/sdk
+\end{verbatim}
+
+\begin{center}
+\fbox{\includegraphics[width=0.8\textwidth]{images/vivado_ipi19.png}}
+\end{center}
+
+to extract the files needed to bootstrap the ARM cores. Then we can run
+
+\texttt{make init-arm}
+
+This script will initialize the Zynq PS with the ps7 files generated from the Hardware Description file, including setting the clock frequency as requested when we configure the Zynq PS, among other things. It then launches the baremetal binary application \verb|arm_baremetal_app/system/Debug/system.elf| to initialize the network weights, images, and labels to the DRAM.
+
+The final step is programming the FPGA with the generated bitstream as usual.
+
+Remember that whenever you change a source file, click \textbf{Refresh Changed Modules} so that the changes take effective when you implement your design the next time. Also note that we only need to run the script \verb|init-arm| whenever a new clock is applied (and hence a new set of ps7 files), or the board is just turned on.
+
 \end{document}
 
-% ARCHIVE
-%\subsubsection{Music Streamer in Software}
-%Now that we have access to user I/Os and access to the tone generator, we can fully implement the music streamer and sequencer FSM from lab 4 entirely in software!
-%
-%The music streamer program can be found in \verb|software/music_streamer|. To use this program, use the same scripts from Lab 3 to generate a music data file from a MusicXML file, and then convert that data file to a static array declaration that can be used in a C program.
-%
-%\begin{minted}[frame=single]{bash}
-%python scripts/musicxml_parser.py musicxml/Row_Row_Row_Your_Boat.mxl music.txt
-%\end{minted}
-%
-%You will now have a \verb|music.txt| file in the \verb|/software/music_streamer| directory with the music data. Now we use the \verb|c_array_generator.py| script to create a static array declaration using this file.
-%
-%\begin{minted}[frame=single]{bash}
-%python scripts/c_array_generator.py music.h music.txt
-%\end{minted}
-%
-%Now, we have a file called \verb|music.h| that has a static array declaration filled with the music data. This serves exactly the same purpose as the ROM that was generated in Lab 3.
-%
-%To build the \verb|music_streamer| program and place it on your processor, execute:
-%\begin{minted}[frame=single]{bash}
-%make
-%hex_to_serial music_streamer.hex 3000a000
-%screen $SERIALTTY 115200
-%151> jal 1000a000
-%\end{minted}
-%
-%The \verb|music_streamer| functions exactly like it does in Lab 3, but the state machine that was implemented directly in hardware, is now implemented in software. Here is the state machine diagram for reference:
-%
-%\begin{center}
-%  \begin{tikzpicture}[shorten >=1pt, node distance=10cm,on grid, auto, semithick]
-%  \tikzstyle{state} = [draw, very thick, fill=white, rectangle, minimum height=3em, minimum width=7em, node distance=12em, font={\sffamily\bfseries}]
-%  \tikzstyle{stateEdgePortion} = [black,thick];
-%  \tikzstyle{stateEdge} = [stateEdgePortion,->];
-%  \tikzstyle{edgeLabel} = [pos=0.5, text centered, font={\sffamily\small}];
-%
-%  \node[state,initial](rp) {REGULAR\_PLAY};
-%  \node[state](revp) [below =of rp]{REVERSE\_PLAY};
-%  \node[state](p) [right=of rp]{PAUSED};
-%  \node[state](playseq) [above=of rp]{PLAY\_SEQ};
-%  \node[state](editseq) [left=of rp]{EDIT\_SEQ};
-%
-%  \path[->]
-%  (playseq) edge node [swap] {play\_pause} (p)
-%  edge node [swap] {switch\_mode} (editseq)
-%  edge node {} (rp)
-%  (editseq) edge node {} (playseq)
-%  (rp) edge node {play\_pause} (p)
-%  edge [swap] node {switch\_mode} (revp)
-%  edge node {switch\_fn} (playseq)
-%  (p) edge node {} (rp)
-%  edge [bend right, swap] node {switch\_fn} (playseq)
-%  (revp) edge [swap] node {play\_pause} (p)
-%  edge [swap] node {} (rp);
-%  \end{tikzpicture}
-%\end{center}
-%
-%The program will print out information as you transition the state machine, edit notes in the sequencer, and modify the tempo.
