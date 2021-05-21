@@ -189,6 +189,7 @@ module Riscv151 #(
   wire [4:0] addr_rs1_id_in, addr_rs2_id_in, addr_rd_id_in;
 
   wire ctrl_csr_we_id_out;
+  wire ctrl_csr_rd_id_out;
   wire [11:0] csr_addr_id_out;
   wire [2:0] csr_func_id_out;
 
@@ -225,6 +226,7 @@ module Riscv151 #(
     .ctrl_id_reg_flush(ctrl_id_reg_flush_id_out),
 
     .ctrl_csr_we(ctrl_csr_we_id_out),
+    .ctrl_csr_rd(ctrl_csr_rd_id_out),
     .csr_addr(csr_addr_id_out),
     .csr_func(csr_func_id_out)
   );
@@ -253,6 +255,7 @@ module Riscv151 #(
   wire [1:0] ctrl_alu_src_a_ex_in, ctrl_alu_src_b_ex_in;
 
   wire ctrl_csr_we_ex_in;
+  wire ctrl_csr_rd_ex_in;
   wire [11:0] csr_addr_ex_in;
   wire [2:0] csr_func_ex_in;
 
@@ -321,6 +324,14 @@ module Riscv151 #(
     .clk(clk),
     .d  (ctrl_csr_we_id_out),
     .q  (ctrl_csr_we_ex_in)
+  );
+
+  REGISTER #(
+    .N(1)
+  ) id_ex_ctrl_csr_rd (
+    .clk(clk),
+    .d  (ctrl_csr_rd_id_out),
+    .q  (ctrl_csr_rd_ex_in)
   );
 
   REGISTER_R #(
@@ -422,6 +433,7 @@ module Riscv151 #(
     .alu_out(alu_out),
 
     .ctrl_csr_we(ctrl_csr_we_ex_in),
+    .ctrl_csr_rd(ctrl_csr_rd_ex_in),
     .csr_addr(csr_addr_ex_in),
     .csr_func(csr_func_ex_in),
     .csr_data_out(csr_data_out)

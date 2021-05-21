@@ -1,7 +1,9 @@
 // Disc: Generate control signals decided by opcode
 `include "Opcode.vh"
-module CONTROL (
-  input [6:0] opcode,
+module CONTROL #(
+  parameter INST_WIDTH = 32
+) (
+  input [INST_WIDTH - 1:0] inst,
   output reg_write,
   output mem_write,
   output mem_read,
@@ -14,13 +16,19 @@ module CONTROL (
   output [1:0] alu_op,
   output [1:0] alu_src_a,
   output [1:0] alu_src_b,
-  output csr_we
+  output csr_we,
+  output csr_rd
 );
 
+  wire [6:0] opcode;
+  wire [4:0] rd_addr;
+
+  assign opcode = inst[6:0];
+  assign rd_addr = inst[11:7];
+
   // expecpt B and S
-  assign reg_write = (opcode != `OPC_BRANCH) && (opcode != `OPC_STORE);
-  // from register (0) or immediate (1)
-  assign mem_write = opcode == `OPC_STORE;
+  assign reg_write = (opcode != `OPC_BRANCH) && (opcode != `OPC_STORE) && (!(rd_addr == 5'd0));
+  assign mem_write = (opcode == `OPC_STORE);
   assign mem_read = opcode == `OPC_LOAD;
 
   // Decide utype rs1 is zero(LUI) or PC(AUIPC/J-type), rs2 must be immediate
@@ -33,8 +41,9 @@ module CONTROL (
   assign jump = (opcode == `OPC_JAL) || (opcode == `OPC_JALR);
   // jalr_src is used to determine which is used to calculate next pc address
   assign jalr_src = opcode == `OPC_JALR;
-
+  
   assign csr_we = opcode == `OPC_CSR;
+  assign csr_rd = opcode == `OPC_CSR && (!(rd_addr == 5'd0));
 
   assign mem_to_reg = (opcode == `OPC_CSR) ? 2'b01:
                       (opcode == `OPC_LOAD) ? 2'b10: 2'b00;

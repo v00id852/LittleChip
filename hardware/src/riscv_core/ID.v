@@ -31,6 +31,7 @@ module ID #(
   output ctrl_id_reg_flush,
 
   output ctrl_csr_we,
+  output ctrl_csr_rd,
   output [11:0] csr_addr,
   output [2:0] csr_func
 );
@@ -92,12 +93,15 @@ module ID #(
   wire [1:0] ctrl_mem_to_reg_inner;
   wire ctrl_mem_write_inner, ctrl_mem_read_inner;
   wire ctrl_csr_we_inner;
+  wire ctrl_csr_rd_inner;
   wire ctrl_jump, ctrl_branch;
   wire ctrl_jalr_src;
 
   // Control Unit
-  CONTROL control (
-    .opcode(inst[6:0]),
+  CONTROL #(
+    .INST_WIDTH(INST_WIDTH)
+  ) control (
+    .inst(inst),
     .alu_op(ctrl_alu_op_inner),
     .reg_write(ctrl_reg_we_inner),
     .alu_src_a(ctrl_alu_src_a_inner),
@@ -110,7 +114,8 @@ module ID #(
     .jalr_src(ctrl_jalr_src),
     .utype_src(ctrl_utype_src),
     .jtype_src(ctrl_jtype_src),
-    .csr_we(ctrl_csr_we_inner)
+    .csr_we(ctrl_csr_we_inner),
+    .csr_rd(ctrl_csr_rd_inner)
   );
 
   wire ctrl_zero_sel;
@@ -145,6 +150,7 @@ module ID #(
   assign ctrl_mem_read = ctrl_zero_sel ? 1'b0 : ctrl_mem_read_inner;
   assign ctrl_mem_to_reg = ctrl_zero_sel ? 2'b00 : ctrl_mem_to_reg_inner;
   assign ctrl_csr_we = ctrl_zero_sel ? 1'b0 : ctrl_csr_we_inner;
+  assign ctrl_csr_rd = ctrl_zero_sel ? 1'b0 : ctrl_csr_rd_inner;
 
   // pc_new = rs1/PC + immediate
   assign branch_pc_rs1 = ctrl_jalr_src ? data_rs1 : pc;

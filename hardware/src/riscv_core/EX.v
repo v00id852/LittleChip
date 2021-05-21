@@ -14,6 +14,7 @@ module EX #(
   input [1:0] ctrl_alu_src_b,
 
   input ctrl_csr_we,
+  input ctrl_csr_rd,
   input [11:0] csr_addr,
   input [2:0] csr_func,
 
@@ -73,7 +74,9 @@ module EX #(
   ) csr (
     .clk(clk),
     .we(ctrl_csr_we),
+    .rd(ctrl_csr_rd),
     .addr(csr_addr),
+    .func(csr_func),
     .data_in(csr_data_in),
     .data_out(csr_data_out)
   );
