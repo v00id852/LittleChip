@@ -173,9 +173,9 @@ module Riscv151 #(
 
   wire [DMEM_DWIDTH - 1:0] rs1_id_out, rs2_id_out;
   wire [DMEM_DWIDTH - 1:0] utype_rs1_id_out;
-  wire [PC_WIDTH - 1:0] pc_branch_id_out;
+  wire [PC_WIDTH - 1:0] pc_branch_id_out, pc_id_out;
   wire [DMEM_DWIDTH - 1:0] imm_id_out;
-  wire [INST_WIDTH - 1:0] pc_new_id_out;
+  wire [ INST_WIDTH - 1:0] pc_new_id_out;
   wire ctrl_pc_src_id_out, ctrl_reg_we_id_out;
   wire ctrl_mem_write_id_out;
   wire ctrl_mem_read_id_out;
@@ -212,7 +212,7 @@ module Riscv151 #(
     .data_rs1(rs1_id_out),
     .data_rs2(rs2_id_out),
     .data_imm(imm_id_out),
-    .data_utype_rs1(utype_rs1_id_out),
+    .data_pc(pc_id_out),
     .branch_pc_new(pc_new_id_out),
     .ctrl_alu_op(ctrl_alu_op_id_out),
     .ctrl_pc_src(ctrl_pc_src_id_out),
@@ -402,7 +402,7 @@ module Riscv151 #(
   ) id_ex_pc (
     .clk(clk),
     .rst(rst),
-    .d  (pc_id_in),
+    .d  (pc_id_out),
     .q  (pc_ex_in)
   );
 
@@ -425,7 +425,7 @@ module Riscv151 #(
     .data_rs1(rs1_ex_in),
     .data_rs2(rs2_ex_in),
     .data_imm(imm_ex_in),
-    .data_utype_rs1(utype_rs1_ex_in),
+    .data_pc(pc_ex_in),
     .ctrl_alu_func(alu_func),
     .ctrl_alu_op(ctrl_alu_op_ex_in),
     .ctrl_alu_src_a(ctrl_alu_src_a_ex_in),

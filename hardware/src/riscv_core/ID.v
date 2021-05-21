@@ -16,7 +16,7 @@ module ID #(
 
   output [DWIDTH - 1:0] data_rs1,
   output [DWIDTH - 1:0] data_rs2,
-  output [DWIDTH - 1:0] data_utype_rs1,
+  output [PC_WIDTH - 1:0] data_pc,
   output [DWIDTH - 1:0] data_imm,
 
   output [PC_WIDTH - 1:0] branch_pc_new,
@@ -112,8 +112,6 @@ module ID #(
     .branch(ctrl_branch),
     .jump(ctrl_jump),
     .jalr_src(ctrl_jalr_src),
-    .utype_src(ctrl_utype_src),
-    .jtype_src(ctrl_jtype_src),
     .csr_we(ctrl_csr_we_inner),
     .csr_rd(ctrl_csr_rd_inner)
   );
@@ -155,8 +153,9 @@ module ID #(
   // pc_new = rs1/PC + immediate
   assign branch_pc_rs1 = ctrl_jalr_src ? data_rs1 : pc;
   assign branch_pc_new = branch_pc_rs1 + imm_gen_out;
-  assign data_utype_rs1 = ctrl_utype_src ? pc : {DWIDTH{1'b0}};
-  assign data_imm = ctrl_jtype_src ? {{(DWIDTH - 3) {1'b0}}, 3'd4} : imm_gen_out;
+
+  assign data_imm = imm_gen_out;
+  assign data_pc  = pc;
 
   assign csr_addr = inst[31:20];
   assign csr_func = inst[14:12];

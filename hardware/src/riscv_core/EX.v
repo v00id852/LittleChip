@@ -1,13 +1,14 @@
 `include "Opcode.vh"
 
 module EX #(
-  parameter DWIDTH = 32
+  parameter DWIDTH = 32,
+  parameter INST_WIDTH = 32
 ) (
   input clk,
   input [DWIDTH - 1:0] data_rs1,
   input [DWIDTH - 1:0] data_rs2,
+  input [INST_WIDTH - 1:0] data_pc,
   input [DWIDTH - 1:0] data_imm,
-  input [DWIDTH - 1:0] data_utype_rs1,
   input [3:0] ctrl_alu_func,
   input [1:0] ctrl_alu_op,
   input [1:0] ctrl_alu_src_a,
@@ -27,8 +28,8 @@ module EX #(
   always @(*) begin
     case (ctrl_alu_src_a)
       2'b00:   alu_a = data_rs1;
-      2'b01:   alu_a = data_utype_rs1;  // For LUI/AUIPC inst
-      // TODO: add forwarding signals
+      2'b01:   alu_a = data_pc;  // For LUI/AUIPC inst
+      2'b10:   alu_a = {DWIDTH{1'b0}};
       default: alu_a = data_rs1;
     endcase
   end
@@ -37,7 +38,7 @@ module EX #(
     case (ctrl_alu_src_b)
       2'b00:   alu_b = data_rs2;
       2'b01:   alu_b = data_imm;
-      // TODO: add forwarding signals
+      2'b10:   alu_b = 32'd4;
       default: alu_b = data_rs2;
     endcase
   end
