@@ -10,6 +10,8 @@ module echo_testbench();
   localparam CHAR0     = 8'h61; // ~ 'a'
   localparam NUM_CHARS = 10;
 
+  localparam TIMEOUT_CYCLE = 10_000 * NUM_CHARS;
+
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;
 
@@ -28,8 +30,14 @@ module echo_testbench();
   );
 
   integer i, j, c, c1, c2;
-  reg done = 0;
-  reg [31:0] cycle = 0;
+  reg [31:0] cycle;
+  always @(posedge clk) begin
+    if (rst === 1)
+      cycle <= 0;
+    else
+      cycle <= cycle + 1;
+  end
+
   integer num_mismatches = 0;
 
   // this holds characters sent by the host via serial line
@@ -74,13 +82,13 @@ module echo_testbench();
 
       for (c2 = 0; c2 < NUM_CHARS; c2 = c2 + 1) begin
         // Wait until serial_out is LOW (start of transaction)
-        while (serial_out == 1) begin
-          @(posedge clk);
-        end
+        wait (serial_out === 1'b0);
 
         for (j = 0; j < 10; j = j + 1) begin
+          // sample output half-way through the baud period to avoid tricky edge cases
+          #(BAUD_PERIOD / 2);
           chars_to_host[c2][j] = serial_out;
-          #(BAUD_PERIOD);
+          #(BAUD_PERIOD / 2);
         end
 
         $display("[time %t, sim. cycle %d] [Host (tb) <-- FPGA_SERIAL_TX] Got char: start_bit=%b, payload=8'h%h, stop_bit=%b",
@@ -99,6 +107,7 @@ module echo_testbench();
     // Hold reset for a while
     repeat (10) @(posedge clk);
 
+    @(negedge clk);
     rst = 0;
 
     // Delay for some time
@@ -112,8 +121,6 @@ module echo_testbench();
         fpga_to_host();
       end
     join
-
-    done = 1;
 
     // Check results
     for (c = 0; c < NUM_CHARS; c = c + 1) begin
@@ -134,18 +141,9 @@ module echo_testbench();
   end
 
   initial begin
-    while (rst == 1) begin
-      @(posedge clk);
-    end
-
-    // Timeout in 10000 * NUM_CHARS cycles
-    for (cycle = 0; cycle < 10000 * NUM_CHARS; cycle = cycle + 1) begin
-      if (!done) @(posedge clk);
-    end
-
-    if (!done) begin
-      $display("[FAILED] Timing out");
-      $finish();
-    end
+    repeat (TIMEOUT_CYCLE) @(posedge clk);
+    $display("Timeout!");
+    $finish();
   end
+
 endmodule

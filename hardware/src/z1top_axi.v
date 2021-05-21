@@ -121,8 +121,8 @@ module z1top_axi #(
 
     // Acccelerator Interfacing
     .xcel_start(xcel_start),
-    .xcel_idle(xcel_idle),
-    .xcel_done(xcel_done),
+    .xcel_idle(xcel_idle & (~xcel_start)),
+    .xcel_done(xcel_done & (~xcel_start)),
 
     .ifm_ddr_addr(ifm_ddr_addr),
     .wt_ddr_addr(wt_ddr_addr),
@@ -136,8 +136,8 @@ module z1top_axi #(
 
     // DMA Interfacing
     .dma_start(dma_start),
-    .dma_done(dma_done),
-    .dma_idle(dma_idle),
+    .dma_done(dma_done & (~dma_start)),
+    .dma_idle(dma_idle & (~dma_start)),
     .dma_dir(dma_dir),
     .dma_src_addr(dma_src_addr),
     .dma_dst_addr(dma_dst_addr),
@@ -364,9 +364,11 @@ module z1top_axi #(
 
   wire xcel_busy;
 
+  // High when the accelerator is running
+  // Low when the accelerator is done (but yet to be restarted)
   REGISTER_R_CE #(.N(1)) acc_busy_reg (
     .clk(axi_clk),
-    .rst(xcel_done | ~axi_resetn | reset),
+    .rst((xcel_done & ~xcel_start) | ~axi_resetn | reset),
     .d(1'b1),
     .q(xcel_busy),
     .ce(xcel_start)

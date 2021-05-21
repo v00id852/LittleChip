@@ -5,9 +5,11 @@
 *.vcd
 _minted*
 *.swp
-hardware/src/.Xil
-hardware/src/*proj
-hardware/src/bitstream_files
+*.jou
+hardware/.Xil
+hardware/*_proj
+hardware/NA
+hardware/bitstream_files
 
 *.o
 *.bin

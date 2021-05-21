@@ -8,6 +8,8 @@ module c_testbench();
   localparam BAUD_RATE       = 115_200;
   localparam BAUD_PERIOD     = 1_000_000_000 / BAUD_RATE; // 8680.55 ns
 
+  localparam TIMEOUT_CYCLE = 100_000;
+
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;
 
@@ -26,8 +28,13 @@ module c_testbench();
   );
 
   integer i, j;
-  reg done = 0;
-  reg [31:0] cycle = 0;
+  reg [31:0] cycle;
+  always @(posedge clk) begin
+    if (rst === 1)
+      cycle <= 0;
+    else
+      cycle <= cycle + 1;
+  end
 
   // Host off-chip UART --> FPGA on-chip UART (receiver)
   // The host (testbench) sends a character to the CPU via the serial line
@@ -59,7 +66,7 @@ module c_testbench();
     input [7:0] expected_char;
     begin
       // Wait until serial_out is LOW (start of transaction)
-      while (serial_out == 1) begin
+      while (serial_out === 1) begin
         @(posedge clk);
       end
 
@@ -68,7 +75,7 @@ module c_testbench();
         #(BAUD_PERIOD);
       end
 
-      if (expected_char == char_out[8:1])
+      if (expected_char === char_out[8:1])
         test_status = "PASSED";
       else
         test_status = "FAILED";
@@ -92,6 +99,7 @@ module c_testbench();
     // Hold reset for a while
     repeat (10) @(posedge clk);
 
+    @(negedge clk);
     rst = 0;
 
     // Delay for some time
@@ -125,12 +133,9 @@ module c_testbench();
     join
 
     // Wait until csr is updated
-    while (csr === 0) begin
-      @(posedge clk);
-    end
-    done = 1;
+    wait (csr !== 0)
 
-    if (csr[0] === 1'b1 && csr[31:1] === 31'd0) begin
+    if (csr === 32'b1) begin
       $display("[%d sim. cycles] CSR test PASSED! Strings matched.", cycle);
     end else begin
       $display("[%d sim. cycles] CSR test FAILED! Strings mismatched.", cycle);
@@ -141,19 +146,9 @@ module c_testbench();
   end
 
   initial begin
-    while (rst == 1) begin
-      @(posedge clk);
-    end
-
-    // Timeout in 200000 cycles
-    for (cycle = 0; cycle < 100000; cycle = cycle + 1) begin
-      if (!done) @(posedge clk);
-    end
-
-    if (!done) begin
-      $display("[FAILED] Timing out");
-      $finish();
-    end
+    repeat (TIMEOUT_CYCLE) @(posedge clk);
+    $display("Timeout!");
+    $finish();
   end
 
 endmodule

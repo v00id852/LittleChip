@@ -44,7 +44,7 @@ uint32_t mmult() {
                 int32_t a = *(A + (i << N) + k);
                 int32_t b = *(B + (k << N) + j);
                 int32_t prod = times(a, b);
-                *s = *s + times(a, b);
+                *s = *s + prod;
             }
             sum += *s;
         }

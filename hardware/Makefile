@@ -5,8 +5,6 @@ VERILOG_SRCS += $(wildcard src/riscv_core/*.v)
 VERILOG_SRCS += $(wildcard src/accelerator/*.v)
 VERILOG_SIMS := $(wildcard sim/*.v)
 
-#Z1TOP_XPR := z1top_proj/z1top_proj.xpr
-
 tb := assembly_testbench
 
 ifeq ($(tb), assembly_testbench)
@@ -15,11 +13,11 @@ else ifeq ($(tb), echo_testbench)
 sw   = echo
 else ifeq ($(tb), c_testbench)
 sw = c_test
-else ifeq ($(tb), strcmp_testbench)
-sw = strcmp
 else ifeq ($(tb), isa_testbench)
 sw = riscv-isa-tests
 test = all
+else
+test = $(sw)
 endif
 
 BIOS_MIF := ../software/bios151v3/bios151v3.mif
@@ -138,4 +136,9 @@ init-arm:
 .PHONY: clean
 # "make clean" won't remove your project folders
 clean:
-		rm -rf *.log *.jou *.str *.vcd *.out *.mif
+		rm -rf *.log *.jou *.str *.vcd *.out *.mif NA
+
+# "make veryclean" removes the project folders and bitstream files
+veryclean:
+		rm -rf *.log *.jou *.str *.vcd *.out *.mif NA z1top* bitstream_files
+

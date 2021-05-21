@@ -82,7 +82,7 @@ module alu_testbench;
     end
   endtask
 
-  task check_alu_minus;
+  task check_alu_sub;
     begin
       $display("====ALU Minus Test====");
       ctl = 6;
@@ -133,14 +133,18 @@ module alu_testbench;
     end
   endtask
 
-
   initial begin
     check_alu_and();
     check_alu_or();
     check_alu_add();
-    check_alu_minus();
+    check_alu_sub();
     check_alu_less();
+    check_alu_sltu();
     check_alu_nor();
+    // check_alu_sll();
+    // check_alu_xor();
+    // check_alu_srl();
+    // check_alu_sra();
     $display("ALL ALU TESTS PASSED!");
   end
 
