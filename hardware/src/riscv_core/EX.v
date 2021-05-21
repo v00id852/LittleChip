@@ -9,10 +9,13 @@ module EX #(
   input [DWIDTH - 1:0] data_rs2,
   input [INST_WIDTH - 1:0] data_pc,
   input [DWIDTH - 1:0] data_imm,
+  input [DWIDTH - 1:0] forward_alu_out,
   input [3:0] ctrl_alu_func,
   input [1:0] ctrl_alu_op,
   input [1:0] ctrl_alu_src_a,
   input [1:0] ctrl_alu_src_b,
+  input [1:0] ctrl_forward_a_sel,
+  input [1:0] ctrl_forward_b_sel,
 
   input ctrl_csr_we,
   input ctrl_csr_rd,
@@ -23,23 +26,38 @@ module EX #(
   output [DWIDTH - 1:0] alu_out
 );
 
+  reg [DWIDTH - 1:0] data_alu_a, data_alu_b;
   reg [DWIDTH - 1:0] alu_a, alu_b;
 
   always @(*) begin
     case (ctrl_alu_src_a)
-      2'b00:   alu_a = data_rs1;
-      2'b01:   alu_a = data_pc;  // For LUI/AUIPC inst
-      2'b10:   alu_a = {DWIDTH{1'b0}};
-      default: alu_a = data_rs1;
+      2'b00:   data_alu_a = data_rs1;
+      2'b01:   data_alu_a = data_pc;  // For LUI/AUIPC inst
+      2'b10:   data_alu_a = {DWIDTH{1'b0}};
+      default: data_alu_a = data_rs1;
     endcase
   end
 
   always @(*) begin
     case (ctrl_alu_src_b)
-      2'b00:   alu_b = data_rs2;
-      2'b01:   alu_b = data_imm;
-      2'b10:   alu_b = 32'd4;
-      default: alu_b = data_rs2;
+      2'b00:   data_alu_b = data_rs2;
+      2'b01:   data_alu_b = data_imm;
+      2'b10:   data_alu_b = 32'd4;
+      default: data_alu_b = data_rs2;
+    endcase
+  end
+
+  always @(*) begin
+    case (ctrl_forward_a_sel)
+      2'b01: alu_a = forward_alu_out;
+      default: alu_a = data_alu_a;
+    endcase
+  end
+
+  always @(*) begin
+    case (ctrl_forward_b_sel)
+      2'b01: alu_b = forward_alu_out;
+      default: alu_b = data_alu_b;
     endcase
   end
 
