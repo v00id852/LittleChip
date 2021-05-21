@@ -10,7 +10,7 @@ module IMM_GEN #(
   output [DWIDTH - 1:0] imm_out
 );
 
-  wire [DWIDTH - 1:0] imm_I, imm_S, imm_B, imm_U, imm_J;
+  wire [DWIDTH - 1:0] imm_I, imm_S, imm_B, imm_U, imm_J, imm_CSR;
 
   // B is similar to S, J is similar to U
   assign imm_I = {{(DWIDTH - 12) {inst_in[31]}}, inst_in[31:20]};
@@ -22,6 +22,7 @@ module IMM_GEN #(
   assign imm_J = {
     {(DWIDTH - 21) {inst_in[31]}}, inst_in[31], inst_in[19:12], inst_in[20], inst_in[30:21], 1'b0
   };
+  assign imm_CSR = {{(DWIDTH - 5) {1'b0}}, inst_in[19:15]};
 
   reg [DWIDTH - 1:0] imm_out;
 
@@ -36,9 +37,10 @@ module IMM_GEN #(
         else imm_out = imm_U;
       end
       2'b11: begin
-        if (inst_in[3:2] == 2'b11) imm_out = imm_J;
-        else if (inst_in[3:2] == 2'b01) imm_out = imm_I;
-        else if (inst_in[3:2] == 2'b00) imm_out = imm_B;
+        if (inst_in[4:2] == 3'b011) imm_out = imm_J;
+        else if (inst_in[4:2] == 3'b001) imm_out = imm_I;
+        else if (inst_in[4:2] == 3'b000) imm_out = imm_B;
+        else if (inst_in[4:2] == 3'b100) imm_out = imm_CSR;
         else imm_out = {DWIDTH{1'b0}};
       end
       default: imm_out = {DWIDTH{1'b0}};
