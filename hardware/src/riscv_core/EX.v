@@ -1,18 +1,24 @@
+`include "Opcode.vh"
+
 module EX #(
   parameter DWIDTH = 32
 ) (
   input clk,
-  input [DWIDTH - 1:0] data_rs1, data_rs2,
+  input [DWIDTH - 1:0] data_rs1,
+  input [DWIDTH - 1:0] data_rs2,
   input [DWIDTH - 1:0] data_imm,
   input [DWIDTH - 1:0] data_utype_rs1,
   input [3:0] ctrl_alu_func,
   input [1:0] ctrl_alu_op,
-  input [1:0] ctrl_alu_src_a, ctrl_alu_src_b,
-  // input ctrl_mem_we, ctrl_mem_rd,
-  // input ctrl_mem_to_reg,
+  input [1:0] ctrl_alu_src_a,
+  input [1:0] ctrl_alu_src_b,
 
-  output [DWIDTH - 1:0] alu_out,
-  output alu_zero
+  input ctrl_csr_we,
+  input [11:0] csr_addr,
+  input [2:0] csr_func,
+
+  output [DWIDTH - 1:0] csr_data_out,
+  output [DWIDTH - 1:0] alu_out
 );
 
   reg [DWIDTH - 1:0] alu_a, alu_b;
@@ -20,7 +26,7 @@ module EX #(
   always @(*) begin
     case (ctrl_alu_src_a)
       2'b00:   alu_a = data_rs1;
-      2'b01:   alu_a = data_utype_rs1; // For LUI/AUIPC inst
+      2'b01:   alu_a = data_utype_rs1;  // For LUI/AUIPC inst
       // TODO: add forwarding signals
       default: alu_a = data_rs1;
     endcase
@@ -46,37 +52,30 @@ module EX #(
   ALU #(
     .DWIDTH(DWIDTH)
   ) alu (
-    .A(alu_a),
-    .B(alu_b),
+    .A  (alu_a),
+    .B  (alu_b),
     .ctl(alu_ctrl_out),
-    .out(alu_out),
-    .zero(alu_zero)
+    .out(alu_out)
   );
 
-  // localparam DMEM_AWIDTH = 14;
-  // localparam DMEM_DWIDTH = DWIDTH;
+  reg [DWIDTH - 1:0] csr_data_in;
 
-  // wire [DMEM_AWIDTH-1:0] dmem_addra;
-  // wire [DMEM_DWIDTH-1:0] dmem_dina, dmem_douta;
-  // wire [3:0] dmem_wea;
-  // wire dmem_en;
+  always @(*) begin
+    case (csr_func)
+      `FNC_CSRRW: csr_data_in = data_rs1;
+      `FNC_CSRRWI: csr_data_in = data_imm;
+      default: csr_data_in = data_rs1;
+    endcase
+  end
 
-  // // Data Memory
-  // // Synchronous read: read takes one cycle
-  // // Synchronous write: write takes one cycle
-  // // Write-byte-enaBLe: select which of the four bytes to write
-  // SYNC_RAM_WBE #(
-  //   .AWIDTH(DMEM_AWIDTH),
-  //   .DWIDTH(DMEM_DWIDTH)
-  // ) dmem (
-  //   .q(dmem_douta),    // output
-  //   .d(dmem_dina),     // input
-  //   .addr(dmem_addra), // input
-  //   .wbe(dmem_wea),    // input
-  //   .en(dmem_en),
-  //   .clk(clk)
-  // );
-
-  // // FIXME: lh/lb
+  CSR #(
+    .DWIDTH(DWIDTH)
+  ) csr (
+    .clk(clk),
+    .we(ctrl_csr_we),
+    .addr(csr_addr),
+    .data_in(csr_data_in),
+    .data_out(csr_data_out)
+  );
 
 endmodule

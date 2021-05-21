@@ -5,7 +5,7 @@ module CONTROL (
   output reg_write,
   output mem_write,
   output mem_read,
-  output mem_to_reg,
+  output [1:0] mem_to_reg,
   output utype_src,
   output jtype_src,
   output jalr_src,
@@ -13,7 +13,8 @@ module CONTROL (
   output jump,
   output [1:0] alu_op,
   output [1:0] alu_src_a,
-  output [1:0] alu_src_b
+  output [1:0] alu_src_b,
+  output csr_we
 );
 
   // expecpt B and S
@@ -21,21 +22,23 @@ module CONTROL (
   // from register (0) or immediate (1)
   assign mem_write = opcode == `OPC_STORE;
   assign mem_read = opcode == `OPC_LOAD;
-  assign mem_to_reg = opcode == `OPC_LOAD;
 
-  // Decide utype rs1 is zero(LUI) or PC(AUIPC/J-type)
-  assign utype_src = (opcode == `OPC_AUIPC) || 
-                     (opcode == `OPC_JAL)   || 
-                     (opcode == `OPC_JALR); 
+  // Decide utype rs1 is zero(LUI) or PC(AUIPC/J-type), rs2 must be immediate
+  assign utype_src = (opcode == `OPC_AUIPC) || (opcode == `OPC_JAL) || (opcode == `OPC_JALR);
   // Decide jtype rs2 is immediate or 4(JAL/JALR). 
   // When jtype_src is asserted, utype_src must be asserted to use PC as rs1
-  assign jtype_src = (opcode == `OPC_JAL) || 
-                     (opcode == `OPC_JALR);
+  assign jtype_src = (opcode == `OPC_JAL) || (opcode == `OPC_JALR);
 
   assign branch = opcode == `OPC_BRANCH;
-  assign jump = (opcode == `OPC_JAL) || (opcode == `OPC_JALR); 
+  assign jump = (opcode == `OPC_JAL) || (opcode == `OPC_JALR);
   // jalr_src is used to determine which is used to calculate next pc address
-  assign jalr_src = opcode == `OPC_JALR; 
+  assign jalr_src = opcode == `OPC_JALR;
+
+  assign csr_we = opcode == `OPC_CSR;
+
+  assign mem_to_reg = (opcode == `OPC_CSR) ? 2'b01:
+                      (opcode == `OPC_LOAD) ? 2'b10: 2'b00;
+
 
   reg [1:0] alu_op;
 
@@ -47,14 +50,12 @@ module CONTROL (
       default: alu_op = 2'b00;
     endcase
   end
-  
+
   reg [1:0] alu_src_a, alu_src_b;
 
   always @(*) begin
-    if (opcode == `OPC_LUI || utype_src)
-      alu_src_a = 2'b01;
-    else
-      alu_src_a = 2'b00;
+    if (opcode == `OPC_LUI || utype_src) alu_src_a = 2'b01;
+    else alu_src_a = 2'b00;
   end
 
   always @(*) begin
@@ -65,7 +66,7 @@ module CONTROL (
         opcode == `OPC_AUIPC || jtype_src) begin
       // Immediate
       alu_src_b = 2'b01;
-    end else begin     
+    end else begin
       // FIXME
       alu_src_b = 2'b00;
     end

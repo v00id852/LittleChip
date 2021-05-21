@@ -5,14 +5,17 @@ module ID #(
 ) (
   input clk,
   input rst,
-
   input [PC_WIDTH - 1:0] pc,
-
   input reg_we,
-  input [4:0] addr_rs1, addr_rs2, addr_rd,
+
+  input [4:0] addr_rs1,
+  input [4:0] addr_rs2,
+  input [4:0] addr_rd,
   input [INST_WIDTH - 1:0] inst,
   input [DWIDTH - 1:0] data_rd,
-  output [DWIDTH - 1:0] data_rs1, data_rs2,
+
+  output [DWIDTH - 1:0] data_rs1,
+  output [DWIDTH - 1:0] data_rs2,
   output [DWIDTH - 1:0] data_utype_rs1,
   output [DWIDTH - 1:0] data_imm,
 
@@ -24,8 +27,12 @@ module ID #(
   output [1:0] ctrl_alu_src_b,
   output ctrl_mem_write,
   output ctrl_mem_read,
-  output ctrl_mem_to_reg,
-  output ctrl_id_reg_flush
+  output [1:0] ctrl_mem_to_reg,
+  output ctrl_id_reg_flush,
+
+  output ctrl_csr_we,
+  output [11:0] csr_addr,
+  output [2:0] csr_func
 );
 
   wire rf_we;
@@ -63,7 +70,7 @@ module ID #(
   // // register rd
   // assign rf_wa  = inst[11:7];
   // register files write enable
-  assign rf_we  = reg_we;
+  assign rf_we = reg_we;
   assign rf_wd = data_rd;
 
   assign data_rs1 = rf_rd1;
@@ -82,12 +89,14 @@ module ID #(
   wire [1:0] ctrl_alu_op_inner;
   wire ctrl_reg_we_inner;
   wire [1:0] ctrl_alu_src_a_inner, ctrl_alu_src_b_inner;
-  wire ctrl_mem_write_inner, ctrl_mem_read_inner, ctrl_mem_to_reg_inner;
+  wire [1:0] ctrl_mem_to_reg_inner;
+  wire ctrl_mem_write_inner, ctrl_mem_read_inner;
+  wire ctrl_csr_we_inner;
   wire ctrl_jump, ctrl_branch;
   wire ctrl_jalr_src;
 
   // Control Unit
-  CONTROL control(
+  CONTROL control (
     .opcode(inst[6:0]),
     .alu_op(ctrl_alu_op_inner),
     .reg_write(ctrl_reg_we_inner),
@@ -100,7 +109,8 @@ module ID #(
     .jump(ctrl_jump),
     .jalr_src(ctrl_jalr_src),
     .utype_src(ctrl_utype_src),
-    .jtype_src(ctrl_jtype_src)
+    .jtype_src(ctrl_jtype_src),
+    .csr_we(ctrl_csr_we_inner)
   );
 
   wire ctrl_zero_sel;
@@ -119,12 +129,13 @@ module ID #(
   BRANCH branch (
     .rs1_in(rf_rd1),
     .rs2_in(rf_rd2),
-    .func(inst[14:12]),
-    .taken(branch_taken)
+    .func  (inst[14:12]),
+    .taken (branch_taken)
   );
 
   assign ctrl_pc_src = ctrl_jump || (ctrl_branch && branch_taken);
 
+  // FIXME: ctrl_zero_sel as pipeline rst
   // zero ex stage signals to avoid data hazard and control hazard
   assign ctrl_alu_op = ctrl_zero_sel ? 2'b00 : ctrl_alu_op_inner;
   assign ctrl_reg_we = ctrl_zero_sel ? 1'b0 : ctrl_reg_we_inner;
@@ -132,13 +143,17 @@ module ID #(
   assign ctrl_alu_src_b = ctrl_zero_sel ? 2'b00 : ctrl_alu_src_b_inner;
   assign ctrl_mem_write = ctrl_zero_sel ? 1'b0 : ctrl_mem_write_inner;
   assign ctrl_mem_read = ctrl_zero_sel ? 1'b0 : ctrl_mem_read_inner;
-  assign ctrl_mem_to_reg = ctrl_zero_sel ? 1'b0 : ctrl_mem_to_reg_inner;
+  assign ctrl_mem_to_reg = ctrl_zero_sel ? 2'b00 : ctrl_mem_to_reg_inner;
+  assign ctrl_csr_we = ctrl_zero_sel ? 1'b0 : ctrl_csr_we_inner;
 
   // pc_new = rs1/PC + immediate
   assign branch_pc_rs1 = ctrl_jalr_src ? data_rs1 : pc;
   assign branch_pc_new = branch_pc_rs1 + imm_gen_out;
-  assign data_utype_rs1 = ctrl_utype_src ? pc : {DWIDTH{1'b0}}; 
-  assign data_imm = ctrl_jtype_src ? {{(DWIDTH - 3){1'b0}}, 3'd4} : imm_gen_out;
-   
+  assign data_utype_rs1 = ctrl_utype_src ? pc : {DWIDTH{1'b0}};
+  assign data_imm = ctrl_jtype_src ? {{(DWIDTH - 3) {1'b0}}, 3'd4} : imm_gen_out;
+
+  assign csr_addr = inst[31:20];
+  assign csr_func = inst[14:12];
+
 endmodule
 

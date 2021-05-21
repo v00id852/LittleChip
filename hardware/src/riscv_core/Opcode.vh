@@ -25,7 +25,7 @@
 `define OPC_ARI_ITYPE   7'b0010011
 
 // CSR code
-`define OPC_CSR         7'b111001
+`define OPC_CSR         7'b1110011
 
 // ***** 5-bit Opcodes *****
 `define OPC_LUI_5       5'b01101

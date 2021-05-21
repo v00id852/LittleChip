@@ -153,8 +153,7 @@ module Riscv151 #(
   assign bios_addra = pc_if_out[11:0];
   assign imem_addrb = pc_if_out[15:2];
   assign imem_web = 4'h0;  // FIXME
-  assign inst_if_out = inst_if_flush ? 32'b0 : 
-                       (pc_if_out[30] == 1'b1) ? bios_douta : imem_doutb;
+  assign inst_if_out = inst_if_flush ? 32'b0 : (pc_if_out[30] == 1'b1) ? bios_douta : imem_doutb;
 
   // IF/ID Registers
   wire [  PC_WIDTH - 1:0] pc_id_in;
@@ -179,14 +178,19 @@ module Riscv151 #(
   wire [INST_WIDTH - 1:0] pc_new_id_out;
   wire ctrl_pc_src_id_out, ctrl_reg_we_id_out;
   wire ctrl_mem_write_id_out;
-  wire ctrl_mem_read_id_out, ctrl_mem_to_reg_id_out;
+  wire ctrl_mem_read_id_out;
   wire ctrl_id_reg_flush_id_out;
+  wire [1:0] ctrl_mem_to_reg_id_out;
   wire [1:0] ctrl_alu_op_id_out;
   wire [1:0] ctrl_alu_src_a_id_out, ctrl_alu_src_b_id_out;
 
   wire ctrl_reg_we_id_in;
-  wire [DMEM_DWIDTH - 1:0] rd_id_in;
+  reg [DMEM_DWIDTH - 1:0] rd_id_in;
   wire [4:0] addr_rs1_id_in, addr_rs2_id_in, addr_rd_id_in;
+
+  wire ctrl_csr_we_id_out;
+  wire [11:0] csr_addr_id_out;
+  wire [2:0] csr_func_id_out;
 
   ID #(
     .PC_WIDTH(PC_WIDTH),
@@ -218,7 +222,11 @@ module Riscv151 #(
     .ctrl_mem_read(ctrl_mem_read_id_out),
     .ctrl_mem_to_reg(ctrl_mem_to_reg_id_out),
     // flush IF/ID inst
-    .ctrl_id_reg_flush(ctrl_id_reg_flush_id_out)
+    .ctrl_id_reg_flush(ctrl_id_reg_flush_id_out),
+
+    .ctrl_csr_we(ctrl_csr_we_id_out),
+    .csr_addr(csr_addr_id_out),
+    .csr_func(csr_func_id_out)
   );
 
   // PcSrc doesn't need pipeline
@@ -239,12 +247,17 @@ module Riscv151 #(
 
   wire ctrl_reg_we_ex_in;
   wire ctrl_mem_we_ex_in;
-  wire ctrl_mem_rd_ex_in, ctrl_mem_to_reg_ex_in;
+  wire ctrl_mem_rd_ex_in;
+  wire [1:0] ctrl_mem_to_reg_ex_in;
   wire [1:0] ctrl_alu_op_ex_in;
   wire [1:0] ctrl_alu_src_a_ex_in, ctrl_alu_src_b_ex_in;
 
+  wire ctrl_csr_we_ex_in;
+  wire [11:0] csr_addr_ex_in;
+  wire [2:0] csr_func_ex_in;
+
   // Note: new pc value doesn't need to use register
-  assign pc_new_if_in = pc_new_id_out; 
+  assign pc_new_if_in = pc_new_id_out;
 
   REGISTER #(
     .N(2)
@@ -287,7 +300,7 @@ module Riscv151 #(
   );
 
   REGISTER #(
-    .N(1)
+    .N(2)
   ) id_ex_ctrl_mem_to_reg (
     .clk(clk),
     .d  (ctrl_mem_to_reg_id_out),
@@ -300,6 +313,14 @@ module Riscv151 #(
     .clk(clk),
     .d  (ctrl_alu_op_id_out),
     .q  (ctrl_alu_op_ex_in)
+  );
+
+  REGISTER #(
+    .N(1)
+  ) id_ex_ctrl_csr_we (
+    .clk(clk),
+    .d  (ctrl_csr_we_id_out),
+    .q  (ctrl_csr_we_ex_in)
   );
 
   REGISTER_R #(
@@ -348,6 +369,24 @@ module Riscv151 #(
   );
 
   REGISTER_R #(
+    .N(12)
+  ) id_ex_csr_addr (
+    .clk(clk),
+    .rst(rst),
+    .d  (csr_addr_id_out),
+    .q  (csr_addr_ex_in)
+  );
+
+  REGISTER_R #(
+    .N(3)
+  ) id_ex_csr_func (
+    .clk(clk),
+    .rst(rst),
+    .d  (csr_func_id_out),
+    .q  (csr_func_ex_in)
+  );
+
+  REGISTER_R #(
     .N(PC_WIDTH)
   ) id_ex_pc (
     .clk(clk),
@@ -361,6 +400,7 @@ module Riscv151 #(
   wire [3:0] alu_func;
   wire [4:0] addr_rd_ex_in;
   wire [DMEM_DWIDTH - 1:0] alu_out, alu_ex_out;
+  wire [DMEM_DWIDTH - 1:0] csr_data_out, csr_ex_data_out;
   wire [INST_WIDTH - 1:0] mem_mask_inst_in;
 
   assign alu_func = {inst_ex_in[30], inst_ex_in[14:12]};
@@ -380,12 +420,16 @@ module Riscv151 #(
     .ctrl_alu_src_a(ctrl_alu_src_a_ex_in),
     .ctrl_alu_src_b(ctrl_alu_src_b_ex_in),
     .alu_out(alu_out),
-    .alu_zero()
+
+    .ctrl_csr_we(ctrl_csr_we_ex_in),
+    .csr_addr(csr_addr_ex_in),
+    .csr_func(csr_func_ex_in),
+    .csr_data_out(csr_data_out)
   );
 
   wire [3:0] mem_wea;
   wire [DMEM_DWIDTH - 1:0] mem_sel_out, mem_ex_out;
-  wire ctrl_mem_to_reg_ex_out;
+  wire [1:0] ctrl_mem_to_reg_ex_out;
 
   assign bios_addrb = alu_out[13:2];
   assign dmem_addra = alu_out[15:2];
@@ -427,6 +471,31 @@ module Riscv151 #(
     .q  (mem_mask_inst_in)
   );
 
+  // Registers used to synchronize clock between mem and alu
+  REGISTER #(
+    .N(DMEM_DWIDTH)
+  ) ex_id_alu_out (
+    .clk(clk),
+    .d  (alu_out),
+    .q  (alu_ex_out)
+  );
+
+  REGISTER #(
+    .N(DMEM_DWIDTH)
+  ) ex_id_csr_data_out (
+    .clk(clk),
+    .d  (csr_data_out),
+    .q  (csr_ex_data_out)
+  );
+
+  REGISTER #(
+    .N(2)
+  ) ex_id_ctrl_mem_to_reg (
+    .clk(clk),
+    .d  (ctrl_mem_to_reg_ex_in),
+    .q  (ctrl_mem_to_reg_ex_out)
+  );
+
   assign mem_mask_byte_addr = alu_ex_out[1:0];
   assign mem_mask_inst_func_in = mem_mask_inst_in[14:12];
 
@@ -440,25 +509,17 @@ module Riscv151 #(
     .data_out(mem_ex_out)
   );
 
-  // Registers used to synchronize clock between mem and alu
-  REGISTER #(
-    .N(DMEM_DWIDTH)
-  ) ex_id_alu_out (
-    .clk(clk),
-    .d  (alu_out),
-    .q  (alu_ex_out)
-  );
-
-  REGISTER #(
-    .N(1)
-  ) ex_id_ctrl_mem_to_reg (
-    .clk(clk),
-    .d  (ctrl_mem_to_reg_ex_in),
-    .q  (ctrl_mem_to_reg_ex_out)
-  );
-
   // EX output selection
-  assign rd_id_in = ctrl_mem_to_reg_ex_out ? mem_ex_out : alu_ex_out;
+  always @(*) begin
+    case (ctrl_mem_to_reg_ex_out)
+      2'b00:   rd_id_in = alu_ex_out;
+      2'b01:   rd_id_in = csr_data_out;
+      2'b10:   rd_id_in = mem_ex_out;
+      default: rd_id_in = alu_ex_out;
+    endcase
+  end
+
+  assign csr = csr_data_out;
 
   // Part of ID pipeline, buffer reg_we and addr_rd from EX
   REGISTER #(

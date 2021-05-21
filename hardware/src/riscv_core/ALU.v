@@ -9,13 +9,10 @@ module ALU #(
   input [DWIDTH - 1:0] A,
   input [DWIDTH - 1:0] B,
   input [3:0] ctl,
-  output [DWIDTH - 1:0] out,
-  output zero
+  output [DWIDTH - 1:0] out
 );
 
   reg [DWIDTH - 1:0] out;
-
-  assign zero = (out == 0);
 
   always @(*) begin
     case (ctl)
