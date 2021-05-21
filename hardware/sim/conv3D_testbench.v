@@ -10,6 +10,7 @@ module conv3D_testbench();
 
   localparam TIMEOUT_CYCLE = 10_000_000;
 
+  // TODO: change these parameters to test with the real layer parameters
   localparam DWIDTH     = 8;
   localparam IFM_DIM    = 28;
   localparam IFM_DEPTH  = 2;
@@ -213,82 +214,30 @@ module conv3D_testbench();
                     wt_byte_offset == 2'b10 ? wt_dout_word[23:16] :
                                               wt_dout_word[31:24];
 
-  integer ifm_data    [IFM_LEN-1:0];
-  integer wt_data     [WT_LEN-1:0];
-  integer ofm_sw_data [OFM_LEN-1:0];
-  integer tmp;
+  // See: sim/conv3D_sw.v
+  conv3D_sw #(
+    .IFM_DIM(IFM_DIM),
+    .IFM_DEPTH(IFM_DEPTH),
+    .OFM_DIM(OFM_DIM),
+    .OFM_DEPTH(OFM_DEPTH),
+    .WT_DIM(WT_DIM)
+  ) sw();
 
-  integer f, d, i, j, m, n;
-  initial begin
-    #0;
-    // init ifm and weight data
-    // include negative numbers to test signed arithmetic
-    for (d = 0; d < IFM_DEPTH; d = d + 1) begin
-      for (i = 0; i < IFM_DIM; i = i + 1) begin
-        for (j = 0; j < IFM_DIM; j = j + 1) begin
-          ifm_data[d * IFM_DIM * IFM_DIM + i * IFM_DIM + j] = (d * IFM_DIM * IFM_DIM + i * IFM_DIM + j) % 256 - 128;
-        end
-      end
-    end
-
-    for (f = 0; f < OFM_DEPTH; f = f + 1) begin
-      for (d = 0; d < IFM_DEPTH; d = d + 1) begin
-        for (m = 0; m < WT_DIM; m = m + 1) begin
-          for (n = 0; n < WT_DIM; n = n + 1) begin
-            wt_data[f * IFM_DEPTH * WT_DIM * WT_DIM + d * WT_DIM * WT_DIM + m * WT_DIM + n] = (n % 2 == 0) ? -(f + d + m + n) : (f + d + m + n);
-          end
-        end
-      end
-    end
-
-    for (f = 0; f < OFM_DEPTH; f = f + 1) begin
-      for (i = 0; i < OFM_DIM; i = i + 1) begin
-        for (j = 0; j < OFM_DIM; j = j + 1) begin
-          ofm_sw_data[f * OFM_SIZE + i * OFM_DIM + j] = 0;
-        end
-      end
-    end
-  end
-
-  initial begin
-    #1;
-    // Software implementation of conv3D
-    for (f = 0; f < OFM_DEPTH; f = f + 1) begin
-      for (d = 0; d < IFM_DEPTH; d = d + 1) begin
-        for (i = 0; i < OFM_DIM; i = i + 1) begin
-          for (j = 0; j < OFM_DIM; j = j + 1) begin
-            tmp = 0;
-
-            for (m = 0; m < WT_DIM; m = m + 1) begin
-              for (n = 0; n < WT_DIM; n = n + 1) begin
-                tmp = tmp +
-                  ifm_data[d * IFM_SIZE + (i + m) * IFM_DIM + (j + n)] *
-                  wt_data[f * WT_VOLUME + d * WT_SIZE + m * WT_DIM + n];
-              end // m
-            end // n
-            ofm_sw_data[f * OFM_SIZE + i * OFM_DIM + j] = ofm_sw_data[f * OFM_SIZE + i * OFM_DIM + j] + tmp;
-
-          end // j
-        end // i
-      end // d
-    end // f
-
-  end
-
+  integer i;
   task init_data;
     begin
       for (i = 0; i < WT_LEN+3; i = i + 4) begin
-        wt_buffer.mem[i/4] = {wt_data[i + 3][7:0],
-                              wt_data[i + 2][7:0],
-                              wt_data[i + 1][7:0],
-                              wt_data[i + 0][7:0]};
+        wt_buffer.mem[i/4] = {sw.wt_data[i + 3][7:0],
+                              sw.wt_data[i + 2][7:0],
+                              sw.wt_data[i + 1][7:0],
+                              sw.wt_data[i + 0][7:0]};
       end
 
       for (i = 0; i < IFM_LEN+3; i = i + 4) begin
-        ifm_buffer.mem[i/4] = {ifm_data[i + 3][7:0],
-                               ifm_data[i + 2][7:0],
-                               ifm_data[i + 1][7:0],
-                               ifm_data[i + 0][7:0]};
+        ifm_buffer.mem[i/4] = {sw.ifm_data[i + 3][7:0],
+                               sw.ifm_data[i + 2][7:0],
+                               sw.ifm_data[i + 1][7:0],
+                               sw.ifm_data[i + 0][7:0]};
       end
 
       for (i = 0; i < OFM_LEN; i = i + 1) begin
@@ -302,10 +251,10 @@ module conv3D_testbench();
   task check_result;
     begin
       for (i = 0; i < OFM_LEN; i = i + 1) begin
-        if (ofm_buffer.mem[i] !== ofm_sw_data[i]) begin
+        if (ofm_buffer.mem[i] !== sw.ofm_sw_data[i]) begin
           num_mismatches = num_mismatches + 1;
           $display("Mismatch at %d: expected %d, got %d",
-                   i, ofm_sw_data[i], ofm_buffer.mem[i]);
+                   i, sw.ofm_sw_data[i], ofm_buffer.mem[i]);
         end
       end
       if (num_mismatches == 0)

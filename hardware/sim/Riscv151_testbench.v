@@ -385,7 +385,7 @@ module Riscv151_testbench();
     check_result_dmem(DATA_ADDR0, 32'h12345678, "S-Type SW");
 
     check_result_dmem(DATA_ADDR1, 32'h00005678, "S-Type SH 1");
-    check_result_dmem(DATA_ADDR2, 32'h00567800, "S-Type SH 2");
+    check_result_dmem(DATA_ADDR2, 32'h00005678, "S-Type SH 2");
     check_result_dmem(DATA_ADDR3, 32'h56780000, "S-Type SH 3");
     check_result_dmem(DATA_ADDR4, 32'h56780000, "S-Type SH 4");
 

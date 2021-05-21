@@ -138,6 +138,7 @@ init-arm:
 clean:
 		rm -rf *.log *.jou *.str *.vcd *.out *.mif NA
 
+.PHONY: veryclean
 # "make veryclean" removes the project folders and bitstream files
 veryclean:
 		rm -rf *.log *.jou *.str *.vcd *.out *.mif NA z1top* bitstream_files

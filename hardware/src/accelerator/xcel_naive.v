@@ -1,8 +1,6 @@
 `include "axi_consts.vh"
 `include "lenet_consts.vh"
 
-// this is really naive, don't try this at home
-
 // This module implements conv3D
 // The weight parameter is statically configured (Verilog parameters)
 // The IFM and OFM paramters (dimension, depth) are set by the
