@@ -33,6 +33,6 @@ module xcel_opt #(
   output xcel_idle
 );
 
-  // TODO: This is all yours! Good luck.
+  // TODO: Your code to implement an optimized hardware accelerator.
 
 endmodule

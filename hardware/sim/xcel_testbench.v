@@ -10,11 +10,12 @@ module xcel_testbench();
 
   localparam TIMEOUT_CYCLE = 10_000_000;
 
+  // TODO: change these parameters to test with the real layer parameters
   localparam DWIDTH     = 8;
   localparam IFM_DIM    = 28;
   localparam IFM_DEPTH  = 2;
   localparam WT_DIM     = 5;
-  localparam OFM_DIM    = 24;
+  localparam OFM_DIM    = IFM_DIM - WT_DIM + 1;
   localparam OFM_DEPTH  = 2;
 
   localparam IFM_LEN = IFM_DEPTH * IFM_DIM * IFM_DIM;
@@ -128,87 +129,34 @@ module xcel_testbench();
     .write_data_ready(xcel_write_data_ready)        // input
   );
 
+  // See: sim/conv3D_sw.v
+  conv3D_sw #(
+    .IFM_DIM(IFM_DIM),
+    .IFM_DEPTH(IFM_DEPTH),
+    .OFM_DIM(OFM_DIM),
+    .OFM_DEPTH(OFM_DEPTH),
+    .WT_DIM(WT_DIM)
+  ) sw();
 
-  integer ifm_data[IFM_DEPTH*IFM_DIM*IFM_DIM-1:0];
-  integer wt_data[OFM_DEPTH*IFM_DEPTH * WT_DIM*WT_DIM-1:0];
-  integer ofm_sw_data[OFM_DEPTH*OFM_DIM*OFM_DIM-1:0];
-  integer tmp;
-
-  integer f, d, i, j, m, n;
-  initial begin
-    #0;
-    // init ifm and weight data
-    // include neg numbers to test signness
-    for (d = 0; d < IFM_DEPTH; d = d + 1) begin
-      for (i = 0; i < IFM_DIM; i = i + 1) begin
-        for (j = 0; j < IFM_DIM; j = j + 1) begin
-          ifm_data[d * IFM_DIM * IFM_DIM + i * IFM_DIM + j] = (d * IFM_DIM * IFM_DIM + i * IFM_DIM + j) % 256 - 128;
-        end
-      end
-    end
-
-    for (f = 0; f < OFM_DEPTH; f = f + 1) begin
-      for (d = 0; d < IFM_DEPTH; d = d + 1) begin
-        for (m = 0; m < WT_DIM; m = m + 1) begin
-          for (n = 0; n < WT_DIM; n = n + 1) begin
-            wt_data[f * IFM_DEPTH * WT_DIM * WT_DIM + d * WT_DIM * WT_DIM + m * WT_DIM + n] = (n % 2 == 0) ? -(f + d + m + n) : (f + d + m + n);
-          end
-        end
-      end
-    end
-
-    for (f = 0; f < OFM_DEPTH; f = f + 1) begin
-      for (i = 0; i < OFM_DIM; i = i + 1) begin
-        for (j = 0; j < OFM_DIM; j = j + 1) begin
-          ofm_sw_data[f * OFM_DIM * OFM_DIM + i * OFM_DIM + j] = 0;
-        end
-      end
-    end
-  end
-
-  initial begin
-    #1;
-    // Software implementation of conv3D
-    for (f = 0; f < OFM_DEPTH; f = f + 1) begin
-      for (d = 0; d < IFM_DEPTH; d = d + 1) begin
-        for (i = 0; i < OFM_DIM; i = i + 1) begin
-          for (j = 0; j < OFM_DIM; j = j + 1) begin
-            tmp = 0;
-
-            for (m = 0; m < WT_DIM; m = m + 1) begin
-              for (n = 0; n < WT_DIM; n = n + 1) begin
-                tmp = tmp +
-                  ifm_data[d * IFM_DIM * IFM_DIM + (i + m) * IFM_DIM + (j + n)] *
-                  wt_data[f * IFM_DEPTH * WT_DIM * WT_DIM + d * WT_DIM * WT_DIM + m * WT_DIM + n];
-              end // m
-            end // n
-            ofm_sw_data[f * OFM_DIM * OFM_DIM + i * OFM_DIM + j] = ofm_sw_data[f * OFM_DIM * OFM_DIM + i * OFM_DIM + j] + tmp;
-
-          end // j
-        end // i
-      end // d
-    end // f
-
-  end
-
+  integer i;
   task init_data;
     begin
       for (i = 0; i < WT_LEN+3; i = i + 4) begin
-        mm_unit.buffer.mem[i/4] = {wt_data[i + 3][7:0],
-                                   wt_data[i + 2][7:0],
-                                   wt_data[i + 1][7:0],
-                                   wt_data[i + 0][7:0]};
+        mm_unit.buffer.mem[i/4] = {sw.wt_data[i + 3][7:0],
+                                   sw.wt_data[i + 2][7:0],
+                                   sw.wt_data[i + 1][7:0],
+                                   sw.wt_data[i + 0][7:0]};
       end
 
       for (i = 0; i < IFM_LEN+3; i = i + 4) begin
-        mm_unit.buffer.mem[(WT_LEN+3)/4 + i/4] = {ifm_data[i + 3][7:0],
-                                                  ifm_data[i + 2][7:0],
-                                                  ifm_data[i + 1][7:0],
-                                                  ifm_data[i + 0][7:0]};
+        mm_unit.buffer.mem[(WT_LEN+3)/4 + i/4] = {sw.ifm_data[i + 3][7:0],
+                                                  sw.ifm_data[i + 2][7:0],
+                                                  sw.ifm_data[i + 1][7:0],
+                                                  sw.ifm_data[i + 0][7:0]};
       end
 
       for (i = 0; i < OFM_LEN; i = i + 1) begin
-        mm_unit.buffer.mem[(WT_LEN+3)/4 + (IFM_LEN+3)/4 + i] = $random;//ofm_sw_data[i];
+        mm_unit.buffer.mem[(WT_LEN+3)/4 + (IFM_LEN+3)/4 + i] = $random;
       end
     end
   endtask
@@ -218,10 +166,10 @@ module xcel_testbench();
   task check_result;
     begin
       for (i = 0; i < OFM_LEN; i = i + 1) begin
-        if (mm_unit.buffer.mem[(WT_LEN+3)/4 + (IFM_LEN+3)/4 + i] !== ofm_sw_data[i]) begin
+        if (mm_unit.buffer.mem[(WT_LEN+3)/4 + (IFM_LEN+3)/4 + i] !== sw.ofm_sw_data[i]) begin
           num_mismatches = num_mismatches + 1;
           $display("Mismatch at %d: expected %d, got %d",
-                   i, ofm_sw_data[i], mm_unit.buffer.mem[(WT_LEN+3)/4 + (IFM_LEN+3)/4 + i]);
+                   i, sw.ofm_sw_data[i], mm_unit.buffer.mem[(WT_LEN+3)/4 + (IFM_LEN+3)/4 + i]);
         end
       end
       if (num_mismatches == 0)
