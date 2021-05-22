@@ -9,13 +9,13 @@ module EX #(
   input [DWIDTH - 1:0] data_rs2,
   input [INST_WIDTH - 1:0] data_pc,
   input [DWIDTH - 1:0] data_imm,
-  input [DWIDTH - 1:0] forward_alu_out_in,
+  input [DWIDTH - 1:0] forward_data_in,
   input [3:0] ctrl_alu_func,
   input [1:0] ctrl_alu_op,
   input [1:0] ctrl_alu_src_a,
   input [1:0] ctrl_alu_src_b,
-  input [1:0] ctrl_forward_a_sel,
-  input [1:0] ctrl_forward_b_sel,
+  input ctrl_forward_a_sel,
+  input ctrl_forward_b_sel,
 
   input ctrl_csr_we,
   input ctrl_csr_rd,
@@ -49,14 +49,14 @@ module EX #(
 
   always @(*) begin
     case (ctrl_forward_a_sel)
-      2'b01: alu_a = forward_alu_out_in;
+      1'b1: alu_a = forward_data_in;
       default: alu_a = data_alu_a;
     endcase
   end
 
   always @(*) begin
     case (ctrl_forward_b_sel)
-      2'b01: alu_b = forward_alu_out_in;
+      1'b1: alu_b = forward_data_in;
       default: alu_b = data_alu_b;
     endcase
   end

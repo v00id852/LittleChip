@@ -183,7 +183,7 @@ module Riscv151 #(
   wire [1:0] ctrl_mem_to_reg_id_out;
   wire [1:0] ctrl_alu_op_id_out;
   wire [1:0] ctrl_alu_src_a_id_out, ctrl_alu_src_b_id_out;
-  wire [1:0] ctrl_forward_a_sel_id_out, ctrl_forward_b_sel_id_out;
+  wire ctrl_forward_a_sel_id_out, ctrl_forward_b_sel_id_out;
 
   wire ctrl_reg_we_id_in;
   reg [DMEM_DWIDTH - 1:0] rd_id_in;
@@ -195,7 +195,7 @@ module Riscv151 #(
   wire [2:0] csr_func_id_out;
 
   wire [DMEM_DWIDTH - 1:0] alu_ex_out_id_in;
-  wire [1:0] ctrl_id_forward_a_sel, ctrl_id_forward_b_sel;
+  wire ctrl_id_forward_a_sel, ctrl_id_forward_b_sel;
 
   ID #(
     .PC_WIDTH(PC_WIDTH),
@@ -212,7 +212,7 @@ module Riscv151 #(
     .inst(inst_id_in),
     .reg_we(ctrl_reg_we_id_in),
     .data_rd(rd_id_in),
-    .forward_alu_out_in(alu_ex_out_id_in),
+    .forward_data_in(rd_id_in),
     .forward_a_sel_in(ctrl_id_forward_a_sel),
     .forward_b_sel_in(ctrl_id_forward_b_sel),
     // output
@@ -277,7 +277,7 @@ module Riscv151 #(
   wire [1:0] ctrl_mem_to_reg_ex_in;
   wire [1:0] ctrl_alu_op_ex_in;
   wire [1:0] ctrl_alu_src_a_ex_in, ctrl_alu_src_b_ex_in;
-  wire [1:0] ctrl_forward_a_sel_ex_in, ctrl_forward_b_sel_ex_in;
+  wire ctrl_forward_a_sel_ex_in, ctrl_forward_b_sel_ex_in;
 
   wire ctrl_csr_we_ex_in;
   wire ctrl_csr_rd_ex_in;
@@ -344,7 +344,7 @@ module Riscv151 #(
   );
 
   REGISTER #(
-    .N(2)
+    .N(1)
   ) id_ex_ctrl_forward_a_sel (
     .clk(clk),
     .d  (ctrl_forward_a_sel_id_out),
@@ -352,7 +352,7 @@ module Riscv151 #(
   );
 
   REGISTER #(
-    .N(2)
+    .N(1)
   ) id_ex_ctrl_forward_b_sel (
     .clk(clk),
     .d  (ctrl_forward_b_sel_id_out),
@@ -451,6 +451,7 @@ module Riscv151 #(
 
   wire [3:0] alu_func;
   wire [DMEM_DWIDTH - 1:0] alu_out, alu_ex_out;
+  wire [DMEM_DWIDTH - 1:0] mem_ex_out;
   wire [DMEM_DWIDTH - 1:0] csr_data_out, csr_ex_data_out;
   wire [INST_WIDTH - 1:0] mem_mask_inst_in;
 
@@ -472,7 +473,7 @@ module Riscv151 #(
     .ctrl_alu_src_b(ctrl_alu_src_b_ex_in),
     .ctrl_forward_a_sel(ctrl_forward_a_sel_ex_in),
     .ctrl_forward_b_sel(ctrl_forward_b_sel_ex_in),
-    .forward_alu_out_in(alu_ex_out),
+    .forward_data_in(rd_id_in),
     .alu_out(alu_out),
 
     .ctrl_csr_we(ctrl_csr_we_ex_in),
@@ -485,7 +486,7 @@ module Riscv151 #(
   assign alu_ex_out_id_in = alu_ex_out;
 
   wire [3:0] mem_wea;
-  wire [DMEM_DWIDTH - 1:0] mem_sel_out, mem_ex_out;
+  wire [DMEM_DWIDTH - 1:0] mem_sel_out;
   wire [1:0] ctrl_mem_to_reg_ex_out;
 
   assign bios_addrb = alu_out[13:2];

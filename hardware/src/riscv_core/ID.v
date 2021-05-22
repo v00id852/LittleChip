@@ -13,9 +13,9 @@ module ID #(
   input [4:0] addr_rd,
   input [INST_WIDTH - 1:0] inst,
   input [DWIDTH - 1:0] data_rd,
-  input [DWIDTH - 1:0] forward_alu_out_in,
-  input [1:0] forward_a_sel_in,
-  input [1:0] forward_b_sel_in,
+  input [DWIDTH - 1:0] forward_data_in,
+  input forward_a_sel_in,
+  input forward_b_sel_in,
 
   output [  DWIDTH - 1:0] data_rs1,
   output [  DWIDTH - 1:0] data_rs2,
@@ -81,14 +81,14 @@ module ID #(
 
   always @(*) begin
     case (forward_a_sel_in)
-      2'b01:   data_rs1 = forward_alu_out_in;
+      1'b1: data_rs1 = forward_data_in;
       default: data_rs1 = rf_rd1;
     endcase
   end
 
   always @(*) begin
     case (forward_b_sel_in)
-      2'b01:   data_rs2 = forward_alu_out_in;
+      1'b1: data_rs2 = forward_data_in;
       default: data_rs2 = rf_rd2;
     endcase
   end

@@ -10,45 +10,45 @@ module FORWARD #(
   input [4:0] rd_addr_id_in,
   input ctrl_reg_we_ex_in,
   input ctrl_reg_we_id_in,
-  output [1:0] ex_forward_a_sel,
-  output [1:0] ex_forward_b_sel,
-  output [1:0] id_forward_a_sel,
-  output [1:0] id_forward_b_sel
+  output ex_forward_a_sel,
+  output ex_forward_b_sel,
+  output id_forward_a_sel,
+  output id_forward_b_sel
 );
 
-  reg [1:0] ex_forward_a_sel, ex_forward_b_sel;
-  reg [1:0] id_forward_a_sel, id_forward_b_sel;
+  reg ex_forward_a_sel, ex_forward_b_sel;
+  reg id_forward_a_sel, id_forward_b_sel;
 
   // EX Hazard
   always @(*) begin
     if (ctrl_reg_we_ex_in && rs1_addr_id == rd_addr_ex_in && rd_addr_ex_in != 5'd0) begin
-      ex_forward_a_sel = 2'b01;
+      ex_forward_a_sel = 1'b1;
     end else begin
-      ex_forward_a_sel = 2'b00;
+      ex_forward_a_sel = 1'b0;
     end
   end
 
   always @(*) begin
     if (ctrl_reg_we_ex_in && rs2_addr_id == rd_addr_ex_in && rd_addr_ex_in != 5'd0) begin
-      ex_forward_b_sel = 2'b01;
+      ex_forward_b_sel = 1'b1;
     end else begin
-      ex_forward_b_sel = 2'b00;
+      ex_forward_b_sel = 1'b0;
     end
   end
 
   always @(*) begin
     if (ctrl_reg_we_id_in && rs1_addr_id == rd_addr_id_in && rd_addr_id_in != 5'd0) begin
-      id_forward_a_sel = 2'b01;
+      id_forward_a_sel = 1'b1;
     end else begin
-      id_forward_a_sel = 2'b00;
+      id_forward_a_sel = 1'b0;
     end
   end
 
   always @(*) begin
     if (ctrl_reg_we_id_in && rs2_addr_id == rd_addr_id_in && rd_addr_id_in != 5'd0) begin
-      id_forward_b_sel = 2'b01;
+      id_forward_b_sel = 1'b1;
     end else begin
-      id_forward_b_sel = 2'b00;
+      id_forward_b_sel = 1'b0;
     end
   end
 endmodule
