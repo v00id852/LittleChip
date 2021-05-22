@@ -15,12 +15,12 @@ module MEM_DATA_GEN #(
 
   always @(*) begin
     bit_index = byte_addr_in << 3;
-    if (inst_func_in == `FNC_SH && byte_addr_in == 2'd3) begin
+    if (inst_func_in == `FNC_SH && (byte_addr_in == 2'd3 || byte_addr_in == 2'd1)) begin
       bit_index = (byte_addr_in - 1) << 3;
     end
   end
   
-  assign mask_index = (byte_addr_in == 2'd3 && inst_func_in == `FNC_SH) 
+  assign mask_index = ((byte_addr_in == 2'd3 || byte_addr_in == 2'd1) && inst_func_in == `FNC_SH) 
                       ? byte_addr_in - 1 : byte_addr_in;
   assign data_out = data_in << bit_index;
   assign wea_out = (inst_func_in == `FNC_SW) ? 4'b1111 :
