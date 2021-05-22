@@ -184,6 +184,7 @@ module Riscv151 #(
   wire [1:0] ctrl_alu_op_id_out;
   wire [1:0] ctrl_alu_src_a_id_out, ctrl_alu_src_b_id_out;
   wire ctrl_forward_a_sel_id_out, ctrl_forward_b_sel_id_out;
+  wire ctrl_forward_data_sel_id_out;
 
   wire ctrl_reg_we_id_in;
   reg [DMEM_DWIDTH - 1:0] rd_id_in;
@@ -248,18 +249,23 @@ module Riscv151 #(
 
   wire [4:0] addr_rd_ex_in;
   wire ctrl_reg_we_ex_in;
+  wire [6:0] opcode_id_in;
+
+  assign opcode_id_in = inst_id_in[6:0];
 
   FORWARD #(
     .DWIDTH(DMEM_DWIDTH)
   ) forward (
     .rs1_addr_id(addr_rs1_id_in),
     .rs2_addr_id(addr_rs2_id_in),
+    .opcode_id(opcode_id_in),
     .rd_addr_ex_in(addr_rd_ex_in),
     .rd_addr_id_in(addr_rd_id_in),
     .ctrl_reg_we_ex_in(ctrl_reg_we_ex_in),
     .ctrl_reg_we_id_in(ctrl_reg_we_id_in),
     .ex_forward_a_sel(ctrl_forward_a_sel_id_out),
     .ex_forward_b_sel(ctrl_forward_b_sel_id_out),
+    .ex_forward_data_sel(ctrl_forward_data_sel_id_out),
     .id_forward_a_sel(ctrl_id_forward_a_sel),
     .id_forward_b_sel(ctrl_id_forward_b_sel)
   );
@@ -278,6 +284,7 @@ module Riscv151 #(
   wire [1:0] ctrl_alu_op_ex_in;
   wire [1:0] ctrl_alu_src_a_ex_in, ctrl_alu_src_b_ex_in;
   wire ctrl_forward_a_sel_ex_in, ctrl_forward_b_sel_ex_in;
+  wire ctrl_forward_data_sel_ex_in;
 
   wire ctrl_csr_we_ex_in;
   wire ctrl_csr_rd_ex_in;
@@ -357,6 +364,14 @@ module Riscv151 #(
     .clk(clk),
     .d  (ctrl_forward_b_sel_id_out),
     .q  (ctrl_forward_b_sel_ex_in)
+  );
+
+  REGISTER #(
+    .N(1)
+  ) id_ex_ctrl_forward_data_sel (
+    .clk(clk),
+    .d  (ctrl_forward_data_sel_id_out),
+    .q  (ctrl_forward_data_sel_ex_in)
   );
 
   REGISTER #(
@@ -493,13 +508,16 @@ module Riscv151 #(
   assign dmem_addra = alu_out[15:2];
   assign imem_addra = alu_out[15:2];
 
+  wire [DMEM_DWIDTH - 1:0] mem_gen_din;
   wire [DMEM_DWIDTH - 1:0] mem_din;
   wire [3:0] mem_din_mask;
+
+  assign mem_gen_din = ctrl_forward_data_sel_ex_in ? rd_id_in : rs2_ex_in;
 
   MEM_DATA_GEN #(
     .DATA_WIDTH(DMEM_DWIDTH)
   ) mem_in_gen (
-    .data_in(rs2_ex_in),
+    .data_in(mem_gen_din),
     .inst_func_in(inst_ex_in[14:12]),
     .byte_addr_in(alu_out[1:0]),
     .data_out(mem_din),
