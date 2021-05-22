@@ -194,6 +194,9 @@ module Riscv151 #(
   wire [11:0] csr_addr_id_out;
   wire [2:0] csr_func_id_out;
 
+  wire [DMEM_DWIDTH - 1:0] alu_ex_out_id_in;
+  wire [1:0] ctrl_id_forward_a_sel, ctrl_id_forward_b_sel;
+
   ID #(
     .PC_WIDTH(PC_WIDTH),
     .INST_WIDTH(INST_WIDTH),
@@ -209,6 +212,9 @@ module Riscv151 #(
     .inst(inst_id_in),
     .reg_we(ctrl_reg_we_id_in),
     .data_rd(rd_id_in),
+    .forward_alu_out_in(alu_ex_out_id_in),
+    .forward_a_sel_in(ctrl_id_forward_a_sel),
+    .forward_b_sel_in(ctrl_id_forward_b_sel),
     // output
     .data_rs1(rs1_id_out),
     .data_rs2(rs2_id_out),
@@ -248,10 +254,14 @@ module Riscv151 #(
   ) forward (
     .rs1_addr_id(addr_rs1_id_in),
     .rs2_addr_id(addr_rs2_id_in),
-    .rd_addr_ex(addr_rd_ex_in),
-    .ctrl_reg_we(ctrl_reg_we_ex_in),
-    .forward_a_sel(ctrl_forward_a_sel_id_out),
-    .forward_b_sel(ctrl_forward_b_sel_id_out)
+    .rd_addr_ex_in(addr_rd_ex_in),
+    .rd_addr_id_in(addr_rd_id_in),
+    .ctrl_reg_we_ex_in(ctrl_reg_we_ex_in),
+    .ctrl_reg_we_id_in(ctrl_reg_we_id_in),
+    .ex_forward_a_sel(ctrl_forward_a_sel_id_out),
+    .ex_forward_b_sel(ctrl_forward_b_sel_id_out),
+    .id_forward_a_sel(ctrl_id_forward_a_sel),
+    .id_forward_b_sel(ctrl_id_forward_b_sel)
   );
 
   // ID-EX pipeline
@@ -471,6 +481,8 @@ module Riscv151 #(
     .csr_func(csr_func_ex_in),
     .csr_data_out(csr_data_out)
   );
+
+  assign alu_ex_out_id_in = alu_ex_out;
 
   wire [3:0] mem_wea;
   wire [DMEM_DWIDTH - 1:0] mem_sel_out, mem_ex_out;

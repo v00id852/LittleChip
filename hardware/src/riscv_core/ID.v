@@ -13,11 +13,14 @@ module ID #(
   input [4:0] addr_rd,
   input [INST_WIDTH - 1:0] inst,
   input [DWIDTH - 1:0] data_rd,
+  input [DWIDTH - 1:0] forward_alu_out_in,
+  input [1:0] forward_a_sel_in,
+  input [1:0] forward_b_sel_in,
 
-  output [DWIDTH - 1:0] data_rs1,
-  output [DWIDTH - 1:0] data_rs2,
+  output [  DWIDTH - 1:0] data_rs1,
+  output [  DWIDTH - 1:0] data_rs2,
   output [PC_WIDTH - 1:0] data_pc,
-  output [DWIDTH - 1:0] data_imm,
+  output [  DWIDTH - 1:0] data_imm,
 
   output [PC_WIDTH - 1:0] branch_pc_new,
   output [1:0] ctrl_alu_op,
@@ -61,7 +64,7 @@ module ID #(
     .clk(clk)
   );
 
-  assign rf_wa = addr_rd;
+  assign rf_wa  = addr_rd;
   assign rf_ra1 = addr_rs1;
   assign rf_ra2 = addr_rs2;
   // // register 1
@@ -71,11 +74,24 @@ module ID #(
   // // register rd
   // assign rf_wa  = inst[11:7];
   // register files write enable
-  assign rf_we = reg_we;
-  assign rf_wd = data_rd;
+  assign rf_we  = reg_we;
+  assign rf_wd  = data_rd;
 
-  assign data_rs1 = rf_rd1;
-  assign data_rs2 = rf_rd2;
+  reg [DWIDTH - 1:0] data_rs1, data_rs2;
+
+  always @(*) begin
+    case (forward_a_sel_in)
+      2'b01:   data_rs1 = forward_alu_out_in;
+      default: data_rs1 = rf_rd1;
+    endcase
+  end
+
+  always @(*) begin
+    case (forward_b_sel_in)
+      2'b01:   data_rs2 = forward_alu_out_in;
+      default: data_rs2 = rf_rd2;
+    endcase
+  end
 
   IMM_GEN #(
     .IWIDTH(INST_WIDTH),
@@ -155,7 +171,7 @@ module ID #(
   assign branch_pc_new = branch_pc_rs1 + imm_gen_out;
 
   assign data_imm = imm_gen_out;
-  assign data_pc  = pc;
+  assign data_pc = pc;
 
   assign csr_addr = inst[31:20];
   assign csr_func = inst[14:12];
