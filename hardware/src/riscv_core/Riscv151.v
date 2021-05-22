@@ -462,7 +462,7 @@ module Riscv151 #(
     .ctrl_alu_src_b(ctrl_alu_src_b_ex_in),
     .ctrl_forward_a_sel(ctrl_forward_a_sel_ex_in),
     .ctrl_forward_b_sel(ctrl_forward_b_sel_ex_in),
-    .forward_alu_out(alu_ex_out),
+    .forward_alu_out_in(alu_ex_out),
     .alu_out(alu_out),
 
     .ctrl_csr_we(ctrl_csr_we_ex_in),
