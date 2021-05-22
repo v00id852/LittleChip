@@ -699,6 +699,17 @@ module Riscv151_testbench();
 
     check_result_rf(5'd3, `RF_PATH.mem[2] + 32'h1000_0004, "Hazard 12");
 
+
+    // Vector ALU hazards
+    reset();
+    init_rf();
+    INST_ADDR = 14'h0000;
+    `IMEM_PATH.mem[INST_ADDR + 0] = {`FNC7_0, 5'd1, 5'd2, `FNC_ADD_SUB, 5'd1, `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 1] = {`FNC7_0, 5'd1, 5'd3, `FNC_ADD_SUB, 5'd1, `OPC_ARI_RTYPE};
+    `IMEM_PATH.mem[INST_ADDR + 2] = {`FNC7_0, 5'd1, 5'd4, `FNC_ADD_SUB, 5'd1, `OPC_ARI_RTYPE};
+
+    check_result_rf(5'd1, `RF_PATH.mem[1] + `RF_PATH.mem[2] + `RF_PATH.mem[3] + `RF_PATH.mem[4], "Hazard 13");
+    
     // ... what else?
     all_tests_passed = 1'b1;
 
