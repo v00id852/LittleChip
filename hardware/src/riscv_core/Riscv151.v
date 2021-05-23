@@ -155,7 +155,7 @@ module Riscv151 #(
 
   wire ctrl_imem_en_id_out;
 
-  assign bios_addra = pc_if_out[11:0];
+  assign bios_addra = pc_if_out[13:2];
   assign imem_addrb = pc_if_out[15:2];
   assign imem_web = 4'h0;  // FIXME
   assign inst_if_out = inst_if_flush ? 32'b0 : (pc_if_out[30] == 1'b1) ? bios_douta : imem_doutb;
