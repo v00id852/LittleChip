@@ -170,12 +170,13 @@ module Riscv151 #(
 
   assign inst_id_in = inst_if_out;
 
-  REGISTER_R #(
+  REGISTER_R_CE #(
     .N(PC_WIDTH),
     .INIT(0)
   ) if_id_pc (
     .d  (pc_if_out),
     .q  (pc_id_in),
+    .ce (pc_en),
     .clk(clk),
     .rst(rst)
   );

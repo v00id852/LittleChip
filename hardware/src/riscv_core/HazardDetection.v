@@ -25,10 +25,14 @@ module HAZARD_DETECTION (
     .q(ctrl_id_reg_flush)
   );
 
-  // NOP
-  assign ctrl_zero_sel = (opcode == 6'b0) || (!ctrl_pc_en);
+  wire jump_inst;
 
-  assign ctrl_pc_en = !(id_ex_rd != 0 && (if_id_rs1 == id_ex_rd || if_id_rs2 == id_ex_rd));
+  // NOP
+  assign ctrl_zero_sel = (opcode == 7'b0) || (!ctrl_pc_en);
+
+  // Only if a B-type instruction in ID stage, and need to forward (e.g. one of the source registers is 
+  // the destination register of the preceding instruction)
+  assign ctrl_pc_en = !((opcode == `OPC_BRANCH) && id_ex_rd != 0 && (if_id_rs1 == id_ex_rd || if_id_rs2 == id_ex_rd));
   assign ctrl_imem_en = rst || ctrl_pc_en;
 
   // Only when rst is high or imem is enabled and the pc value is updated from calculated one
