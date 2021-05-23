@@ -11,6 +11,7 @@ module ID #(
   input [4:0] addr_rs1,
   input [4:0] addr_rs2,
   input [4:0] addr_rd,
+  input [4:0] addr_rd_ex_in,
   input [INST_WIDTH - 1:0] inst,
   input [DWIDTH - 1:0] data_rd,
   input [DWIDTH - 1:0] forward_data_in,
@@ -32,6 +33,8 @@ module ID #(
   output ctrl_mem_read,
   output [1:0] ctrl_mem_to_reg,
   output ctrl_id_reg_flush,
+  output ctrl_pc_en,
+  output ctrl_imem_en,
 
   output ctrl_csr_we,
   output ctrl_csr_rd,
@@ -136,8 +139,15 @@ module ID #(
 
   HAZARD_DETECTION hd (
     .clk(clk),
+    .rst(rst),
     .opcode(inst[6:0]),
+    .if_id_rs1(addr_rs1),
+    .if_id_rs2(addr_rs2),
+    .id_ex_rd(addr_rd_ex_in),
     .ctrl_pc_src(ctrl_pc_src),
+    // output
+    .ctrl_pc_en(ctrl_pc_en),
+    .ctrl_imem_en(ctrl_imem_en),
     .ctrl_id_reg_flush(ctrl_id_reg_flush),
     .ctrl_zero_sel(ctrl_zero_sel)
   );
@@ -146,8 +156,8 @@ module ID #(
   wire [INST_WIDTH - 1:0] branch_pc_rs1;
 
   BRANCH branch (
-    .rs1_in(rf_rd1),
-    .rs2_in(rf_rd2),
+    .rs1_in(data_rs1),
+    .rs2_in(data_rs2),
     .func  (inst[14:12]),
     .taken (branch_taken)
   );

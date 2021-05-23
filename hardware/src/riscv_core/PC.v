@@ -7,6 +7,7 @@ module PC #(
   input clk,
   input rst,
   input pc_sel_in,  // select which is the new pc value, old_pc + 4 or pc_new_val
+  input pc_en,
   input [PC_WIDTH - 1 : 0] pc_new_in,  // the new pc value from ALU
   output [PC_WIDTH - 1 : 0] pc_out
 );
@@ -14,12 +15,13 @@ module PC #(
   wire [PC_WIDTH - 1 : 0] pc_value, pc_next;
   wire pc_rst;
 
-  REGISTER_R #(
+  REGISTER_R_CE #(
     .N(PC_WIDTH),
     .INIT(RESET_PC_VAL)
   ) pc (
     .clk(clk),
     .rst(rst),
+    .ce (pc_en),
     .d  (pc_next),
     .q  (pc_value)
   );

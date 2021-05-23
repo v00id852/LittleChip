@@ -16,6 +16,7 @@ module Riscv151 #(
 
   wire [BIOS_AWIDTH-1:0] bios_addra, bios_addrb;
   wire [BIOS_DWIDTH-1:0] bios_douta, bios_doutb;
+  wire bios_ena;
 
   // BIOS Memory
   // Synchronous read: read takes one cycle
@@ -27,7 +28,7 @@ module Riscv151 #(
   ) bios_mem (
     .q0(bios_douta),  // output
     .addr0(bios_addra),  // input
-    .en0(1'b1),
+    .en0(bios_ena),
 
     .q1(bios_doutb),  // output
     .addr1(bios_addrb),  // input
@@ -101,6 +102,7 @@ module Riscv151 #(
 
   wire ctrl_pc_src;
   wire [PC_WIDTH - 1:0] pc_new_if_in, pc_if_out;
+  wire pc_en;
 
   // IF part, fetch instruction from BIOS or IMEM
 
@@ -111,6 +113,7 @@ module Riscv151 #(
     .clk(clk),
     .rst(rst),
     .pc_sel_in(ctrl_pc_src),
+    .pc_en(pc_en),
     .pc_new_in(pc_new_if_in),
     .pc_out(pc_if_out)
   );
@@ -145,15 +148,21 @@ module Riscv151 #(
     .d1(imem_dinb),     // input
     .addr1(imem_addrb), // input
     .wbe1(imem_web),    // input
-    .en1(1'b1),
+    .en1(imem_enb),
 
     .clk(clk)
   );
+
+  wire ctrl_imem_en_id_out;
 
   assign bios_addra = pc_if_out[11:0];
   assign imem_addrb = pc_if_out[15:2];
   assign imem_web = 4'h0;  // FIXME
   assign inst_if_out = inst_if_flush ? 32'b0 : (pc_if_out[30] == 1'b1) ? bios_douta : imem_doutb;
+  // when ctrl_imem_en is not asserted, the memory will keep its output value.
+  assign imem_enb = ctrl_imem_en_id_out;
+  assign bios_ena = ctrl_imem_en_id_out;
+
 
   // IF/ID Registers
   wire [  PC_WIDTH - 1:0] pc_id_in;
@@ -185,6 +194,7 @@ module Riscv151 #(
   wire [1:0] ctrl_alu_src_a_id_out, ctrl_alu_src_b_id_out;
   wire ctrl_forward_a_sel_id_out, ctrl_forward_b_sel_id_out;
   wire ctrl_forward_data_sel_id_out;
+  wire ctrl_pc_en_id_out;
 
   wire ctrl_reg_we_id_in;
   reg [DMEM_DWIDTH - 1:0] rd_id_in;
@@ -197,6 +207,7 @@ module Riscv151 #(
 
   wire [DMEM_DWIDTH - 1:0] alu_ex_out_id_in;
   wire ctrl_id_forward_a_sel, ctrl_id_forward_b_sel;
+  wire [4:0] addr_rd_ex_in;
 
   ID #(
     .PC_WIDTH(PC_WIDTH),
@@ -210,6 +221,7 @@ module Riscv151 #(
     .addr_rs1(addr_rs1_id_in),
     .addr_rs2(addr_rs2_id_in),
     .addr_rd(addr_rd_id_in),
+    .addr_rd_ex_in(addr_rd_ex_in),
     .inst(inst_id_in),
     .reg_we(ctrl_reg_we_id_in),
     .data_rd(rd_id_in),
@@ -230,6 +242,8 @@ module Riscv151 #(
     .ctrl_mem_write(ctrl_mem_write_id_out),
     .ctrl_mem_read(ctrl_mem_read_id_out),
     .ctrl_mem_to_reg(ctrl_mem_to_reg_id_out),
+    .ctrl_pc_en(ctrl_pc_en_id_out),
+    .ctrl_imem_en(ctrl_imem_en_id_out),
     // flush IF/ID inst
     .ctrl_id_reg_flush(ctrl_id_reg_flush_id_out),
 
@@ -241,13 +255,13 @@ module Riscv151 #(
 
   // PcSrc doesn't need pipeline
   assign ctrl_pc_src = ctrl_pc_src_id_out;
+  assign pc_en = ctrl_pc_en_id_out;
   // Control line to flush instruction in IF/ID stage
   assign inst_if_flush = ctrl_id_reg_flush_id_out;
 
   assign addr_rs1_id_in = inst_id_in[19:15];
   assign addr_rs2_id_in = inst_id_in[24:20];
 
-  wire [4:0] addr_rd_ex_in;
   wire ctrl_reg_we_ex_in;
   wire [6:0] opcode_id_in;
 
