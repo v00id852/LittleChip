@@ -55,7 +55,7 @@ module Riscv151_testbench();
     .csr(csr)
   );
 
-  wire [31:0] timeout_cycle = 10;
+  wire [31:0] timeout_cycle = 11;
 
   // Reset IMem, DMem, and RegFile before running new test
   task reset;
@@ -599,7 +599,6 @@ module Riscv151_testbench();
     `IMEM_PATH.mem[INST_ADDR + 0] = {`FNC7_0, 5'd1, 5'd2, `FNC_ADD_SUB, 5'd3, `OPC_ARI_RTYPE};
     `IMEM_PATH.mem[INST_ADDR + 1] = {`FNC7_0, 5'd4, 5'd3, `FNC_ADD_SUB, 5'd5, `OPC_ARI_RTYPE};
     `IMEM_PATH.mem[INST_ADDR + 2] = {`FNC7_0, 5'd5, 5'd6, `FNC_ADD_SUB, 5'd7, `OPC_ARI_RTYPE};
-
     check_result_rf(5'd7, `RF_PATH.mem[1] + `RF_PATH.mem[2] + `RF_PATH.mem[4] + `RF_PATH.mem[6], "Hazard 5");
 
     // ALU->MEM hazard
