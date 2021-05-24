@@ -27,6 +27,6 @@ module CSR #(
     .clk(clk)
   );
 
-  assign data_out = rd ? data_csr_rf_out : data_in;
+  assign data_out = data_csr_rf_out;
 
 endmodule

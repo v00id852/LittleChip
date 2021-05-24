@@ -510,7 +510,8 @@ module Riscv151 #(
     .ctrl_csr_rd(ctrl_csr_rd_ex_in),
     .csr_addr(csr_addr_ex_in),
     .csr_func(csr_func_ex_in),
-    .csr_data_out(csr_data_out)
+    .csr_data_out(csr_data_out),
+    .csr_orig_data_out(csr)
   );
 
   assign alu_ex_out_id_in = alu_ex_out;
@@ -609,8 +610,6 @@ module Riscv151 #(
       default: rd_id_in = alu_ex_out;
     endcase
   end
-
-  assign csr = csr_data_out;
 
   // Part of ID pipeline, buffer reg_we and addr_rd from EX
   REGISTER #(

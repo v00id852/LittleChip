@@ -23,6 +23,7 @@ module EX #(
   input [2:0] csr_func,
 
   output [DWIDTH - 1:0] csr_data_out,
+  output [DWIDTH - 1:0] csr_orig_data_out, // the data written into csr
   output [DWIDTH - 1:0] alu_out
 );
 
@@ -99,5 +100,7 @@ module EX #(
     .data_in(csr_data_in),
     .data_out(csr_data_out)
   );
+
+  assign csr_orig_data_out = csr_data_in;
 
 endmodule
