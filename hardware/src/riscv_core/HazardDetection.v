@@ -32,7 +32,18 @@ module HAZARD_DETECTION (
 
   // Only if a B-type instruction in ID stage, and need to forward (e.g. one of the source registers is 
   // the destination register of the preceding instruction)
-  assign ctrl_pc_en = !((opcode == `OPC_BRANCH) && id_ex_rd != 0 && (if_id_rs1 == id_ex_rd || if_id_rs2 == id_ex_rd));
+  // And the pc can only stall one clock, after that it should asserted
+  wire old_ctrl_pc_en;
+
+  REGISTER #(.N(1), .INIT(1)) ctrl_pc_en_reg (
+    .clk(clk),
+    .d(ctrl_pc_en),
+    .q(old_ctrl_pc_en)
+  );
+
+  assign ctrl_pc_en = (old_ctrl_pc_en == 1'b0) ? 1'b1 : 
+                      !((opcode == `OPC_BRANCH) && id_ex_rd != 0 && (if_id_rs1 == id_ex_rd || if_id_rs2 == id_ex_rd));
+
   assign ctrl_imem_en = rst || ctrl_pc_en;
 
   // Only when rst is high or imem is enabled and the pc value is updated from calculated one
