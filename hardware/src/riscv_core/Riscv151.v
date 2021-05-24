@@ -548,8 +548,6 @@ module Riscv151 #(
   assign dmem_wea = ((alu_out[31:28] & 4'b1101) == 4'b0001) ? mem_wea : 4'h0;
   // Instruction Memory can be writted only if PC[30] == 1'b1;
   assign imem_wea = (((alu_out[31:28] & 4'b1110) == 4'b0010) & (pc_ex_in[30] == 1'b1)) ? mem_wea : 4'h0;
-  // Data out from memory selection
-  assign mem_sel_out = (alu_out[30] == 1'b1) ? bios_doutb : dmem_douta;
 
 
   wire [1:0] mem_mask_byte_addr;
@@ -587,6 +585,11 @@ module Riscv151 #(
     .d  (ctrl_mem_to_reg_ex_in),
     .q  (ctrl_mem_to_reg_ex_out)
   );
+  
+  // Data out from memory selection
+  // Because memory output is synchronise read, so it should use alu_ex_out to
+  // decide which one is used.
+  assign mem_sel_out = (alu_ex_out[30] == 1'b1) ? bios_doutb : dmem_douta;
 
   assign mem_mask_byte_addr = alu_ex_out[1:0];
   assign mem_mask_inst_func_in = mem_mask_inst_in[14:12];
