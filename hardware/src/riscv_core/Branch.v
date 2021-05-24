@@ -16,9 +16,9 @@ module BRANCH #(
       `FNC_BEQ: taken = rs1_in == rs2_in; 
       `FNC_BNE: taken = !(rs1_in == rs2_in);
       `FNC_BLT: taken = $signed(rs1_in) < $signed(rs2_in);
-      `FNC_BGE: taken = !(($signed(rs1_in) < $signed(rs2_in)) || (rs1_in == rs2_in));
+      `FNC_BGE: taken = !($signed(rs1_in) < $signed(rs2_in));
       `FNC_BLTU: taken = rs1_in < rs2_in; 
-      `FNC_BGEU: taken = !((rs1_in < rs2_in) || (rs1_in == rs2_in));
+      `FNC_BGEU: taken = !(rs1_in < rs2_in);
       default: taken = 1'b0;
     endcase
   end
