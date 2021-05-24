@@ -83,9 +83,9 @@ module EX #(
 
   always @(*) begin
     case (csr_func)
-      `FNC_CSRRW: csr_data_in = data_rs1;
+      `FNC_CSRRW: csr_data_in = data_rs1_final;
       `FNC_CSRRWI: csr_data_in = data_imm;
-      default: csr_data_in = data_rs1;
+      default: csr_data_in = data_rs1_final;
     endcase
   end
 
@@ -101,6 +101,6 @@ module EX #(
     .data_out(csr_data_out)
   );
 
-  assign csr_orig_data_out = csr_data_in;
+  assign csr_orig_data_out = ctrl_csr_we ? csr_data_in : {DWIDTH{1'b0}};
 
 endmodule
