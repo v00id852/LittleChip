@@ -23,9 +23,9 @@ module ALU #(
       `ALU_CTRL_SLT: out = $signed(A) < $signed(B) ? 1 : 0;
       `ALU_CTRL_SLTU: out = A < B ? 1 : 0;
       `ALU_CTRL_NOR: out = ~(A | B);
-      `ALU_CTRL_SLL: out = A << (B & 32'h001f);
+      `ALU_CTRL_SLL: out = A << (B & 32'h0000_001f);
       `ALU_CTRL_XOR: out = A ^ B;
-      `ALU_CTRL_SRL: out = A >> (B & 32'h001f);
+      `ALU_CTRL_SRL: out = A >> (B & 32'h0000_001f);
       `ALU_CTRL_SRA: out = $signed(A) >>> (B & 32'h001f);
       default: out = 0;
     endcase
