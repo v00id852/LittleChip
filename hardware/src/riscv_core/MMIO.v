@@ -6,7 +6,7 @@ module MMIO #(
   input [DWIDTH - 1:0] data_in,
   input we_in,
   // Peripheral data in
-  input [DWIDTH - 1:0] data_uart_rx_in,
+  input [7:0] data_uart_rx_in,
   input [DWIDTH - 1:0] data_cycle_counter_in,
   input [DWIDTH - 1:0] data_inst_counter_in,
   // Peripheral data in
@@ -15,7 +15,7 @@ module MMIO #(
 
   output [DWIDTH - 1:0] data_reg_out,
   // Peripheral data out
-  output [DWIDTH - 1:0] data_uart_tx_out,
+  output [7:0] data_uart_tx_out,
   // Peripheral control out
   output ctrl_uart_tx_valid_out,
   output ctrl_uart_rx_ready_out,
