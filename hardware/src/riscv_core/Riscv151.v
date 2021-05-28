@@ -540,6 +540,48 @@ module Riscv151 #(
     .wea_out(mem_din_mask)
   );
 
+  wire [DMEM_DWIDTH - 1:0] mmio_addr_in;
+  wire [DMEM_DWIDTH - 1:0] mmio_data_in, mmio_data_out;
+  wire mmio_we_in;
+  // Peripheral data and control signals
+  wire [DMEM_DWIDTH - 1:0] mmio_cycle_counter_in, mmio_inst_counter_in;
+  wire [7:0] mmio_uart_tx_out, mmio_uart_rx_in;
+  wire mmio_uart_tx_ready_in, mmio_uart_rx_valid_in;
+  wire mmio_uart_tx_valid_out, mmio_uart_rx_ready_out;
+  wire mmio_counter_rst_out;
+
+  // MMIO and other peripherals
+  MMIO #(
+    .AWIDTH(DMEM_DWIDTH),
+    .DWIDTH(DMEM_DWIDTH)
+  ) mmio (
+    .addr_in(mmio_addr_in),
+    .data_in(mmio_data_in),
+    .data_uart_rx_in(mmio_uart_rx_in),
+    .data_cycle_counter_in(mmio_cycle_counter_in),
+    .data_inst_counter_in(mmio_inst_counter_in),
+    .ctrl_uart_tx_ready_in(mmio_uart_tx_ready_in),
+    .ctrl_uart_rx_valid_in(mmio_uart_rx_valid_in),
+    .we_in(mmio_we_in),
+    .data_reg_out(mmio_data_out),
+    .data_uart_tx_out(mmio_uart_tx_out),
+    .ctrl_uart_tx_valid_out(mmio_uart_tx_valid_out),
+    .ctrl_uart_rx_ready_out(mmio_uart_rx_ready_out),
+    .ctrl_counter_rst_out(mmio_counter_rst_out)
+  );
+
+  wire cycle_counter_rst;
+  wire [DMEM_AWIDTH - 1:0] cycle_counter_value;
+
+  CYCLE_COUNTER #(.DWIDTH(DMEM_DWIDTH)) cycle_counter (
+    .clk(clk),
+    .rst(cycle_counter_rst),
+    .cycle(cycle_counter_value)
+  );
+  
+  assign cycle_counter_rst = rst | mmio_counter_rst_out;
+  assign mmio_cycle_counter_in = cycle_counter_value;
+
   assign dmem_dina = mem_din;
   assign imem_dina = mem_din;
 
@@ -585,7 +627,7 @@ module Riscv151 #(
     .d  (ctrl_mem_to_reg_ex_in),
     .q  (ctrl_mem_to_reg_ex_out)
   );
-  
+
   // Data out from memory selection
   // Because memory output is synchronise read, so it should use alu_ex_out to
   // decide which one is used.
