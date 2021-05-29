@@ -26,15 +26,15 @@ module MMIO #(
   reg ctrl_counter_rst_out;
 
   always @(*) begin
-    if (addr == {{(AWIDTH - 32) {1'b0}}, 32'h80000010}) begin
-      data_reg_out = cycle_counter_in;
+    if (addr_in == {{(AWIDTH - 32) {1'b0}}, 32'h80000010}) begin
+      data_reg_out = data_cycle_counter_in;
     end else begin
       data_reg_out = 32'b0;
     end
   end
 
   always @(*) begin
-    if ((addr == {{(AWIDTH - 32) {1'b0}}, 32'h80000018}) && we) begin
+    if ((addr_in == {{(AWIDTH - 32) {1'b0}}, 32'h80000018}) && we_in) begin
       ctrl_counter_rst_out = 1'b1;
     end else begin
       ctrl_counter_rst_out = 1'b0;

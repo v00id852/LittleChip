@@ -571,7 +571,7 @@ module Riscv151 #(
   );
 
   wire cycle_counter_rst;
-  wire [DMEM_AWIDTH - 1:0] cycle_counter_value;
+  wire [DMEM_DWIDTH - 1:0] cycle_counter_value;
 
   CYCLE_COUNTER #(.DWIDTH(DMEM_DWIDTH)) cycle_counter (
     .clk(clk),
