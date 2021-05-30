@@ -16,5 +16,6 @@ module CYCLE_COUNTER #(
   );
 
   assign cycle_next = cycle_value + 1;
+  assign cycle = cycle_value;
   
 endmodule

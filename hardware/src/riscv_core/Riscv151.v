@@ -540,8 +540,10 @@ module Riscv151 #(
     .wea_out(mem_din_mask)
   );
 
-  wire [DMEM_DWIDTH - 1:0] mmio_addr_in;
-  wire [DMEM_DWIDTH - 1:0] mmio_data_in, mmio_data_out;
+  localparam MMIO_AWIDTH = 32;
+
+  wire [MMIO_AWIDTH - 1:0] mmio_addr_in;
+  wire [DMEM_DWIDTH - 1:0] mmio_data_in, mmio_data_out, mmio_data_ex_out;
   wire mmio_we_in;
   // Peripheral data and control signals
   wire [DMEM_DWIDTH - 1:0] mmio_cycle_counter_in, mmio_inst_counter_in;
@@ -552,7 +554,7 @@ module Riscv151 #(
 
   // MMIO and other peripherals
   MMIO #(
-    .AWIDTH(DMEM_DWIDTH),
+    .AWIDTH(MMIO_AWIDTH),
     .DWIDTH(DMEM_DWIDTH)
   ) mmio (
     .addr_in(mmio_addr_in),
@@ -581,6 +583,11 @@ module Riscv151 #(
   
   assign cycle_counter_rst = rst | mmio_counter_rst_out;
   assign mmio_cycle_counter_in = cycle_counter_value;
+  assign mmio_addr_in = alu_out;
+  assign mmio_data_in = mem_din;
+  assign mmio_uart_rx_in = {DMEM_DWIDTH{1'b0}};
+  assign mmio_we_in = ctrl_mem_we_ex_in;
+  
 
   assign dmem_dina = mem_din;
   assign imem_dina = mem_din;
@@ -628,10 +635,19 @@ module Riscv151 #(
     .q  (ctrl_mem_to_reg_ex_out)
   );
 
+  REGISTER #(
+    .N(DMEM_DWIDTH)
+  ) ex_id_mmio_data_out (
+    .clk(clk),
+    .d  (mmio_data_out),
+    .q  (mmio_data_ex_out)
+  );
+
   // Data out from memory selection
   // Because memory output is synchronise read, so it should use alu_ex_out to
   // decide which one is used.
-  assign mem_sel_out = (alu_ex_out[30] == 1'b1) ? bios_doutb : dmem_douta;
+  assign mem_sel_out = (alu_ex_out[31] == 1'b1) ? mmio_data_ex_out :
+                       (alu_ex_out[30] == 1'b1) ? bios_doutb : dmem_douta;
 
   assign mem_mask_byte_addr = alu_ex_out[1:0];
   assign mem_mask_inst_func_in = mem_mask_inst_in[14:12];

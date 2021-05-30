@@ -97,7 +97,7 @@ module mmio_testbench;
 
   reg [31:0] IMM0;
   reg [14:0] INST_ADDR;
-  reg [31:0] CYCLE_COUNTER_ADDR;
+  reg [31:0] CYCLE_COUNTER_ADDR, COUNTER_RESET_ADDR;
 
   initial begin
     $dumpfile("mmio_testbench.vcd");
@@ -118,16 +118,23 @@ module mmio_testbench;
     INST_ADDR = 14'h0000;
     IMM0      = 32'd0;
     CYCLE_COUNTER_ADDR = 32'h80000010;
+    COUNTER_RESET_ADDR = 32'h80000018;
 
-    `RF_PATH.mem[1] = 32'h0;
+    `RF_PATH.mem[1] = COUNTER_RESET_ADDR;
     `RF_PATH.mem[2] = CYCLE_COUNTER_ADDR;
     
     // Reset the counter
-    `IMEM_PATH.mem[INST_ADDR + 0] = {IMM0[11:5], 5'd2, 5'd1, `FNC_SW, IMM0[4:0], `OPC_STORE};
-    `IMEM_PATH.mem[INST_ADDR + 0] = {IMM0[11:0], 5'd1, `FNC_LW, 5'd3, `OPC_LOAD};
-    
-    check_result_rf(5'd3, 32'd1, "Read Cycle Counter");
-    
+    `IMEM_PATH.mem[INST_ADDR + 0] = {IMM0[11:5], 5'd0, 5'd1, `FNC_SW, IMM0[4:0], `OPC_STORE};
+    `IMEM_PATH.mem[INST_ADDR + 1] = {IMM0[11:5], 5'd2, `FNC_LW, 5'd3, `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 4] = {IMM0[11:0], 5'd2, `FNC_LW, 5'd4, `OPC_LOAD};
+    `IMEM_PATH.mem[INST_ADDR + 10] = {IMM0[11:0], 5'd2, `FNC_LW, 5'd5, `OPC_LOAD};
+
+    check_result_rf(5'd3, 32'd0, "Cycle counter reset");
+    check_result_rf(5'd4, 32'd3, "Cycle counter after 3 cycles");
+    check_result_rf(5'd5, 32'd9, "Cycle counter after 9 cycles");
+    #100;
+    $display("All tests passed!");
+    $finish();
   end
 
 endmodule
