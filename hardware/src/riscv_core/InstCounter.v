@@ -8,15 +8,18 @@ module INST_COUNTER #(
 );
 
   wire [DWIDTH - 1:0] counter_value, counter_next;
-  
-  REGISTER_R #(.N(DWIDTH), .INIT(0)) counter_reg (
+
+  REGISTER_R #(
+    .N(DWIDTH),
+    .INIT(0)
+  ) counter_reg (
     .clk(clk),
     .rst(rst),
-    .d (counter_next),
-    .q (counter_value)
+    .d  (counter_next),
+    .q  (counter_value)
   );
-  
-  assign counter_out = counter_value;
+
+  assign counter_out  = counter_value;
   assign counter_next = (opcode == 6'd0) ? counter_value : counter_value + 1;
 
 endmodule
