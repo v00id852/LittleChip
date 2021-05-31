@@ -28,8 +28,11 @@ module MMIO #(
   always @(*) begin
     if (addr_in == {{(AWIDTH - 32) {1'b0}}, 32'h80000010}) begin
       data_reg_out = data_cycle_counter_in;
+    end else if (addr_in == {{(AWIDTH - 32) {1'b0}}, 32'h80000014}) begin
+      // Instruction counter
+      data_reg_out = data_inst_counter_in;
     end else begin
-      data_reg_out = 32'b0;
+      data_reg_out = {AWIDTH{1'b0}};
     end
   end
 

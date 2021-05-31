@@ -285,19 +285,6 @@ module Riscv151 #(
     .id_forward_b_sel(ctrl_id_forward_b_sel)
   );
 
-  wire inst_counter_rst;
-  wire [6:0] inst_counter_opcode_in;
-  wire [DMEM_DWIDTH - 1:0] inst_counter_out;
-
-  INST_COUNTER #(.DWIDTH(DMEM_DWIDTH)) inst_counter (
-    .clk(clk),
-    .rst(inst_counter_rst),
-    .opcode(inst_counter_opcode_in),
-    .counter_out(inst_counter_out)
-  );
-
-  assign inst_counter_opcode_in = opcode_id_in;
-
   // ID-EX pipeline
 
   wire [INST_WIDTH - 1:0] inst_ex_in;
@@ -318,8 +305,6 @@ module Riscv151 #(
   wire ctrl_csr_rd_ex_in;
   wire [11:0] csr_addr_ex_in;
   wire [2:0] csr_func_ex_in;
-  
-  wire [DMEM_DWIDTH - 1: 0] inst_counter_ex_in;
 
   // Note: new pc value doesn't need to use register
   assign pc_new_if_in = pc_new_id_out;
@@ -492,15 +477,6 @@ module Riscv151 #(
     .q  (pc_ex_in)
   );
 
-  REGISTER_R #(
-    .N(DMEM_DWIDTH)
-  ) id_ex_inst_counter_value (
-    .clk(clk),
-    .rst(rst),
-    .d (inst_counter_out),
-    .q (inst_counter_ex_in)
-  );
-
   // EX Stage 
 
   wire [3:0] alu_func;
@@ -604,11 +580,24 @@ module Riscv151 #(
     .rst(cycle_counter_rst),
     .cycle(cycle_counter_value)
   );
-  
+
   assign cycle_counter_rst = rst | mmio_counter_rst_out;
+
+  wire inst_counter_rst;
+  wire [6:0] inst_counter_opcode_in;
+  wire [DMEM_DWIDTH - 1:0] inst_counter_value;
+
+  INST_COUNTER #(.DWIDTH(DMEM_DWIDTH)) inst_counter (
+    .clk(clk),
+    .rst(inst_counter_rst),
+    .opcode(inst_counter_opcode_in),
+    .counter_out(inst_counter_value)
+  );
+
+  assign inst_counter_opcode_in = inst_ex_in[6:0];
   assign inst_counter_rst = rst | mmio_counter_rst_out;
   assign mmio_cycle_counter_in = cycle_counter_value;
-  assign mmio_inst_counter_in = inst_counter_ex_in;
+  assign mmio_inst_counter_in = inst_counter_value;
   assign mmio_addr_in = alu_out;
   assign mmio_data_in = mem_din;
   assign mmio_uart_rx_in = {DMEM_DWIDTH{1'b0}};
