@@ -736,7 +736,7 @@ module Riscv151 #(
   always @(*) begin
     case (ctrl_mem_to_reg_ex_out)
       2'b00:   rd_id_in = alu_ex_out;
-      2'b01:   rd_id_in = csr_data_out;
+      2'b01:   rd_id_in = csr_ex_data_out;
       2'b10:   rd_id_in = mem_ex_out;
       default: rd_id_in = alu_ex_out;
     endcase

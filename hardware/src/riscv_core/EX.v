@@ -23,7 +23,7 @@ module EX #(
   input [2:0] csr_func,
 
   output [DWIDTH - 1:0] csr_data_out,
-  output [DWIDTH - 1:0] csr_orig_data_out, // the data written into csr
+  output [DWIDTH - 1:0] csr_orig_data_out,  // the data written into csr
   output [DWIDTH - 1:0] alu_out
 );
 
@@ -101,6 +101,21 @@ module EX #(
     .data_out(csr_data_out)
   );
 
-  assign csr_orig_data_out = ctrl_csr_we ? csr_data_in : {DWIDTH{1'b0}};
+  wire csr_orig_data_ce;
+  wire [DWIDTH - 1:0] csr_orig_data_next, csr_orig_data_value;
+
+  REGISTER_CE #(
+    .N(DWIDTH),
+    .INIT(0)
+  ) csr_orig_data_reg (
+    .clk(clk),
+    .ce (csr_orig_data_ce),
+    .d  (csr_orig_data_next),
+    .q  (csr_orig_data_value)
+  );
+
+  assign csr_orig_data_ce   = ctrl_csr_we;
+  assign csr_orig_data_next = csr_data_in;
+  assign csr_orig_data_out  = csr_orig_data_value;
 
 endmodule
