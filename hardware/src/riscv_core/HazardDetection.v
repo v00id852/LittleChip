@@ -35,7 +35,7 @@ module HAZARD_DETECTION (
   // And the pc can only stall one clock, after that it should asserted
   wire old_ctrl_pc_en;
 
-  REGISTER #(.N(1), .INIT(1)) ctrl_pc_en_reg (
+  REGISTER #(.N(1)) ctrl_pc_en_reg (
     .clk(clk),
     .d(ctrl_pc_en),
     .q(old_ctrl_pc_en)

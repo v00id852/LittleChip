@@ -105,8 +105,7 @@ module EX #(
   wire [DWIDTH - 1:0] csr_orig_data_next, csr_orig_data_value;
 
   REGISTER_CE #(
-    .N(DWIDTH),
-    .INIT(0)
+    .N(DWIDTH)
   ) csr_orig_data_reg (
     .clk(clk),
     .ce (csr_orig_data_ce),

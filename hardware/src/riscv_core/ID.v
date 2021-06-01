@@ -36,6 +36,8 @@ module ID #(
   output ctrl_pc_en,
   output ctrl_imem_en,
 
+  output ctrl_zero_sel,
+
   output ctrl_csr_we,
   output ctrl_csr_rd,
   output [11:0] csr_addr,
@@ -106,13 +108,6 @@ module ID #(
 
   wire ctrl_utype_src, ctrl_jtype_src;
 
-  wire [1:0] ctrl_alu_op_inner;
-  wire ctrl_reg_we_inner;
-  wire [1:0] ctrl_alu_src_a_inner, ctrl_alu_src_b_inner;
-  wire [1:0] ctrl_mem_to_reg_inner;
-  wire ctrl_mem_write_inner, ctrl_mem_read_inner;
-  wire ctrl_csr_we_inner;
-  wire ctrl_csr_rd_inner;
   wire ctrl_jump, ctrl_branch;
   wire ctrl_jalr_src;
 
@@ -121,21 +116,19 @@ module ID #(
     .INST_WIDTH(INST_WIDTH)
   ) control (
     .inst(inst),
-    .alu_op(ctrl_alu_op_inner),
-    .reg_write(ctrl_reg_we_inner),
-    .alu_src_a(ctrl_alu_src_a_inner),
-    .alu_src_b(ctrl_alu_src_b_inner),
-    .mem_write(ctrl_mem_write_inner),
-    .mem_read(ctrl_mem_read_inner),
-    .mem_to_reg(ctrl_mem_to_reg_inner),
+    .alu_op(ctrl_alu_op),
+    .reg_write(ctrl_reg_we),
+    .alu_src_a(ctrl_alu_src_a),
+    .alu_src_b(ctrl_alu_src_b),
+    .mem_write(ctrl_mem_write),
+    .mem_read(ctrl_mem_read),
+    .mem_to_reg(ctrl_mem_to_reg),
     .branch(ctrl_branch),
     .jump(ctrl_jump),
     .jalr_src(ctrl_jalr_src),
-    .csr_we(ctrl_csr_we_inner),
-    .csr_rd(ctrl_csr_rd_inner)
+    .csr_we(ctrl_csr_we),
+    .csr_rd(ctrl_csr_rd)
   );
-
-  wire ctrl_zero_sel;
 
   HAZARD_DETECTION hd (
     .clk(clk),
@@ -163,18 +156,6 @@ module ID #(
   );
 
   assign ctrl_pc_src = ctrl_jump || (ctrl_branch && branch_taken);
-
-  // FIXME: ctrl_zero_sel as pipeline rst
-  // zero ex stage signals to avoid data hazard and control hazard
-  assign ctrl_alu_op = ctrl_zero_sel ? 2'b00 : ctrl_alu_op_inner;
-  assign ctrl_reg_we = ctrl_zero_sel ? 1'b0 : ctrl_reg_we_inner;
-  assign ctrl_alu_src_a = ctrl_zero_sel ? 2'b00 : ctrl_alu_src_a_inner;
-  assign ctrl_alu_src_b = ctrl_zero_sel ? 2'b00 : ctrl_alu_src_b_inner;
-  assign ctrl_mem_write = ctrl_zero_sel ? 1'b0 : ctrl_mem_write_inner;
-  assign ctrl_mem_read = ctrl_zero_sel ? 1'b0 : ctrl_mem_read_inner;
-  assign ctrl_mem_to_reg = ctrl_zero_sel ? 2'b00 : ctrl_mem_to_reg_inner;
-  assign ctrl_csr_we = ctrl_zero_sel ? 1'b0 : ctrl_csr_we_inner;
-  assign ctrl_csr_rd = ctrl_zero_sel ? 1'b0 : ctrl_csr_rd_inner;
 
   // pc_new = rs1/PC + immediate
   assign branch_pc_rs1 = ctrl_jalr_src ? data_rs1 : pc;
