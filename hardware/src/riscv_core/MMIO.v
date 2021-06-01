@@ -4,6 +4,7 @@ module MMIO #(
 ) (
   input [AWIDTH - 1:0] addr_in,
   input [DWIDTH - 1:0] data_in,
+  input re_in,
   input we_in,
   // Peripheral data in
   input [7:0] data_uart_rx_in,
@@ -67,7 +68,7 @@ module MMIO #(
 
   // Uart receiver ready signal
   always @(*) begin
-    if (addr_in == {{(AWIDTH - 32) {1'b0}}, 32'h80000004}) begin
+    if ((addr_in == {{(AWIDTH - 32) {1'b0}}, 32'h80000004}) && re_in) begin
       ctrl_uart_rx_ready_out = 1'b1;
     end else begin
       ctrl_uart_rx_ready_out = 1'b0;

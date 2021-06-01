@@ -294,7 +294,7 @@ module Riscv151 #(
   wire [PC_WIDTH - 1:0] pc_ex_in;
 
   wire ctrl_mem_we_ex_in;
-  wire ctrl_mem_rd_ex_in;
+  wire ctrl_mem_re_ex_in;
   wire [1:0] ctrl_mem_to_reg_ex_in;
   wire [1:0] ctrl_alu_op_ex_in;
   wire [1:0] ctrl_alu_src_a_ex_in, ctrl_alu_src_b_ex_in;
@@ -346,7 +346,7 @@ module Riscv151 #(
   ) id_ex_ctrl_mem_read (
     .clk(clk),
     .d  (ctrl_mem_read_id_out),
-    .q  (ctrl_mem_rd_ex_in)
+    .q  (ctrl_mem_re_ex_in)
   );
 
   REGISTER #(
@@ -544,7 +544,7 @@ module Riscv151 #(
 
   wire [MMIO_AWIDTH - 1:0] mmio_addr_in;
   wire [DMEM_DWIDTH - 1:0] mmio_data_in, mmio_data_out, mmio_data_ex_out;
-  wire mmio_we_in;
+  wire mmio_we_in, mmio_re_in;
   // Peripheral data and control signals
   wire [DMEM_DWIDTH - 1:0] mmio_cycle_counter_in, mmio_inst_counter_in;
   wire [7:0] mmio_uart_tx_out, mmio_uart_rx_in;
@@ -565,6 +565,7 @@ module Riscv151 #(
     .ctrl_uart_tx_ready_in(mmio_uart_tx_ready_in),
     .ctrl_uart_rx_valid_in(mmio_uart_rx_valid_in),
     .we_in(mmio_we_in),
+    .re_in(mmio_re_in),
     .data_reg_out(mmio_data_out),
     .data_uart_tx_out(mmio_uart_tx_out),
     .ctrl_uart_tx_valid_out(mmio_uart_tx_valid_out),
@@ -655,9 +656,7 @@ module Riscv151 #(
   assign mmio_addr_in = alu_out;
   assign mmio_data_in = mem_din;
   assign mmio_we_in = ctrl_mem_we_ex_in;
-
-  assign uart_tx_data_in = mmio_uart_tx_out;
-
+  assign mmio_re_in = ctrl_mem_re_ex_in;
 
 
   assign dmem_dina = mem_din;
