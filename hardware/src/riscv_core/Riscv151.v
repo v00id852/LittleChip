@@ -575,9 +575,11 @@ module Riscv151 #(
   wire cycle_counter_rst;
   wire [DMEM_DWIDTH - 1:0] cycle_counter_value;
 
-  CYCLE_COUNTER #(.DWIDTH(DMEM_DWIDTH)) cycle_counter (
-    .clk(clk),
-    .rst(cycle_counter_rst),
+  CYCLE_COUNTER #(
+    .DWIDTH(DMEM_DWIDTH)
+  ) cycle_counter (
+    .clk  (clk),
+    .rst  (cycle_counter_rst),
     .cycle(cycle_counter_value)
   );
 
@@ -587,12 +589,64 @@ module Riscv151 #(
   wire [6:0] inst_counter_opcode_in;
   wire [DMEM_DWIDTH - 1:0] inst_counter_value;
 
-  INST_COUNTER #(.DWIDTH(DMEM_DWIDTH)) inst_counter (
+  INST_COUNTER #(
+    .DWIDTH(DMEM_DWIDTH)
+  ) inst_counter (
     .clk(clk),
     .rst(inst_counter_rst),
     .opcode(inst_counter_opcode_in),
     .counter_out(inst_counter_value)
   );
+
+  wire [7:0] uart_tx_fifo_enq_data, uart_tx_fifo_deq_data;
+  wire uart_tx_fifo_enq_ready, uart_tx_fifo_enq_valid;
+  wire uart_tx_fifo_deq_ready, uart_tx_fifo_deq_valid;
+
+  FIFO #(
+    .WIDTH(8),
+    .LOGDEPTH(5)
+  ) uart_tx_fifo (
+    .clk(clk),
+    .rst(rst),
+    .enq_valid(uart_tx_fifo_enq_valid),
+    .enq_ready(uart_tx_fifo_enq_ready),
+    .enq_data(uart_tx_fifo_enq_data),
+    .deq_valid(uart_tx_fifo_deq_valid),
+    .deq_ready(uart_tx_fifo_deq_ready),
+    .deq_data(uart_tx_fifo_deq_data)
+  );
+
+  assign uart_tx_fifo_enq_data = mmio_uart_tx_out;
+  assign uart_tx_fifo_enq_valid = mmio_uart_tx_valid_out;
+  assign mmio_uart_tx_ready_in = uart_tx_fifo_enq_ready;
+  assign uart_tx_data_in = uart_tx_fifo_deq_data;
+  assign uart_tx_data_in_valid = uart_tx_fifo_deq_valid;
+  assign uart_tx_fifo_deq_ready = uart_tx_data_in_ready;
+
+  wire [7:0] uart_rx_fifo_enq_data, uart_rx_fifo_deq_data;
+  wire uart_rx_fifo_enq_ready, uart_rx_fifo_enq_valid;
+  wire uart_rx_fifo_deq_ready, uart_rx_fifo_deq_valid;
+
+  FIFO #(
+    .WIDTH(8),
+    .LOGDEPTH(5)
+  ) uart_rx_fifo (
+    .clk(clk),
+    .rst(rst),
+    .enq_valid(uart_rx_fifo_enq_valid),
+    .enq_ready(uart_rx_fifo_enq_ready),
+    .enq_data(uart_rx_fifo_enq_data),
+    .deq_valid(uart_rx_fifo_deq_valid),
+    .deq_ready(uart_rx_fifo_deq_ready),
+    .deq_data(uart_rx_fifo_deq_data)
+  );
+
+  assign uart_rx_fifo_enq_data = uart_rx_data_out;
+  assign uart_rx_fifo_enq_valid = uart_rx_data_out_valid;
+  assign uart_rx_data_out_ready = uart_rx_fifo_enq_ready;
+  assign mmio_uart_rx_in = uart_rx_fifo_deq_data;
+  assign mmio_uart_rx_valid_in = uart_rx_fifo_deq_valid;
+  assign uart_rx_fifo_deq_ready = mmio_uart_rx_ready_out;
 
   assign inst_counter_opcode_in = inst_ex_in[6:0];
   assign inst_counter_rst = rst | mmio_counter_rst_out;
@@ -600,9 +654,11 @@ module Riscv151 #(
   assign mmio_inst_counter_in = inst_counter_value;
   assign mmio_addr_in = alu_out;
   assign mmio_data_in = mem_din;
-  assign mmio_uart_rx_in = {DMEM_DWIDTH{1'b0}};
   assign mmio_we_in = ctrl_mem_we_ex_in;
-  
+
+  assign uart_tx_data_in = mmio_uart_tx_out;
+
+
 
   assign dmem_dina = mem_din;
   assign imem_dina = mem_din;

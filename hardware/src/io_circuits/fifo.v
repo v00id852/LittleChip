@@ -1,5 +1,5 @@
 
-module fifo #(
+module FIFO #(
   parameter WIDTH    = 32, // data width is 32-bit
   parameter LOGDEPTH = 3   // 2^3 = 8 entries
 ) (
