@@ -157,7 +157,7 @@ module Riscv151 #(
 
   assign bios_addra = pc_if_out[13:2];
   assign imem_addrb = pc_if_out[15:2];
-  assign imem_web = 4'h0;  // FIXME
+  assign imem_web = 4'h0;
   assign inst_if_out = inst_if_flush ? 32'b0 : (pc_if_out[30] == 1'b1) ? bios_douta : imem_doutb;
   // when ctrl_imem_en is not asserted, the memory will keep its output value.
   assign imem_enb = ctrl_imem_en_id_out;
