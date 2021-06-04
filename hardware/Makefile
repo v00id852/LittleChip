@@ -141,5 +141,5 @@ clean:
 .PHONY: veryclean
 # "make veryclean" removes the project folders and bitstream files
 veryclean:
-		rm -rf *.log *.jou *.str *.vcd *.out *.mif NA z1top* bitstream_files
+		rm -rf *.log *.jou *.str *.vcd *.out *.mif NA z1top* a7top* bitstream_files
 
