@@ -7,7 +7,7 @@ module IMM_GEN #(
   parameter DWIDTH = 32
 ) (
   input  [IWIDTH - 1:0] inst_in,
-  output [DWIDTH - 1:0] imm_out
+  output reg [DWIDTH - 1:0] imm_out
 );
 
   wire [DWIDTH - 1:0] imm_I, imm_S, imm_B, imm_U, imm_J, imm_CSR;
@@ -23,8 +23,6 @@ module IMM_GEN #(
     {(DWIDTH - 21) {inst_in[31]}}, inst_in[31], inst_in[19:12], inst_in[20], inst_in[30:21], 1'b0
   };
   assign imm_CSR = {{(DWIDTH - 5) {1'b0}}, inst_in[19:15]};
-
-  reg [DWIDTH - 1:0] imm_out;
 
   always @(*) begin
     case (inst_in[6:5])

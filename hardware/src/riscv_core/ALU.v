@@ -9,10 +9,8 @@ module ALU #(
   input [DWIDTH - 1:0] A,
   input [DWIDTH - 1:0] B,
   input [3:0] ctl,
-  output [DWIDTH - 1:0] out
+  output reg [DWIDTH - 1:0] out
 );
-
-  reg [DWIDTH - 1:0] out;
 
   always @(*) begin
     case (ctl)
@@ -36,10 +34,8 @@ endmodule
 module ALUCtrl (
   input  [3:0] func,
   input  [1:0] alu_op,
-  output [3:0] alu_ctrl
+  output reg [3:0] alu_ctrl
 );
-
-  reg [3:0] alu_ctrl;
 
   always @(*) begin
     case (alu_op)

@@ -2,7 +2,7 @@
 
 module PC #(
   parameter PC_WIDTH = 32,
-  parameter RESET_PC_VAL = {AWIDTH{1'b0}}
+  parameter RESET_PC_VAL = {{(PC_WIDTH){1'b0}}}
 ) (
   input clk,
   input rst,

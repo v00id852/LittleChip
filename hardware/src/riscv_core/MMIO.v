@@ -14,18 +14,14 @@ module MMIO #(
   input ctrl_uart_tx_ready_in,
   input ctrl_uart_rx_valid_in,
 
-  output [DWIDTH - 1:0] data_reg_out,
+  output reg [DWIDTH - 1:0] data_reg_out,
   // Peripheral data out
   output [7:0] data_uart_tx_out,
   // Peripheral control out
-  output ctrl_uart_tx_valid_out,
-  output ctrl_uart_rx_ready_out,
-  output ctrl_counter_rst_out
+  output reg ctrl_uart_tx_valid_out,
+  output reg ctrl_uart_rx_ready_out,
+  output reg ctrl_counter_rst_out
 );
-
-  reg [DWIDTH - 1:0] data_reg_out;
-  reg ctrl_counter_rst_out;
-  reg ctrl_uart_tx_valid_out, ctrl_uart_rx_ready_out;
 
   always @(*) begin
     if (addr_in == {{(AWIDTH - 32) {1'b0}}, 32'h80000010}) begin

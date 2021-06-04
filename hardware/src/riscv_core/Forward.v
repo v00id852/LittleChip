@@ -11,16 +11,12 @@ module FORWARD #(
   input [4:0] rd_addr_id_in,
   input ctrl_reg_we_ex_in,
   input ctrl_reg_we_id_in,
-  output ex_forward_a_sel,
-  output ex_forward_b_sel,
-  output ex_forward_data_sel,
-  output id_forward_a_sel,
-  output id_forward_b_sel
+  output reg ex_forward_a_sel,
+  output reg ex_forward_b_sel,
+  output reg ex_forward_data_sel,
+  output reg id_forward_a_sel,
+  output reg id_forward_b_sel
 );
-
-  reg ex_forward_a_sel, ex_forward_b_sel;
-  reg ex_forward_data_sel;
-  reg id_forward_a_sel, id_forward_b_sel;
 
   // EX Hazard
   always @(*) begin

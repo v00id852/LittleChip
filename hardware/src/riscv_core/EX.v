@@ -62,7 +62,6 @@ module EX #(
     endcase
   end
 
-  wire [DWIDTH - 1:0] alu_out;
   wire [3:0] alu_ctrl_out;
   ALUCtrl alu_ctrl (
     .func(ctrl_alu_func),

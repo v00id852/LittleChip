@@ -11,9 +11,9 @@ module CONTROL #(
   output jalr_src,
   output branch,
   output jump,
-  output [1:0] alu_op,
-  output [1:0] alu_src_a,
-  output [1:0] alu_src_b,
+  output reg [1:0] alu_op,
+  output reg [1:0] alu_src_a,
+  output reg [1:0] alu_src_b,
   output csr_we,
   output csr_rd
 );
@@ -39,9 +39,6 @@ module CONTROL #(
 
   assign mem_to_reg = (opcode == `OPC_CSR) ? 2'b01 : (opcode == `OPC_LOAD) ? 2'b10 : 2'b00;
 
-
-  reg [1:0] alu_op;
-
   always @(*) begin
     case (opcode)
       `OPC_ARI_ITYPE: alu_op = 2'b11;
@@ -50,8 +47,6 @@ module CONTROL #(
       default: alu_op = 2'b00;
     endcase
   end
-
-  reg [1:0] alu_src_a, alu_src_b;
 
   always @(*) begin
     if (opcode == `OPC_LUI)

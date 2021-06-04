@@ -18,8 +18,8 @@ module ID #(
   input forward_a_sel_in,
   input forward_b_sel_in,
 
-  output [  DWIDTH - 1:0] data_rs1,
-  output [  DWIDTH - 1:0] data_rs2,
+  output reg [  DWIDTH - 1:0] data_rs1,
+  output reg [  DWIDTH - 1:0] data_rs2,
   output [PC_WIDTH - 1:0] data_pc,
   output [  DWIDTH - 1:0] data_imm,
 
@@ -81,8 +81,6 @@ module ID #(
   // register files write enable
   assign rf_we  = reg_we;
   assign rf_wd  = data_rd;
-
-  reg [DWIDTH - 1:0] data_rs1, data_rs2;
 
   always @(*) begin
     case (forward_a_sel_in)

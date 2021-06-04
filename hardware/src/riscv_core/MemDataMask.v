@@ -6,9 +6,9 @@ module MEM_DATA_MASK #(
   input [DATA_WIDTH - 1:0] data_in,
   input [2:0] inst_func_in,
   input [1:0] byte_addr_in,
-  output [DATA_WIDTH - 1:0] data_out
+  output reg [DATA_WIDTH - 1:0] data_out
 );
-  reg [DATA_WIDTH - 1:0] data_out;
+
   reg [5:0] bit_index;
 
   always @(*) begin
