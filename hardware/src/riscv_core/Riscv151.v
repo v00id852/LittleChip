@@ -500,7 +500,7 @@ module Riscv151 #(
   // EX Stage 
 
   wire [3:0] alu_func;
-  wire [DMEM_DWIDTH - 1:0] alu_out, alu_ex_out;
+  wire [DMEM_DWIDTH - 1:0] alu_out, alu_ex_out, alu_out_ex_sel_out;
   wire [DMEM_DWIDTH - 1:0] mem_ex_out;
   wire [DMEM_DWIDTH - 1:0] csr_data_out, csr_ex_data_out;
   wire [INST_WIDTH - 1:0] mem_mask_inst_in;
@@ -711,6 +711,14 @@ module Riscv151 #(
 
   REGISTER #(
     .N(DMEM_DWIDTH)
+  ) ex_id_alu_sel_out (
+    .clk(clk),
+    .d  (alu_out),
+    .q  (alu_out_ex_sel_out)
+  );
+
+  REGISTER #(
+    .N(DMEM_DWIDTH)
   ) ex_id_csr_data_out (
     .clk(clk),
     .d  (csr_data_out),
@@ -755,10 +763,10 @@ module Riscv151 #(
   // EX output selection
   always @(*) begin
     case (ctrl_mem_to_reg_ex_out)
-      2'b00:   rd_id_in = alu_ex_out;
+      2'b00:   rd_id_in = alu_out_ex_sel_out;
       2'b01:   rd_id_in = csr_ex_data_out;
       2'b10:   rd_id_in = mem_ex_out;
-      default: rd_id_in = alu_ex_out;
+      default: rd_id_in = alu_out_ex_sel_out;
     endcase
   end
 

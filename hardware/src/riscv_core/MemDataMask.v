@@ -12,12 +12,25 @@ module MEM_DATA_MASK #(
   reg [5:0] bit_index;
 
   always @(*) begin
-    bit_index = byte_addr_in << 3;
-    if (inst_func_in == `FNC_LH || inst_func_in == `FNC_LHU) begin
-      if (byte_addr_in == 2'd3 || byte_addr_in == 2'd1) begin
-        bit_index = (byte_addr_in - 1) << 3;
+    case (inst_func_in)
+      `FNC_LH: begin
+        case (byte_addr_in)
+          2'b00: bit_index = 0;
+          2'b01: bit_index = 0;
+          2'b10: bit_index = 2 << 3;
+          2'b11: bit_index = 2 << 3;
+        endcase
       end
-    end
+      `FNC_LHU: begin
+        case (byte_addr_in)
+          2'b00: bit_index = 0;
+          2'b01: bit_index = 0;
+          2'b10: bit_index = 2 << 3;
+          2'b11: bit_index = 2 << 3;
+        endcase 
+      end
+      default: bit_index = byte_addr_in << 3;
+    endcase
   end
 
   always @(*) begin
