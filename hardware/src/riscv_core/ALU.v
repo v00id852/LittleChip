@@ -55,7 +55,7 @@ module ALU #(
     case (ctrl_shift_sel)
       `ALU_SHIFT_SLL:   shift = A << offset;
       `ALU_SHIFT_SRL:   shift = A >> offset;
-      `ALU_SHIFT_SRA:   shift = $signed(A) >> offset;
+      `ALU_SHIFT_SRA:   shift = $signed(A) >>> offset;
       default: shift = 0;
     endcase
   end
@@ -77,7 +77,7 @@ module ALUCtrl (
   input [1:0] alu_op,
   output reg [1:0] ctrl_alu_out_sel,
   output reg [1:0] ctrl_bitwise_sel,
-  output reg ctrl_shift_sel,
+  output reg [1:0] ctrl_shift_sel,
   output reg ctrl_sub_less_sel,
   output reg ctrl_slt_unsigned_sel
 );
