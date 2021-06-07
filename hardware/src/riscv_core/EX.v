@@ -62,19 +62,29 @@ module EX #(
     endcase
   end
 
-  wire [3:0] alu_ctrl_out;
+  wire [1:0] ctrl_alu_out_sel, ctrl_bitwise_sel, ctrl_shift_sel;
+  wire ctrl_sub_less_sel, ctrl_slt_unsigned_sel;
+
   ALUCtrl alu_ctrl (
     .func(ctrl_alu_func),
     .alu_op(ctrl_alu_op),
-    .alu_ctrl(alu_ctrl_out)
+    .ctrl_alu_out_sel(ctrl_alu_out_sel),
+    .ctrl_bitwise_sel(ctrl_bitwise_sel),
+    .ctrl_sub_less_sel(ctrl_sub_less_sel),
+    .ctrl_shift_sel(ctrl_shift_sel),
+    .ctrl_slt_unsigned_sel(ctrl_slt_unsigned_sel)
   );
 
   ALU #(
     .DWIDTH(DWIDTH)
   ) alu (
-    .A  (alu_a_final),
-    .B  (alu_b_final),
-    .ctl(alu_ctrl_out),
+    .A(alu_a_final),
+    .B(alu_b_final),
+    .ctrl_alu_out_sel(ctrl_alu_out_sel),
+    .ctrl_bitwise_sel(ctrl_bitwise_sel),
+    .ctrl_sub_less_sel(ctrl_sub_less_sel),
+    .ctrl_shift_sel(ctrl_shift_sel),
+    .ctrl_slt_unsigned_sel(ctrl_slt_unsigned_sel),
     .out(alu_out)
   );
 
