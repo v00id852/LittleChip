@@ -34,8 +34,8 @@ module ALU #(
   wire [DWIDTH - 1:0] less;
   wire [DWIDTH - 1:0] add_sub_out;
 
-  reg [DWIDTH - 1:0] shift;
-  reg [DWIDTH - 1:0] bitwise_out;
+  reg  [DWIDTH - 1:0] shift;
+  reg  [DWIDTH - 1:0] bitwise_out;
 
   always @(*) begin
     case (ctrl_bitwise_sel)
@@ -46,16 +46,21 @@ module ALU #(
     endcase
   end
 
-  assign less        = (A[31] === B[31]) ? add_sub_out[31] : ctrl_slt_unsigned_sel ? B[31] : A[31];
-  assign add_sub_out = A + ((ctrl_sub_less_sel) ? (~B + 32'd1) : B);
+  assign less        = (A[31] === B[31]) ? add_sub_out[31] : 
+                       ctrl_slt_unsigned_sel ? B[31] : A[31];
+  wire [DWIDTH - 1:0] add_sub_offset;
+  assign add_sub_offset = (ctrl_sub_less_sel) ? 32'd1 : 32'd0;
+  wire [DWIDTH - 1:0] add_sub_b;
+  assign add_sub_b = (ctrl_sub_less_sel) ? ~B : B;
+  assign add_sub_out = A + add_sub_b + add_sub_offset;
 
   wire [4:0] offset = B[4:0];
 
   always @(*) begin
     case (ctrl_shift_sel)
-      `ALU_SHIFT_SLL:   shift = A << offset;
-      `ALU_SHIFT_SRL:   shift = A >> offset;
-      `ALU_SHIFT_SRA:   shift = $signed(A) >>> offset;
+      `ALU_SHIFT_SLL: shift = A << offset;
+      `ALU_SHIFT_SRL: shift = A >> offset;
+      `ALU_SHIFT_SRA: shift = $signed(A) >>> offset;
       default: shift = 0;
     endcase
   end
