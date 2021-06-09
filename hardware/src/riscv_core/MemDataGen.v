@@ -10,7 +10,7 @@ module MEM_DATA_GEN #(
   output reg [DATA_WIDTH / 8 - 1:0] wea_out
 );
 
-  reg [5:0] bit_index;
+  wire [5:0] bit_index;
   reg [2:0] mask_index;
 
   always @(*) begin
@@ -30,19 +30,21 @@ module MEM_DATA_GEN #(
     endcase
   end
 
-  always @(*) begin
-    case (inst_func_in)
-      `FNC_SH: begin
-        case (byte_addr_in)
-          2'd0: bit_index = 0;
-          2'd1: bit_index = 0;
-          2'd2: bit_index = 2 << 3;
-          2'd3: bit_index = 2 << 3;
-        endcase
-      end
-      default: bit_index = byte_addr_in << 3;
-    endcase
-  end
+  assign bit_index = mask_index << 3;
+
+  // always @(*) begin
+  //   case (inst_func_in)
+  //     `FNC_SH: begin
+  //       case (byte_addr_in)
+  //         2'd0: bit_index = 0;
+  //         2'd1: bit_index = 0;
+  //         2'd2: bit_index = 2 << 3;
+  //         2'd3: bit_index = 2 << 3;
+  //       endcase
+  //     end
+  //     default: bit_index = byte_addr_in << 3;
+  //   endcase
+  // end
 
   always @(*) begin
     case (inst_func_in)

@@ -40,6 +40,8 @@ module MMIO #(
       end else if (addr_in[7:0] == 8'h00) begin
         // Uart control
         data_reg_out = {{(DWIDTH - 2) {1'b0}}, ctrl_uart_rx_valid_in, ctrl_uart_tx_ready_in};
+      end else begin
+        data_reg_out = {{DWIDTH{1'b0}};
       end
     end else begin
       data_reg_out = {AWIDTH{1'b0}};

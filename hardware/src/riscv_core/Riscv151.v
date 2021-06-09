@@ -537,7 +537,7 @@ module Riscv151 #(
   assign alu_ex_out_id_in = alu_ex_out;
 
   wire [3:0] mem_wea;
-  wire [DMEM_DWIDTH - 1:0] mem_sel_out;
+  reg [DMEM_DWIDTH - 1:0] mem_sel_out;
   wire [1:0] ctrl_mem_to_reg_ex_out;
 
   assign bios_addrb = alu_out[13:2];
@@ -682,11 +682,10 @@ module Riscv151 #(
   assign dmem_dina = mem_din;
   assign imem_dina = mem_din;
 
-  assign mem_wea = (ctrl_mem_we_ex_in == 1'b0) ? 4'b0000 : mem_din_mask;
   // Note: see Address Space table
-  assign dmem_wea = ((alu_out[31:28] & 4'b1101) == 4'b0001) ? mem_wea : 4'h0;
+  assign dmem_wea = ((alu_out[31:28] & 4'b1101) == 4'b0001 && ctrl_mem_we_ex_in == 1'b1) ? mem_din_mask : 4'h0;
   // Instruction Memory can be writted only if PC[30] == 1'b1;
-  assign imem_wea = (((alu_out[31:28] & 4'b1110) == 4'b0010) & (pc_ex_in[30] == 1'b1)) ? mem_wea : 4'h0;
+  assign imem_wea = (((alu_out[31:29] & 3'b111) == 3'b001) && (pc_ex_in[30] == 1'b1) && (ctrl_mem_we_ex_in == 1'b1)) ? mem_din_mask : 4'h0;
 
 
   wire [1:0] mem_mask_byte_addr;
@@ -744,8 +743,14 @@ module Riscv151 #(
   // Data out from memory selection
   // Because memory output is synchronise read, so it should use alu_ex_out to
   // decide which one is used.
-  assign mem_sel_out = (alu_ex_out[31] == 1'b1) ? mmio_data_ex_out :
-                       (alu_ex_out[30] == 1'b1) ? bios_doutb : dmem_douta;
+  always @(*) begin
+    case (alu_ex_out[31:30])
+      2'b00: mem_sel_out = dmem_douta;
+      2'b01: mem_sel_out = bios_doutb;
+      2'b10: mem_sel_out = mmio_data_ex_out;
+      2'b11: mem_sel_out = mmio_data_ex_out;
+    endcase
+  end
 
   assign mem_mask_byte_addr = alu_ex_out[1:0];
   assign mem_mask_inst_func_in = mem_mask_inst_in[14:12];
@@ -766,7 +771,7 @@ module Riscv151 #(
       2'b00:   rd_id_in = alu_out_ex_sel_out;
       2'b01:   rd_id_in = csr_ex_data_out;
       2'b10:   rd_id_in = mem_ex_out;
-      default: rd_id_in = alu_out_ex_sel_out;
+      default: rd_id_in = 32'b0;
     endcase
   end
 
