@@ -1,3 +1,5 @@
+`include "Opcode.vh"
+
 module Riscv151 #(
   parameter CPU_CLOCK_FREQ = 50_000_000,
   parameter RESET_PC       = 32'h4000_0000,
@@ -262,13 +264,14 @@ module Riscv151 #(
   // Control line to flush instruction in IF/ID stage
   assign inst_if_flush = ctrl_id_reg_flush_id_out;
 
-  assign addr_rs1_id_in = inst_id_in[19:15];
-  assign addr_rs2_id_in = inst_id_in[24:20];
 
   wire ctrl_reg_we_ex_in;
   wire [6:0] opcode_id_in;
 
   assign opcode_id_in = inst_id_in[6:0];
+
+  assign addr_rs1_id_in = opcode_id_in == `OPC_LUI ? 5'd0 : inst_id_in[19:15];
+  assign addr_rs2_id_in = inst_id_in[24:20];
 
   FORWARD #(
     .DWIDTH(DMEM_DWIDTH)
@@ -740,6 +743,17 @@ module Riscv151 #(
     .q  (mmio_data_ex_out)
   );
 
+  wire [PC_WIDTH - 1:0] pc_ex_rd_value, pc_ex_out;
+  assign pc_ex_rd_value = pc_ex_in + 4;
+
+  REGISTER #(
+    .N(PC_WIDTH)
+  ) ex_id_pc_reg (
+    .clk(clk),
+    .d (pc_ex_rd_value),
+    .q (pc_ex_out)
+  );
+
   // Data out from memory selection
   // Because memory output is synchronise read, so it should use alu_ex_out to
   // decide which one is used.
@@ -771,7 +785,7 @@ module Riscv151 #(
       2'b00:   rd_id_in = alu_out_ex_sel_out;
       2'b01:   rd_id_in = csr_ex_data_out;
       2'b10:   rd_id_in = mem_ex_out;
-      default: rd_id_in = 32'b0;
+      2'b11:   rd_id_in = pc_ex_out;
     endcase
   end
 

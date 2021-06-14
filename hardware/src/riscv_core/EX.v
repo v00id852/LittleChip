@@ -2,13 +2,14 @@
 
 module EX #(
   parameter DWIDTH = 32,
-  parameter INST_WIDTH = 32
+  parameter INST_WIDTH = 32,
+  parameter PC_WIDTH = 32
 ) (
   input clk,
   input [DWIDTH - 1:0] data_rs1,
   input [DWIDTH - 1:0] data_rs2,
-  input [INST_WIDTH - 1:0] data_pc,
   input [DWIDTH - 1:0] data_imm,
+  input [PC_WIDTH - 1:0] data_pc,
   input [DWIDTH - 1:0] forward_data_in,
   input [3:0] ctrl_alu_func,
   input [1:0] ctrl_alu_op,
@@ -32,9 +33,8 @@ module EX #(
 
   always @(*) begin
     case (ctrl_alu_src_a)
-      2'b00:   alu_a_final = data_rs1_final;
-      2'b01:   alu_a_final = data_pc;  // For LUI/AUIPC inst
-      2'b10:   alu_a_final = {DWIDTH{1'b0}};
+      2'b00:   alu_a_final = data_rs1_final; 
+      2'b10:   alu_a_final = data_pc;
       default: alu_a_final = data_rs1_final;
     endcase
   end

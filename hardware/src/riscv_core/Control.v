@@ -7,7 +7,7 @@ module CONTROL #(
   output reg_write,
   output mem_write,
   output mem_read,
-  output [1:0] mem_to_reg,
+  output reg [1:0] mem_to_reg,
   output jalr_src,
   output branch,
   output jump,
@@ -37,7 +37,15 @@ module CONTROL #(
   assign csr_we = opcode == `OPC_CSR;
   assign csr_rd = opcode == `OPC_CSR && (!(rd_addr == 5'd0));
 
-  assign mem_to_reg = (opcode == `OPC_CSR) ? 2'b01 : (opcode == `OPC_LOAD) ? 2'b10 : 2'b00;
+  always @(*) begin
+    case (opcode)
+      `OPC_LOAD: mem_to_reg = 2'b10;
+      `OPC_CSR: mem_to_reg = 2'b01;
+      `OPC_JAL: mem_to_reg = 2'b11;
+      `OPC_JALR: mem_to_reg = 2'b11;
+      default: mem_to_reg = 2'b00;
+    endcase
+  end
 
   always @(*) begin
     case (opcode)
@@ -49,24 +57,21 @@ module CONTROL #(
   end
 
   always @(*) begin
-    if (opcode == `OPC_LUI)
-      // immediate 0
+    if (opcode == `OPC_AUIPC) begin
+      // PC
       alu_src_a = 2'b10;
-    else if (opcode == `OPC_AUIPC || 
-             opcode == `OPC_JAL   ||
-             opcode == `OPC_JALR)
-      // pc
-      alu_src_a = 2'b01;
-    else
+    end else begin
       // rs1
       alu_src_a = 2'b00;
+    end
   end
 
   always @(*) begin
-    if (opcode == `OPC_JAL || opcode == `OPC_JALR) begin
-      // immediate 4
-      alu_src_b = 2'b10;
-    end else if (opcode == `OPC_LOAD  || 
+    // if (opcode == `OPC_JAL || opcode == `OPC_JALR) begin
+    //   // immediate 4
+    //   alu_src_b = 2'b10;
+    // end else 
+    if (opcode == `OPC_LOAD  || 
                  opcode == `OPC_STORE || 
                  opcode == `OPC_ARI_ITYPE ||
                  opcode == `OPC_LUI ||
