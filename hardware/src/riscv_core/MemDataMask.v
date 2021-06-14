@@ -9,37 +9,16 @@ module MEM_DATA_MASK #(
   output reg [DATA_WIDTH - 1:0] data_out
 );
 
-  reg [5:0] bit_index;
-
-  always @(*) begin
-    case (inst_func_in)
-      `FNC_LH: begin
-        case (byte_addr_in)
-          2'b00: bit_index = 0;
-          2'b01: bit_index = 0;
-          2'b10: bit_index = 2 << 3;
-          2'b11: bit_index = 2 << 3;
-        endcase
-      end
-      `FNC_LHU: begin
-        case (byte_addr_in)
-          2'b00: bit_index = 0;
-          2'b01: bit_index = 0;
-          2'b10: bit_index = 2 << 3;
-          2'b11: bit_index = 2 << 3;
-        endcase 
-      end
-      default: bit_index = byte_addr_in << 3;
-    endcase
-  end
+  wire [5:0] offset = (byte_addr_in[1] << 4) | (byte_addr_in[0] << 3);
+  wire [DATA_WIDTH - 1:0] data_shift = $signed(data_in) >>> offset; 
 
   always @(*) begin
     case (inst_func_in)
       `FNC_LW:  data_out = data_in;
-      `FNC_LB:  data_out = {{24{data_in[bit_index+8-1]}}, data_in[bit_index+:8]};
-      `FNC_LH:  data_out = {{16{data_in[bit_index+16-1]}}, data_in[bit_index+:16]};
-      `FNC_LHU: data_out = {16'b0, data_in[bit_index+:16]};
-      `FNC_LBU: data_out = {16'b0, data_in[bit_index+:8]};
+      `FNC_LB:  data_out = {{(DATA_WIDTH - 8){data_shift[7]}}, data_shift[7:0]};
+      `FNC_LH:  data_out = {{(DATA_WIDTH - 16){data_shift[15]}}, data_shift[15:0]};
+      `FNC_LHU: data_out = {{(DATA_WIDTH - 16){1'b0}}, data_shift[15:0]};
+      `FNC_LBU: data_out = {{(DATA_WIDTH - 8){1'b0}}, data_shift[7:0]};
       default:  data_out = data_in;
     endcase
   end

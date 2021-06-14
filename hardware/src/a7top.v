@@ -51,7 +51,7 @@ module a7top (
   wire [31:0] csr;
 
   wire cpu_tx, cpu_rx;
-  (* keep_hierarchy="yes" *) Riscv151 #(
+  Riscv151 #(
     .CPU_CLOCK_FREQ(CPU_CLOCK_FREQ)
   ) cpu (
     .clk(cpu_clk),
